@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -32,6 +34,38 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.S01, true)
+    signAllPublications()
+
+    coordinates("com.hubtel", "sdk.checkout", findProperty("versionName") ? findProperty("versionName") : "1.0.0")
+
+    pom {
+        name = "Android-Hubtel-Library"
+        description = "The Kotlin Android Checkout Library is a convenient and easy-to-use library that simplifies the process of implementing a checkout flow in your Android application.\n" +
+                "It provides a set of classes and methods to help you create and manage a checkout intent, handle the checkout result, and retrieve important information about the transaction."
+        url = "https://github.com/hubtel/hubtel-mobile-android-checkout-sdk"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "http://www.opensource.org/licenses/mit-license.php"
+            }
+        }
+        developers {
+            developer {
+                id = "albanybuipe96"
+                name = "Albany Buipe"
+                email = "mohammedarahman96@gmail.com"
+            }
+        }
+        scm {
+            connection = "scm:git:git:github.com/hubtel/hubtel-mobile-android-checkout-sdk.git"
+            developerConnection = "git@github.com:hubtel/hubtel-mobile-android-checkout-sdk.git"
+            url = "https://github.com/hubtel/hubtel-mobile-android-checkout-sdk.git"
+        }
     }
 }
 
