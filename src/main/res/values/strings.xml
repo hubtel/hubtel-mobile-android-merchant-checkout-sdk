@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="checkout_visa">Visa</string>
+    <string name="checkout_mastercard">Mastercard</string>
+    <string name="checkout_american_express">American Express</string>
+
+    <string name="checkout_use_new_card">Use new card</string>
+    <string name="checkout_use_saved_card">Use saved card</string>
+    <string name="checkout_bank_card">Bank Card</string>
+
+    <string name="checkout_cvv">CVV</string>
+    <string name="checkout_mm_yy">MM/YY</string>
+    <string name="checkout_card_future_use_mgs">Save this card for future use</string>
+    <string name="checkout_card_ending_with_format">Card ending with **** %1$s</string>
+
+    <string name="checkout_close_drop_down_menu">Close drop down menu</string>
+    <string name="checkout_open_drop_down_menu">Open drop down menu</string>
+
+    <string name="checkout_card_not_supported">Card not supported</string>
+    <string name="checkout_card_not_supported_msg">This bank card is not a secured card and cannot be processed. Speak to your bank to enable 3DS on this bank card</string>
+
+    <string name="checkout_okay">Okay</string>
+    <string name="checkout_close">close</string>
+    <string name="checkout_pay">Pay</string>
+    <string name="checkout_pay_with">Pay with</string>
+    <string name="checkout_please_wait">Please wait</string>
+
+    <string name="checkout_cancel_transaction_title">Cancel Transaction?</string>
+    <string name="checkout_cancel_transaction_msg">Do you want to cancel this transaction?</string>
+
+    <string name="checkout_yes">Yes</string>
+    <string name="checkout_no">No</string>
+    <string name="checkout_success">Success</string>
+
+    <string name="checkout_momo_bill_prompt_msg">A bill prompt has been sent to %1$s. Please authorize payment.</string>
+
+    <string name="checkout_additional_verification_title">Contacting your bank for additional verification</string>
+    <string name="checkout_additional_verification_subtitle">You will have to provide a correct token to proceed. \nScroll to the bottom if you cannot see the CONTINUE button</string>
+
+    <string name="checkout_amount_charged_msg">You will be charged</string>
+    <string name="checkout_amount">Amount</string>
+
+    <string name="checkout_sorry_an_error_occurred">Sorry an error occurred.</string>
+
+    <!--    <string name="checkout_cancel_transaction">Cancel Transaction?</string>-->
+    <!--    <string name="checkout_do_you_want_to_cancel_this_transaction">Do you want to cancel this transaction?</string>-->
+    <!--    <string name="checkout_save_this_card_for_future_use">Save this card for future use</string>-->
+    <!--    <string name="checkout_use_a_saved_card">Use a saved card</string>-->
+    <!--    <string name="checkout_something_went_wrong">Something went wrong</string>-->
+
+    <!--    <string name="checkout_confirm">Confirm</string>-->
+    <!--    <string name="checkout_mobile_money">Mobile Money</string>-->
+    <!--    <string name="checkout_hubtel_balance">Hubtel Balance</string>-->
+    <!--    <string name="checkout_add_a_new_number">Add a new number</string>-->
+    <!--    <string name="checkout_cvv">CVV</string>-->
+    <!--    <string name="checkout_mm_yy">MM/YY</string>-->
+    <!--    <string name="checkout_mobile_money_payment_info_msg">You will be required to enter your %1$s PIN to authorise payment.</string>-->
+    <!--    <string name="checkout_insufficient_hubtel_balance_msg">There are insufficient funds for this transaction</string>-->
+    <!--    <string name="checkout_hubtel_balance_debit_msg">Your balance on Hubtel will be debited immediately you confirm payment.\n\nNo authorisation prompt will be sent to you.</string>-->
+    <!--    <string name="checkout_calculating_fees">Calculating fees</string>-->
+    <!--    <string name="checkout_processing">Processing</string>-->
+    <!--    <string name="checkout_not_less_than_a_minute">Not less than a minute</string>-->
+    <!--    <string name="checkout_i_have_paid">I Have Paid</string>-->
+    <!--    <string name="checkout_other_bill_prompt_msg">Your payment is being processed. Tap the button below to check payment status</string>-->
+    <!--    <string name="checkout_checking_status">Checking status …</string>-->
+    <!--    <string name="checkout_change_wallet">Change Wallet</string>-->
+    <!--    <string name="checkout_check_again">Check Again</string>-->
+    <!--    <string name="checkout_alert">Alert</string>-->
+    <!--    <string name="checkout_processing_payment">Processing Payment</string>-->
+    <!--    <string name="checkout_payment_being_processed_msg">Your payment is being processed. Tap on the “Check Again” button to confirm final payment status</string>-->
+    <!--    <string name="checkout_card_number_hint">1234 **** **** 7890</string>-->
+    <!--    -->
+    <!--    <string name="checkout_new_transactions">This will start a new transaction.Are you sure you want to go ahead with this?</string>-->
+    <!--    <string name="checkout_prompt_not_received">Not receiving a payment prompt?</string>-->
+    <!--    <string name="checkout_follow_steps">Follow the steps below to authorize payment requests.</string>-->
+    <!--    <string name="checkout_enter_pin">3. Enter PIN to get your Pending Approval List.</string>-->
+    <!--    <string name="checkout_pending_approval">4. Select pending transaction to approve.</string>-->
+    <!--    <string name="checkout_prompt_pay">5. Pay.</string>-->
+    <!--    <string name="checkout_receive_mtn_prompt">If you don\'t receive any authorisation prompt, dial</string>-->
+    <!--    <string name="checkout_mtn_code">*170#, </string>-->
+    <!--    <string name="checkout_select_approvals">go to My Account and select Approvals.</string>-->
+
+</resources>
