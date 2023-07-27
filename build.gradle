@@ -1,0 +1,136 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'maven-publish'
+    id "com.vanniktech.maven.publish" version "0.25.3"
+}
+
+android {
+    namespace 'com.hubtel.sdk.checkout'
+    compileSdk 33
+
+    resourcePrefix 'checkout'
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 33
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            buildConfigField "String", "SDK_VERSION", "\"$checkout_sdk_verison\""
+            buildConfigField "String", "API_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjIzMzU0NDg0MzExNyIsImp0aSI6IjMxZTJjYmYxLTVjYTUtNGNhMS1iMGZhLTc2YjA4Mzg1NDhhYiIsIm5iZiI6MTY0MzI0NTU5NSwiZXhwIjoxNjc0NzgxNTk1LCJpc3MiOiJodHRwOi8vaHVidGVsLmNvbSIsImF1ZCI6Imh0dHA6Ly9odWJ0ZWwuY29tIn0.dvXMyveQQeEPkz6O498-aflyfHN9z2iwJsFWsQcMf4A\""
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "SDK_VERSION", "\"$checkout_sdk_verison\""
+            buildConfigField "String", "API_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjIzMzU0NDg0MzExNyIsImp0aSI6IjMxZTJjYmYxLTVjYTUtNGNhMS1iMGZhLTc2YjA4Mzg1NDhhYiIsIm5iZiI6MTY0MzI0NTU5NSwiZXhwIjoxNjc0NzgxNTk1LCJpc3MiOiJodHRwOi8vaHVidGVsLmNvbSIsImF1ZCI6Imh0dHA6Ly9odWJ0ZWwuY29tIn0.dvXMyveQQeEPkz6O498-aflyfHN9z2iwJsFWsQcMf4A\""
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.S01, true)
+    signAllPublications()
+
+    coordinates("com.hubtel", "checkout-sdk", findProperty("versionName") ? findProperty("versionName") : "1.0.0-SNAPSHOT")
+
+    pom {
+        name = "Android-Hubtel-Library"
+        description = "The Kotlin Android Checkout Library is a convenient and easy-to-use library that simplifies the process of implementing a checkout flow in your Android application.\n" +
+                "It provides a set of classes and methods to help you create and manage a checkout intent, handle the checkout result, and retrieve important information about the transaction."
+        url = "https://github.com/hubtel/hubtel-mobile-android-checkout-sdk"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "http://www.opensource.org/licenses/mit-license.php"
+            }
+        }
+        developers {
+            developer {
+                id = "albanybuipe96"
+                name = "Albany Buipe"
+                email = "mohammedarahman96@gmail.com"
+            }
+        }
+        scm {
+            connection = "scm:git:git:github.com/hubtel/hubtel-mobile-android-checkout-sdk.git"
+            developerConnection = "git@github.com:hubtel/hubtel-mobile-android-checkout-sdk.git"
+            url = "https://github.com/hubtel/hubtel-mobile-android-checkout-sdk.git"
+        }
+    }
+}
+
+dependencies {
+//    implementation project(":network-kit")
+
+    def hubtel_version = "1.0.7"
+    implementation "com.hubtel:core-ui:$hubtel_version"
+    implementation "com.hubtel:core-utils:$hubtel_version"
+
+    implementation "com.google.code.gson:gson:2.10.1"
+
+    def room_version = "2.5.1"
+    implementation "androidx.room:room-runtime:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+
+    // Retrofit
+    api 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+
+    // voyager navigation
+    def voyager_version = "1.0.0-rc05"
+    implementation "cafe.adriel.voyager:voyager-navigator:$voyager_version"
+    implementation "cafe.adriel.voyager:voyager-androidx:$voyager_version"
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                group 'com.hubtel'
+                artifactId 'checkout-sdk'
+                version checkout_sdk_verison
+            }
+        }
+
+        repositories {
+            maven {
+                name = "hubtel.mobile"
+                url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
+                credentials {
+                    username "hubtel.mobile"
+                    password "jmqbjwo4wknjt7crfkpisgxw6bfzw34twwticivlbp5tx37jdw5q"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,75 @@
+package com.hubtel.sdk.checkout.ux.pay.status
+
+import android.app.Application
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.hubtel.core_ui.extensions.update
+import com.hubtel.core_ui.model.UiState2
+import com.hubtel.core_ui.model.UiText
+import com.hubtel.sdk.checkout.R
+import com.hubtel.sdk.checkout.network.ApiResult
+import com.hubtel.sdk.checkout.platform.data.source.api.CheckoutApiService
+import com.hubtel.sdk.checkout.platform.data.source.api.model.response.TransactionStatusInfo
+import com.hubtel.sdk.checkout.platform.data.source.db.CheckoutDB
+import com.hubtel.sdk.checkout.platform.data.source.repository.CheckoutRepository
+import com.hubtel.sdk.checkout.storage.CheckoutPrefManager
+import com.hubtel.sdk.checkout.ux.model.CheckoutConfig
+import kotlinx.coroutines.launch
+
+internal class PaymentStatusViewModel(
+    private val checkoutRepository: CheckoutRepository
+) : ViewModel() {
+
+    private val _uiState = mutableStateOf(UiState2<TransactionStatusInfo>())
+    val uiState: State<UiState2<TransactionStatusInfo>> = _uiState
+
+    fun checkPaymentStatus(config: CheckoutConfig) {
+        viewModelScope.launch {
+            _uiState.update { UiState2(isLoading = true) }
+
+            val result = checkoutRepository.getTransactionStatus(
+                salesId = config.posSalesId ?: "",
+                clientReference = config.clientReference ?: ""
+            )
+
+            if (result is ApiResult.Success) {
+                _uiState.update {
+                    UiState2(
+                        data = result.response.data,
+                        success = true
+                    )
+                }
+            } else {
+                _uiState.update {
+                    UiState2(
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
+                }
+            }
+        }
+    }
+
+    companion object {
+        fun getViewModelFactory(apiKey: String?): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application =
+                    this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as Application
+
+                val database = CheckoutDB.getInstance(application)
+                val checkoutService = CheckoutApiService(apiKey ?: "")
+                val checkoutPrefManager = CheckoutPrefManager(application)
+
+                val checkoutRepository = CheckoutRepository(
+                    database, checkoutService, checkoutPrefManager
+                )
+                PaymentStatusViewModel(checkoutRepository)
+            }
+        }
+
+    }
+}
