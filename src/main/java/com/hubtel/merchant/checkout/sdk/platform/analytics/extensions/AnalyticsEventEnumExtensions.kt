@@ -1,7 +1,7 @@
-package com.hubtel.core_analytics.extensions
+package com.hubtel.merchant.checkout.sdk.platform.analytics.extensions
 
-import com.hubtel.core_analytics.constants.AppEventType
-import com.hubtel.core_analytics.constants.UIType
+import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.AppEventType
+import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.UIType
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.AnalyticsEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.AnalyticsEventEnum
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.eventType

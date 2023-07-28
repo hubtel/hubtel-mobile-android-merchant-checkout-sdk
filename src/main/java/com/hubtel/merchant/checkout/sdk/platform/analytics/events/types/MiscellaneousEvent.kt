@@ -1,6 +1,6 @@
 package com.hubtel.merchant.checkout.sdk.platform.analytics.events.types
 
-import com.hubtel.core_analytics.constants.AnalyticsConstants
+import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.AnalyticsConstants
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.AnalyticsEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.EventParams
 import com.hubtel.core_utils.constants.AppSection

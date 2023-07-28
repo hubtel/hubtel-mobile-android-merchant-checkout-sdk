@@ -1,12 +1,12 @@
 package com.hubtel.merchant.checkout.sdk.network
 
+import com.hubtel.merchant.checkout.sdk.BuildConfig
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import com.hubtel.sdk.checkout.BuildConfig
 import com.hubtel.merchant.checkout.sdk.platform.analytics.util.NetworkAnalyticsInterceptor
 
 internal inline fun <reified T> createRetrofitService(

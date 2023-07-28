@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.core_utils.extensions.formatMoneyParts
-import com.hubtel.sdk.checkout.R
+import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 

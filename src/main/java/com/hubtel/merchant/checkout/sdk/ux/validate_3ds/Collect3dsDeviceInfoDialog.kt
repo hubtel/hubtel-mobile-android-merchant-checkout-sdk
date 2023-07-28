@@ -13,7 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.hubtel.core_ui.components.custom.HBProgressDialog
-import com.hubtel.sdk.checkout.R
+import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.ThreeDSSetupState
 import timber.log.Timber
 

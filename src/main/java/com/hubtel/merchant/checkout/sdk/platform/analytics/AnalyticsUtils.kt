@@ -3,13 +3,13 @@ package com.hubtel.merchant.checkout.sdk.platform.analytics
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import com.hubtel.core_analytics.api.EventStoreApiService
-import com.hubtel.core_analytics.constants.AnalyticsConstants
+import com.hubtel.merchant.checkout.sdk.platform.analytics.api.EventStoreApiService
+import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.AnalyticsConstants
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.AnalyticsEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.EventParams
 import com.hubtel.core_utils.constants.AppSection
 import com.hubtel.core_utils.extensions.formatYyyyMMddHHmmss
-import com.hubtel.sdk.checkout.BuildConfig
+import com.hubtel.merchant.checkout.sdk.BuildConfig
 import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.AnalyticsProvider
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.ApiRequestEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent

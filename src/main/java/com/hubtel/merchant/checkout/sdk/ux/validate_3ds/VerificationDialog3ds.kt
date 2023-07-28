@@ -20,7 +20,7 @@ import com.hubtel.core_ui.components.custom.HBTopAppBar
 import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
-import com.hubtel.sdk.checkout.R
+import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.ThreeDSSetupState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.Verification3dsState
