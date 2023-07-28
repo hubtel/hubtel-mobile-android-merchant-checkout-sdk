@@ -5,7 +5,7 @@
 
     <application>
         <activity
-            android:name="com.hubtel.sdk.checkout.ux.CheckoutActivity"
+            android:name="com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity"
             android:windowSoftInputMode="adjustResize" />
     </application>
 </manifest>

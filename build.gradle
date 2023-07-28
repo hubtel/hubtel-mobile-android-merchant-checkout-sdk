@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace 'com.hubtel.sdk.checkout'
+    namespace 'com.hubtel.merchant.checkout.sdk'
     compileSdk 33
 
     resourcePrefix 'checkout'
@@ -53,7 +53,7 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.S01, true)
     signAllPublications()
 
-    coordinates("com.hubtel", "checkout-sdk", findProperty("versionName") ? findProperty("versionName") : "1.0.0-SNAPSHOT")
+    coordinates("com.hubtel", "merchant-checkout-sdk", findProperty("versionName") ? findProperty("versionName") : "1.0.0-SNAPSHOT")
 
     pom {
         name = "Android-Hubtel-Library"
@@ -128,7 +128,7 @@ afterEvaluate {
                 url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
                 credentials {
                     username "hubtel.mobile"
-                    password "jmqbjwo4wknjt7crfkpisgxw6bfzw34twwticivlbp5tx37jdw5q"
+                    password "e3aidara77aiedv7cwvyxbesaizprswnnpy5arn6hykj5hcn6qzq"
                 }
             }
         }
