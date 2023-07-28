@@ -1,4 +1,4 @@
-package com.hubtel.core_analytics.extensions
+package com.hubtel.merchant.checkout.sdk.platform.analytics.extensions
 
 fun String.toFriendlyName(): String {
     return this.split("_")

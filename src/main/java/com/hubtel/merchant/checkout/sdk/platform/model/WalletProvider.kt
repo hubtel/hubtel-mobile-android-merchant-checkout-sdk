@@ -2,7 +2,8 @@ package com.hubtel.merchant.checkout.sdk.platform.model
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import com.hubtel.sdk.checkout.R
+import com.hubtel.merchant.checkout.sdk.R
+
 
 internal enum class WalletImages(
     @DrawableRes val logo: Int,

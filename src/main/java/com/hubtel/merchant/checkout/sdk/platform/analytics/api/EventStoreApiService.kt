@@ -1,6 +1,6 @@
-package com.hubtel.core_analytics.api
+package com.hubtel.merchant.checkout.sdk.platform.analytics.api
 
-import com.hubtel.sdk.checkout.BuildConfig
+import com.hubtel.merchant.checkout.sdk.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

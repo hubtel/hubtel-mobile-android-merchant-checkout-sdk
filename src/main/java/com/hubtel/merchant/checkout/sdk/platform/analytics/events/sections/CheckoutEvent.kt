@@ -1,4 +1,4 @@
-package com.hubtel.core_analytics.events.sections
+package com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections
 
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.AnalyticsEventEnum
 

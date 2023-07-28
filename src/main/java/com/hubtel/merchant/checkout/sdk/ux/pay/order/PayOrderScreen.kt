@@ -38,7 +38,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import com.hubtel.core_analytics.events.sections.CheckoutEvent
+import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.core_ui.components.custom.HBProgressDialog
 import com.hubtel.core_ui.components.custom.HBTopAppBar
 import com.hubtel.core_ui.extensions.LocalActivity
@@ -47,7 +47,7 @@ import com.hubtel.core_ui.model.UiState2
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.core_utils.extensions.formatMoney
-import com.hubtel.sdk.checkout.R
+import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent

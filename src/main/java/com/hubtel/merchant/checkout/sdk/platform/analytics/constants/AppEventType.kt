@@ -1,4 +1,4 @@
-package com.hubtel.core_analytics.constants
+package com.hubtel.merchant.checkout.sdk.platform.analytics.constants
 
 internal enum class AppEventType(internal val rawValue: String) {
     Login("Login"),

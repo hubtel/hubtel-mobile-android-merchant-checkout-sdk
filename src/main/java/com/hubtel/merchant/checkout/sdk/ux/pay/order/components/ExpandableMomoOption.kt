@@ -49,7 +49,7 @@ import com.hubtel.core_ui.components.custom.HBDivider
 import com.hubtel.core_ui.components.custom.HBTextField
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
-import com.hubtel.sdk.checkout.R
+import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.MomoWalletUiState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel

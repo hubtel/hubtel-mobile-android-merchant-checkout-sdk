@@ -1,4 +1,4 @@
-package com.hubtel.core_analytics.constants
+package com.hubtel.merchant.checkout.sdk.platform.analytics.constants
 
 enum class UIType(internal val rawValue: String) {
     Page("Page"),
