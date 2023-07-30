@@ -1,4 +1,4 @@
-# Hubtel Checkout SDK  - Android
+# Hubtel Merchant Checkout SDK - Android
 
 ## Overview
 The Hubtel Checkout Library is a convenient and easy-to-use library that simplifies the process of implementing a checkout flow in your Android application.
