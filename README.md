@@ -69,5 +69,6 @@ override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) 
  ```
 Replace `CHECKOUT_REQUEST_CODE` with the actual request code used when starting the checkout process.
 
+
 ## Screenshots
-![Fig. 01](https://firebasestorage.googleapis.com/v0/b/newagent-b6906.appspot.com/o/hubtel-mobile-checkout-ios-sdk-image.png?alt=media&token=376d90ab-c416-42a0-8b99-69028378ff72)
+![Fig. 01](https://firebasestorage.googleapis.com/v0/b/newagent-b6906.appspot.com/o/hubtel-mobile-checkout-android-sdk-image.png?alt=media&token=f9f5f391-1278-4ecb-89c2-345a92e61229)
