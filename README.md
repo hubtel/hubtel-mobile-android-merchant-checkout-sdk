@@ -62,8 +62,8 @@ To handle the result of the checkout process, you need to override the `onActivi
 ```kotlin
 override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {  
   super.onActivityResult(requestCode, resultCode, data)  
-  if (requestCode == CHECKOUT_REQUEST_CODE && resultCode == RESULT_OK) {  
-	  val status = intent?.getParcelableExtra<CheckoutStatus?>(CheckoutStatus.CHECKOUT_RESULT) // Handle the checkout status  
+  if (requestCode == CHECKOUT_REQUEST_CODE && resultCode == RESULT_OK) {
+      val status = intent?.getParcelableExtra<CheckoutStatus?>(CheckoutStatus.CHECKOUT_RESULT) // Handle the checkout status  
   }  
 }
  ```
