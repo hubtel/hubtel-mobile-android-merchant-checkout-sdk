@@ -60,13 +60,13 @@ Be sure to replace the parameter values with your own data.
 ### Handling the Checkout Result
 To handle the result of the checkout process, you need to override the `onActivityResult` method in your activity or fragment. In this method, you can check if the request code matches the checkout request code and if the result code is `RESULT_OK`. If both conditions are met, you can retrieve the checkout status using the `CheckoutStatus.CHECKOUT_RESULT` extra key. Here's an example:
 ```kotlin
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-	super.onActivityResult(requestCode, resultCode, data)    
-    if (requestCode == CHECKOUT_REQUEST_CODE &&resultCode == RESULT_OK) {  
-		 val status = intent?.getParcelableExtra<CheckoutStatus?>(CheckoutStatus.CHECKOUT_RESULT) // Handle the checkout status
-	}
- }
- ```   
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {  
+  super.onActivityResult(requestCode, resultCode, data)  
+  if (requestCode == CHECKOUT_REQUEST_CODE && resultCode == RESULT_OK) {  
+	  val status = intent?.getParcelableExtra<CheckoutStatus?>(CheckoutStatus.CHECKOUT_RESULT) // Handle the checkout status  
+  }  
+}
+ ```
 Replace `CHECKOUT_REQUEST_CODE` with the actual request code used when starting the checkout process.
 
 ## Screenshots
