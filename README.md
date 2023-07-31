@@ -19,6 +19,7 @@ dependencies {
 }
 ```  
 4. Sync your project to download the library and make it available for use in your project.
+5. Create an `intent` with the `CheckoutIntent.Builder`.
 
 ## Getting Started
 Here's a quick explanation of the parameters used in the `CheckoutIntent.Builder`:    
