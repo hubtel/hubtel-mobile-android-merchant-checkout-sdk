@@ -21,7 +21,8 @@ jobs:
         # Builds the release artifacts of the library
       - name: Release build
         run: |
-          ./gradlew publishAllPublicationsToMavenCentral --no-configuration-cache
+          ../checkout-sdk/gradlew publishAllPublicationsToMavenCentral --no-configuration-cache
+#          ./gradlew publishAllPublicationsToMavenCentral --no-configuration-cache
 
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USER_NAME }}
