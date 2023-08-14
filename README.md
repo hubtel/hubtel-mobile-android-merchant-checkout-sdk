@@ -1,12 +1,11 @@
-# Hubtel Checkout SDK  - Android
 
-## Overview
-The Hubtel Checkout Library is a convenient and easy-to-use library that simplifies the process of implementing a checkout flow in your Android application.
+# Hubtel Merchant Checkout SDK - Android
+
+### Overview
+The Hubtel Checkout Library is a convenient and easy-to-use library that simplifies the process of implementing a checkout flow in your Android application.  
 It provides a set of classes and methods to help you create and manage a checkout intent, handle the checkout result, and retrieve important information about the transaction.
-
 ## Installation
-The `Hubtel Checkout` library is available on Maven Centril. To integrate it in your Android project, follow these steps:
-
+The `Hubtel Checkout` library is available on Maven Central. To integrate it in your Android project, follow these steps:
 1. Open your project in Android Studio.
 2. Go to the `build.gradle` file of your app module.
 3. Add the following line:
@@ -20,6 +19,7 @@ dependencies {
 }
 ```
 4. Sync your project to download the library and make it available for use in your project.
+5. Create an `intent` with the `CheckoutIntent.Builder`.
 
 ## Getting Started
 Here's a quick explanation of the parameters used in the `CheckoutIntent.Builder`:
@@ -44,33 +44,33 @@ Make sure to provide appropriate values for these parameters based on your speci
 ### Creating a Checkout Intent
 To initiate a checkout process, you need to create a checkout intent using the `CheckoutIntent.Builder` class. This builder allows you to set various parameters related to the checkout, such as the `amount`, `description`, `merchant ID`, `customer information`, and more. Here's an example of creating a checkout intent:
 
-```kotlin  
-val intent = CheckoutIntent.Builder(context)  
- .setAmount(10.24)
- .setCallbackUrl("https://url-to-your-web-server.com/payment-status")
- .setDescription("A brief description of item")
- .setMerchantId("YOUR_MERCHANT_ID")
- .setClientReference(UUID.randomUUID().toString())
- .setCustomerPhoneNumber("233502424242")
- .setTitle("Grey Chair")
- .setLogoUrl("https://image-to-show-on-the-checkout.com/image.jpg")
- .build()  
-```  
+```kotlin
+val intent = CheckoutIntent.Builder(this)
+	.setAmount(0.1)
+	.setApiKey("T0UwajAzcjo5ZjAxMzhkOTk5ZmM0ODMxYjc3MWFhMzEzYTNjMThhNA==")
+	.setCallbackUrl("https://cd81-154-47-25-8.ngrok-free.app/payment-callback")
+	.setDescription("Rice with Coleslaw")
+	.setMerchantId("11684")
+	.setClientReference(UUID.randomUUID().toString())
+	.setCustomerPhoneNumber("233540343395")
+	.setTheme(themeConfig)
+	.build()
+ ``` 
 
 Be sure to replace the parameter values with your own data.
 
 ### Handling the Checkout Result
 To handle the result of the checkout process, you need to override the `onActivityResult` method in your activity or fragment. In this method, you can check if the request code matches the checkout request code and if the result code is `RESULT_OK`. If both conditions are met, you can retrieve the checkout status using the `CheckoutStatus.CHECKOUT_RESULT` extra key. Here's an example:
-```kotlin  
+```kotlin
 override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {  
-	 super.onActivityResult(requestCode, resultCode, data)  
-	 if (requestCode == CHECKOUT_REQUEST_CODE && resultCode == RESULT_OK) {
-	    val status = intent?.getParcelableExtra<CheckoutStatus?>(CheckoutStatus.CHECKOUT_RESULT) // Handle the checkout status
-	 }
- }
-```  
-
+  super.onActivityResult(requestCode, resultCode, data)  
+  if (requestCode == CHECKOUT_REQUEST_CODE && resultCode == RESULT_OK) {
+      val status = intent?.getParcelableExtra<CheckoutStatus?>(CheckoutStatus.CHECKOUT_RESULT) // Handle the checkout status  
+  }  
+}
+ ```
 Replace `CHECKOUT_REQUEST_CODE` with the actual request code used when starting the checkout process.
+
 
 ## Screenshots
 ![Fig. 01](https://firebasestorage.googleapis.com/v0/b/newagent-b6906.appspot.com/o/hubtel-mobile-checkout-android-sdk-image.png?alt=media&token=f9f5f391-1278-4ecb-89c2-345a92e61229)
