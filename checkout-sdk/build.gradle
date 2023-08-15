@@ -5,6 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'maven-publish'
+    id 'signing'
     id "com.vanniktech.maven.publish" version "0.25.3"
 }
 
@@ -126,6 +127,13 @@ afterEvaluate {
                 artifactId 'checkout-sdk'
                 version checkout_sdk_verison
             }
+
+            mavenJava(MavenPublication) {
+                signing {
+                    sign publishing.publications.mavenJava
+                }
+            }
+
         }
 
         repositories {
