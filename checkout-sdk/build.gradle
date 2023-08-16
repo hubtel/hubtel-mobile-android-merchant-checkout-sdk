@@ -4,7 +4,6 @@ plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
-    id 'maven-publish'
     id "com.vanniktech.maven.publish" version "0.25.3"
 }
 
@@ -143,14 +142,10 @@ afterEvaluate {
                 url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
                 credentials {
                     username "hubtel.mobile"
-                    password "uzivxceruhygwczhnsez27uf6dsu5iqtuyqhfleg3qp4m6sftaba"
+                    password "55amjuupw3lk3rikjhacfd4kps4zy6ajfpmpjcwj2smbsq3dzcxa"
 
                 }
             }
         }
     }
-}
-
-tasks.withType(GenerateModuleMetadata).configureEach {
-    enabled = false
 }
