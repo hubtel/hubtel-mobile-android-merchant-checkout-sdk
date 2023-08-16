@@ -2,9 +2,12 @@
 name: Publish
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version Name'
+        required: true
+
 
 jobs:
   publish:
