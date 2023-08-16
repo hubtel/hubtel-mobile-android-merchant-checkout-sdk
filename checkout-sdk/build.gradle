@@ -52,7 +52,7 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.S01, true)
     signAllPublications()
 
-    coordinates("com.hubtel", "$checkout_artifact_id", findProperty("versionName") ? findProperty("versionName") : "$checkout_sdk_verison")
+    coordinates("com.hubtel.sdk.checkout", "$checkout_artifact_id", findProperty("versionName") ? findProperty("versionName") : "$checkout_sdk_verison")
 
     pom {
         name = "Android-Hubtel-Library"
