@@ -47,6 +47,15 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    signingConfigs {
+        release {
+            keyAlias 'Hubtel'
+            keyPassword 'apps@hubtel'
+            storeFile file('/hubtel_apps_2023_keystore.jks')
+            storePassword 'apps@hubtel'
+        }
+    }
 }
 
 mavenPublishing {
