@@ -46,15 +46,6 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    signingConfigs {
-        release {
-            keyAlias 'Hubtel'
-            keyPassword 'apps@hubtel'
-            storeFile file('/hubtel_apps_2023_keystore.jks')
-            storePassword 'apps@hubtel'
-        }
-    }
 }
 
 mavenPublishing {
@@ -95,12 +86,8 @@ dependencies {
 //    implementation project(":network-kit")
 
     def hubtel_version = "1.0.7"
-    api ("com.hubtel:core-ui:$hubtel_version") {
-        transitive = true
-    }
-    api ("com.hubtel:core-utils:$hubtel_version") {
-        transitive = true
-    }
+    implementation "com.hubtel:core-ui:$hubtel_version"
+    implementation "com.hubtel:core-utils:$hubtel_version"
 
     implementation "com.google.code.gson:gson:2.10.1"
 
