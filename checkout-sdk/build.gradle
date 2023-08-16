@@ -8,7 +8,8 @@ plugins {
 }
 
 android {
-    namespace 'com.hubtel.sdk.checkout'
+//    namespace 'com.hubtel.sdk.checkout'
+    namespace 'com.hubtel.merchant.checkout.sdk'
     compileSdk 33
 
     resourcePrefix 'checkout'
