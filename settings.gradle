@@ -15,7 +15,7 @@ dependencyResolutionManagement {
             url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
             credentials {
                 username "hubtel.mobile"
-                password "nrsu2jqy7a3hy6mz47xydxjmw3s74dt5655byiunwwqf3ww7ngwa"
+                password "s7nasn626rwwixwjenxconlj4efh66s6jj4rcvy5x3v46srvtc7q"
             }
         }
     }
