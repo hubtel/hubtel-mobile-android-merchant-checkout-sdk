@@ -123,28 +123,3 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
-
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-
-                group 'com.hubtel'
-                artifactId 'checkout-sdk'
-                version checkout_sdk_verison
-            }
-        }
-
-        repositories {
-            maven {
-                name = "hubtel.mobile"
-                url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
-                credentials {
-                    username "hubtel.mobile"
-                    password "3aurmtqdb7j4cxwkgvmxa2gq53kpl4owvewqor2wxfwu4wwq2fgq"
-                }
-            }
-        }
-    }
-}
