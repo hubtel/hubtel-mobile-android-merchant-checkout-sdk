@@ -142,7 +142,7 @@ afterEvaluate {
                 url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
                 credentials {
                     username "hubtel.mobile"
-                    password "55amjuupw3lk3rikjhacfd4kps4zy6ajfpmpjcwj2smbsq3dzcxa"
+                    password "vgff5dw4o6c5i3tr7cb6jxsgpqvsyglzeeivuuu5bufiickoktxa"
 
                 }
             }
