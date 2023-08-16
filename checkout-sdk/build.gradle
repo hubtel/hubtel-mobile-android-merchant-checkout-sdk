@@ -95,8 +95,12 @@ dependencies {
 //    implementation project(":network-kit")
 
     def hubtel_version = "1.0.7"
-    implementation "com.hubtel:core-ui:$hubtel_version"
-    implementation "com.hubtel:core-utils:$hubtel_version"
+    api ("com.hubtel:core-ui:$hubtel_version") {
+        transitive = true
+    }
+    api ("com.hubtel:core-utils:$hubtel_version") {
+        transitive = true
+    }
 
     implementation "com.google.code.gson:gson:2.10.1"
 
@@ -138,7 +142,7 @@ afterEvaluate {
                 url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
                 credentials {
                     username "hubtel.mobile"
-                    password "e3aidara77aiedv7cwvyxbesaizprswnnpy5arn6hykj5hcn6qzq"
+                    password "3aurmtqdb7j4cxwkgvmxa2gq53kpl4owvewqor2wxfwu4wwq2fgq"
                 }
             }
         }
