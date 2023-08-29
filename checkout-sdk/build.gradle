@@ -4,11 +4,11 @@ plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'signing'
     id "com.vanniktech.maven.publish" version "0.25.3"
 }
 
 android {
-//    namespace 'com.hubtel.sdk.checkout'
     namespace 'com.hubtel.merchant.checkout.sdk'
     compileSdk 33
 
@@ -53,7 +53,7 @@ mavenPublishing {
     publishToMavenCentral(SonatypeHost.S01, true)
     signAllPublications()
 
-    coordinates("com.hubtel.sdk.checkout", "$checkout_artifact_id", findProperty("versionName") ? findProperty("versionName") : "$checkout_sdk_verison")
+    coordinates("$groud_id", "$checkout_artifact_id", findProperty("versionName") ? findProperty("versionName") : "$checkout_sdk_verison")
 
     pom {
         name = "Android-Hubtel-Library"
@@ -82,13 +82,35 @@ mavenPublishing {
 
 }
 
-
 dependencies {
-//    implementation project(":network-kit")
 
-    def hubtel_version = "1.0.7"
-    implementation "com.hubtel:core-ui:$hubtel_version"
-    implementation "com.hubtel:core-utils:$hubtel_version"
+    api 'androidx.appcompat:appcompat:1.6.1'
+    api 'com.google.android.material:material:1.8.0'
+    api 'androidx.legacy:legacy-support-v4:1.0.0'
+    api 'androidx.recyclerview:recyclerview:1.2.1'
+    api 'androidx.cardview:cardview:1.0.0'
+    api 'androidx.vectordrawable:vectordrawable:1.1.0'
+
+    def lifecycle_version = "2.4.1"
+    api "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
+    api "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    api "androidx.compose.runtime:runtime-livedata:1.2.1"
+    api 'androidx.activity:activity-compose:1.6.0'
+
+    // compose
+    api "androidx.compose.ui:ui:$compose_version"
+    api "androidx.compose.material:material:$compose_version"
+    api "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    api "androidx.compose.ui:ui-util:$compose_version"
+    api "androidx.paging:paging-compose:1.0.0-alpha16"
+
+    // Coil
+    api "io.coil-kt:coil-compose:1.4.0"
+    api "io.coil-kt:coil-gif:1.4.0"
+
+    // navigation compose
+    api "androidx.navigation:navigation-compose:2.5.2"
+    api 'androidx.hilt:hilt-navigation-compose:1.0.0'
 
     implementation "com.google.code.gson:gson:2.10.1"
 
@@ -106,6 +128,9 @@ dependencies {
     def voyager_version = "1.0.0-rc05"
     implementation "cafe.adriel.voyager:voyager-navigator:$voyager_version"
     implementation "cafe.adriel.voyager:voyager-androidx:$voyager_version"
+
+    // Timber Logging
+    api 'com.jakewharton.timber:timber:5.0.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

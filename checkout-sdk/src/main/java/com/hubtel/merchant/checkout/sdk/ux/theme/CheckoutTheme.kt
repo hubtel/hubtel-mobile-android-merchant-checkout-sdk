@@ -9,8 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import com.hubtel.core_ui.theme.Teal100
-import com.hubtel.core_ui.theme.TealPrimary
 
 
 class CheckoutColors(

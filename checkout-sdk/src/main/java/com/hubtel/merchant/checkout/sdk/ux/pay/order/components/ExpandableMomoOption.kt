@@ -45,15 +45,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
-import com.hubtel.core_ui.components.custom.HBDivider
-import com.hubtel.core_ui.components.custom.HBTextField
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.HubtelTheme
+//import com.hubtel.core_ui.components.custom.HBDivider
+//import com.hubtel.core_ui.components.custom.HBTextField
+//import com.hubtel.core_ui.theme.Dimens
+//import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
+import com.hubtel.merchant.checkout.sdk.ux.components.HBDivider
+import com.hubtel.merchant.checkout.sdk.ux.components.HBTextField
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.MomoWalletUiState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toMomoWalletProviders
+import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
+import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -180,8 +184,8 @@ private fun MobileWalletProviderDownMenu(
                     Icon(
                         imageVector = if (expanded) Icons.Default.KeyboardArrowUp
                         else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (expanded) stringResource(com.hubtel.core_ui.R.string.close_drop_down_menu)
-                        else stringResource(com.hubtel.core_ui.R.string.open_drop_down_menu),
+                        contentDescription = if (expanded) stringResource(R.string.checkout_close_drop_down_menu)
+                        else stringResource(R.string.checkout_open_drop_down_menu),
                     )
                 }
             },
@@ -231,7 +235,7 @@ private fun MobileWalletProviderDownMenu(
                             )
 
                             Icon(
-                                painter = painterResource(com.hubtel.core_ui.R.drawable.core_ic_caret_right_deep),
+                                painter = painterResource(R.drawable.checkout_ic_caret_right_deep),
                                 contentDescription = null,
                                 modifier = Modifier.size(30.dp),
                             )

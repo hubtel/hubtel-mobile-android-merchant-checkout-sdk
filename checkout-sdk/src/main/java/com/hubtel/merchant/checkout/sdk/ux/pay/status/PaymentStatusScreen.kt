@@ -31,18 +31,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
-import com.hubtel.core_ui.components.custom.HBTopAppBar
-import com.hubtel.core_ui.extensions.LocalActivity
-import com.hubtel.core_ui.layouts.HBScaffold
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.HubtelTheme
-import com.hubtel.core_utils.extensions.formatter.formatTime
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.PurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.PurchaseFailedEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
@@ -54,12 +47,18 @@ import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.platform.model.toWalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
+import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
+import com.hubtel.merchant.checkout.sdk.ux.layouts.HBScaffold
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
+import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
+import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
+import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
+import com.hubtel.merchant.checkout.sdk.ux.utils.formatTime
 import kotlinx.coroutines.delay
 
 internal data class PaymentStatusScreen(
@@ -118,7 +117,7 @@ internal data class PaymentStatusScreen(
         val paymentStatusIconRes = remember(paymentStatus) {
             when (paymentStatus) {
                 PaymentStatus.UNPAID -> R.drawable.checkout_ic_alert_red
-                PaymentStatus.PAID -> com.hubtel.core_ui.R.drawable.core_ic_success
+                PaymentStatus.PAID -> R.drawable.checkout_ic_success
                 else -> R.drawable.checkout_ic_pending
             }
         }
@@ -151,7 +150,7 @@ internal data class PaymentStatusScreen(
                                 },
                             ) {
                                 Text(
-                                    text = stringResource(com.hubtel.core_ui.R.string.core_cancel),
+                                    text = stringResource(R.string.checkout_core_cancel),
                                     color = CheckoutTheme.colors.colorPrimary,
                                 )
                             }
@@ -180,7 +179,7 @@ internal data class PaymentStatusScreen(
 
                         paymentStatus == PaymentStatus.PAID -> {
                             LoadingTextButton(
-                                text = stringResource(com.hubtel.core_ui.R.string.done),
+                                text = stringResource(R.string.checkout_done),
                                 onClick = {
                                     checkoutActivity?.finishWithResult(orderStatus, paymentStatus)
                                     recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
@@ -191,7 +190,7 @@ internal data class PaymentStatusScreen(
 
                         paymentStatus == PaymentStatus.UNPAID -> {
                             LoadingTextButton(
-                                text = stringResource(com.hubtel.core_ui.R.string.done),
+                                text = stringResource(R.string.checkout_done),
                                 onClick = {
                                     checkoutActivity?.finishWithResult()
 //                                    onPaymentComplete(false)
@@ -309,19 +308,19 @@ internal data class PaymentStatusScreen(
         if (showChangeWalletDialog) {
             CheckoutMessageDialog(
                 onDismissRequest = { },
-                painter = painterResource(com.hubtel.core_ui.R.drawable.core_ic_alert_red),
+                painter = painterResource(R.drawable.checkout_ic_alert_red),
                 message = stringResource(R.string.checkout_new_transactions),
-                positiveText = stringResource(com.hubtel.core_ui.R.string.yes),
-                negativeText = stringResource(com.hubtel.core_ui.R.string.core_cancel),
+                positiveText = stringResource(R.string.checkout_yes),
+                negativeText = stringResource(R.string.checkout_cancel),
                 onPositiveClick = {
                     showChangeWalletDialog = false
                     navigator?.pop()
                 },
                 onNegativeClick = { showChangeWalletDialog = false },
-                properties = DialogProperties(
-                    dismissOnBackPress = false,
-                    dismissOnClickOutside = false
-                )
+//                properties = DialogProperties(
+//                    dismissOnBackPress = false,
+//                    dismissOnClickOutside = false
+//                )
             )
         }
 
@@ -456,13 +455,13 @@ internal data class PaymentStatusScreen(
 
 internal fun CheckoutActivity.finishWithResult(
     orderStatus: TransactionStatusInfo? = null,
-    paymentStatus: PaymentStatus = com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentStatus.UNPAID,
+    paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
 ) {
     submitCheckoutResult(
         CheckoutStatus(
             transactionId = orderStatus?.transactionId,
             isCanceled = orderStatus == null,
-            isPaymentSuccessful = paymentStatus == com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentStatus.PAID
+            isPaymentSuccessful = paymentStatus == PaymentStatus.PAID
         )
     )
 }

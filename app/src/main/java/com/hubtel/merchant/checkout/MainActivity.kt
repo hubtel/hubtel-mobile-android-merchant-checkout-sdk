@@ -1,41 +1,36 @@
 package com.hubtel.merchant.checkout
 
+import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.hubtel.core_ui.shared.BaseActivity
 import com.hubtel.merchant.checkout.sdk.CheckoutIntent
+import com.hubtel.merchant.checkout.sdk.ux.shared.BaseActivity
 import com.hubtel.merchant.checkout.sdk.ux.theme.ThemeConfig
 import java.util.UUID
 
 class MainActivity : BaseActivity() {
 
-    @Composable
-    override fun RootContent() {
-        super.RootContent()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        LazyColumn {
-            item {
-                Text(
-                    text = "Checkout",
-                    modifier = Modifier
-                        .clickable { startCheckout() }
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
+        setContent {
+            LazyColumn {
+                item {
+                    Text(text = "Checkout", modifier = Modifier.clickable {
+                        startCheckout()
+                    })
+                }
             }
         }
     }
 
     private fun startCheckout() {
         val themeConfig = ThemeConfig(
-            primaryColor = ContextCompat.getColor(this, R.color.bright_red)
+            primaryColor = ContextCompat.getColor(this, R.color.purple_500)
         )
 
         val intent = CheckoutIntent.Builder(this)
