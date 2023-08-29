@@ -10,20 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            name = "hubtel.mobile"
-            url 'https://pkgs.dev.azure.com/hubtel/Mobile-Apps/_packaging/hubtel.mobile/maven/v1'
-            credentials {
-                username "hubtel.mobile"
-                password "f3i2pjvspfkicd3x7tzczqqzzb5wwskvkbdp6prui3ek2unmy5ra"
-            }
-        }
     }
 }
 rootProject.name = "android-checkout"
 include ':app'
 include ':core-network'
-include ':core-ui'
-include ':core-utils'
 include ':checkout-sdk'
 include ':network-kit'

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="checkout_visa">Visa</string>
     <string name="checkout_mastercard">Mastercard</string>
     <string name="checkout_american_express">American Express</string>
@@ -66,6 +67,12 @@
     <string name="checkout_enter_pin">3. Enter PIN to get your Pending Approval List.</string>
     <string name="checkout_pending_approval">4. Select pending transaction to approve.</string>
     <string name="checkout_prompt_pay">5. Pay.</string>
+    <string name="checkout_loading">Loading…</string>
+    <string name="checkout_back">Back</string>
+    <string name="checkout_near_by">Nearby</string>
+    <string name="checkout_core_cancel">Cancel</string>
+    <string name="checkout_done">Done</string>
+    <string name="checkout_cancel">Cancel</string>
 
     <!--    <string name="checkout_close">close</string>-->
     <!--    <string name="checkout_cancel_transaction">Cancel Transaction?</string>-->

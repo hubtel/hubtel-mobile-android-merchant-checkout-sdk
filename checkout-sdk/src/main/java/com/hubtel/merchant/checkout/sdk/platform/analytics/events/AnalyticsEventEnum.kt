@@ -1,7 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.platform.analytics.events
 
 import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.AppEventType
-import com.hubtel.core_utils.constants.AppSection
+import com.hubtel.merchant.checkout.sdk.platform.analytics.constants.AppSection
 
 /**
  * An interface implemented by AppSection enum classes to provide

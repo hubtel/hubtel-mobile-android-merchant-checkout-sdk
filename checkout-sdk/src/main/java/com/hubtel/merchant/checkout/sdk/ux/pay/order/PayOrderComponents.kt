@@ -20,12 +20,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.HubtelTheme
-import com.hubtel.core_utils.extensions.formatMoneyParts
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
+import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
+import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
+import com.hubtel.merchant.checkout.sdk.ux.utils.formatMoneyParts
 
 @Composable
 internal fun CheckoutReceiptCard(

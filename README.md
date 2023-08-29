@@ -10,12 +10,12 @@ The `Hubtel Checkout` library is available on Maven Central. To integrate it in 
 2. Go to the `build.gradle` file of your app module.
 3. Add the following line:
  ```groovy  
- implementation "com.hubtel:checkout-sdk:1.0.0"  
+ implementation "com.hubtel:merchant-checkout-sdk:1.0.1"  
  ```
 to the `dependencies` block:
 ```groovy
 dependencies {
-	implementation "com.hubtel:checkout-sdk:1.0.0"
+	implementation "com.hubtel:merchant-checkout-sdk:1.0.1"
 }
 ```
 4. Sync your project to download the library and make it available for use in your project.
@@ -24,7 +24,7 @@ dependencies {
 ## Getting Started
 Here's a quick explanation of the parameters used in the `CheckoutIntent.Builder`:
 
-|Propoerties|Explanation  |
+|Properties|Explanation  |
 |--|--|
 | **context** | The `Context` object representing the current context of the application.|
 |**amount** (required)|The amount of the transaction.|
@@ -52,7 +52,7 @@ val intent = CheckoutIntent.Builder(this)
 	.setDescription("Rice with Coleslaw")
 	.setMerchantId("11684")
 	.setClientReference(UUID.randomUUID().toString())
-	.setCustomerPhoneNumber("233540343395")
+	.setCustomerPhoneNumber("233541234567")
 	.setTheme(themeConfig)
 	.build()
  ``` 

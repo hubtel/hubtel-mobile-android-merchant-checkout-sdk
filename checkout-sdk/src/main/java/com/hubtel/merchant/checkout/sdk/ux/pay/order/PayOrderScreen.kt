@@ -34,20 +34,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
-import com.hubtel.core_ui.components.custom.HBProgressDialog
-import com.hubtel.core_ui.components.custom.HBTopAppBar
-import com.hubtel.core_ui.extensions.LocalActivity
-import com.hubtel.core_ui.layouts.HBScaffold
-import com.hubtel.core_ui.model.UiState2
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.HubtelTheme
-import com.hubtel.core_utils.extensions.formatMoney
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
@@ -55,8 +46,12 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
+import com.hubtel.merchant.checkout.sdk.ux.components.HBProgressDialog
+import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
+import com.hubtel.merchant.checkout.sdk.ux.layouts.HBScaffold
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.model.UiState2
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.CARD_SETUP
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.CHECKOUT
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.CHECKOUT_SUCCESS_DIALOG
@@ -71,6 +66,10 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCa
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
+import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
+import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
+import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
+import com.hubtel.merchant.checkout.sdk.ux.utils.formatMoney
 import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.VerificationDialog3ds
 
 internal data class PayOrderScreen(
@@ -351,9 +350,9 @@ internal data class PayOrderScreen(
                 ),
                 positiveText = stringResource(R.string.checkout_okay),
                 onPositiveClick = { currentCheckoutStep = PAYMENT_COMPLETED },
-                properties = DialogProperties(
-                    dismissOnBackPress = false, dismissOnClickOutside = false
-                )
+//                properties = DialogProperties(
+//                    dismissOnBackPress = false, dismissOnClickOutside = false
+//                )
             )
         }
 

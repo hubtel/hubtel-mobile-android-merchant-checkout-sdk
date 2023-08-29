@@ -48,12 +48,9 @@ android {
 
 dependencies {
 
-    def hubtel_version = "1.0.7"
-    implementation "com.hubtel:core-ui:$hubtel_version"
-    implementation "com.hubtel:core-utils:$hubtel_version"
-
     implementation project(":checkout-sdk")
     implementation project(":network-kit")
+    implementation 'androidx.activity:activity-ktx:1.7.2'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

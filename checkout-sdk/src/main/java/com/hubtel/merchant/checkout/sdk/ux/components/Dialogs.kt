@@ -14,53 +14,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.hubtel.core_ui.R
-import com.hubtel.core_ui.components.custom.HBDivider
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.HubtelTheme
-import com.hubtel.core_utils.extensions.capitalizeFirst
+import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
+import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
+import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
+import com.hubtel.merchant.checkout.sdk.ux.utils.capitalizeFirst
 import java.util.*
 
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun HBRoundedDialog(
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-    properties: DialogProperties = DialogProperties(),
-    content: @Composable () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(
-            dismissOnBackPress = properties.dismissOnBackPress,
-            dismissOnClickOutside = properties.dismissOnClickOutside,
-            securePolicy = properties.securePolicy,
-            usePlatformDefaultWidth = false,
-        )
-    ) {
-        Card(
-            modifier = modifier.fillMaxWidth(0.9f),
-            elevation = 0.dp,
-            shape = HubtelTheme.shapes.medium,
-            backgroundColor = HubtelTheme.colors.cardBackground,
-            contentColor = HubtelTheme.colors.textPrimary,
-            content = content
-        )
-    }
-}
 
 @Composable
 fun CheckoutActionDialog(
     onDismissRequest: () -> Unit,
     positiveText: String? = null,
     negativeText: String? = null,
-    properties: DialogProperties = DialogProperties(),
+//    properties: DialogProperties = DialogProperties(),
     onPositiveClick: () -> Unit = {},
     onNegativeClick: () -> Unit = {},
     flipButtonPositions: Boolean = false,
@@ -72,7 +42,7 @@ fun CheckoutActionDialog(
 
     HBRoundedDialog(
         onDismissRequest = onDismissRequest,
-        properties = properties,
+//        properties = properties,
     ) {
         Column {
             // render dialog content
@@ -158,7 +128,6 @@ fun CheckoutActionDialog(
     }
 }
 
-
 @Composable
 fun CheckoutMessageDialog(
     onDismissRequest: () -> Unit,
@@ -169,7 +138,7 @@ fun CheckoutMessageDialog(
     negativeText: String? = null,
     onPositiveClick: () -> Unit = {},
     onNegativeClick: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(),
+//    properties: DialogProperties = DialogProperties(),
     flipButtonPositions: Boolean = false,
 ) {
     CheckoutActionDialog(
@@ -178,7 +147,7 @@ fun CheckoutMessageDialog(
         negativeText = negativeText,
         onPositiveClick = onPositiveClick,
         onNegativeClick = onNegativeClick,
-        properties = properties,
+//        properties = properties,
         flipButtonPositions = flipButtonPositions
     ) {
 
@@ -219,82 +188,50 @@ fun CheckoutMessageDialog(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun CheckoutMessageDialog(
+fun HBRoundedDialog(
     onDismissRequest: () -> Unit,
-    painter: Painter? = null,
-    titleText: String? = null,
-    message: AnnotatedString? = null,
-    positiveText: String? = null,
-    negativeText: String? = null,
-    onPositiveClick: () -> Unit = {},
-    onNegativeClick: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(),
-    flipButtonPositions: Boolean = false,
+    modifier: Modifier = Modifier,
+//    properties: DialogProperties = DialogProperties(),
+    content: @Composable () -> Unit
 ) {
-    CheckoutActionDialog(
+    Dialog(
         onDismissRequest = onDismissRequest,
-        positiveText = positiveText,
-        negativeText = negativeText,
-        onPositiveClick = onPositiveClick,
-        onNegativeClick = onNegativeClick,
-        properties = properties,
-        flipButtonPositions = flipButtonPositions
+//        properties = DialogProperties(
+//            dismissOnBackPress = properties.dismissOnBackPress,
+//            dismissOnClickOutside = properties.dismissOnClickOutside,
+//            securePolicy = properties.securePolicy,
+//            usePlatformDefaultWidth = false,
+//        )
     ) {
-
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-
-            if (painter != null) {
-                Image(
-                    painter = painter,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .size(60.dp)
-                )
-            }
-
-            if (titleText != null) {
-                Text(
-                    text = titleText,
-                    style = HubtelTheme.typography.h4,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
-
-            if (message != null) {
-                Text(
-                    text = message,
-                    style = HubtelTheme.typography.body1,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        Card(
+            modifier = modifier.fillMaxWidth(0.9f),
+            elevation = 0.dp,
+            shape = HubtelTheme.shapes.medium,
+            backgroundColor = HubtelTheme.colors.cardBackground,
+            contentColor = HubtelTheme.colors.textPrimary,
+            content = content
+        )
     }
 }
 
 @Composable
-fun CheckoutProgressDialog(
+fun HBProgressDialog(
     modifier: Modifier = Modifier,
     title: String? = null,
-    message: String? = stringResource(R.string.loading),
+    message: String? = stringResource(R.string.checkout_loading),
     textColor: Color = HubtelTheme.colors.textPrimary,
-    progressColor: Color = CheckoutTheme.colors.colorPrimary,
+    progressColor: Color = HubtelTheme.colors.colorPrimary,
     onDismissRequest: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(
-        dismissOnClickOutside = false,
-        dismissOnBackPress = false,
-    ),
+//    properties: DialogProperties = DialogProperties(
+//        dismissOnClickOutside = false,
+//        dismissOnBackPress = false,
+//    ),
 ) {
     HBRoundedDialog(
         onDismissRequest = onDismissRequest,
-        properties = properties,
+//        properties = properties,
         modifier = modifier
     ) {
         Column(

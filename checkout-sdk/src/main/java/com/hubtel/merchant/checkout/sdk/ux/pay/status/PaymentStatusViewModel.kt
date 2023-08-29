@@ -8,9 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.hubtel.core_ui.extensions.update
-import com.hubtel.core_ui.model.UiState2
-import com.hubtel.core_ui.model.UiText
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
@@ -19,6 +16,9 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.model.UiState2
+import com.hubtel.merchant.checkout.sdk.ux.model.UiText
+import com.hubtel.merchant.checkout.sdk.ux.utils.update
 import kotlinx.coroutines.launch
 
 internal class PaymentStatusViewModel(

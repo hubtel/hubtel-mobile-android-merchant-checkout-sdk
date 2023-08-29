@@ -7,12 +7,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.navigator.Navigator
 import com.hubtel.merchant.checkout.sdk.platform.analytics.AnalyticsUtils
-import com.hubtel.core_ui.shared.BaseActivity
-import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
+import com.hubtel.merchant.checkout.sdk.ux.shared.BaseActivity
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutColors
+import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.theme.ProvideCheckoutColors
 import com.hubtel.merchant.checkout.sdk.ux.utils.getAppColorPrimary
 
