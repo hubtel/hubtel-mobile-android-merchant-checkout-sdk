@@ -28,6 +28,7 @@ enum class CheckoutEvent(
     CheckoutPayTapMobileMoney("checkout__pay__tap__mobile_money"),
 
     CheckoutPayTapBankCard("checkout__pay__tap__bank_card"),
+    CheckoutPayTapOtherPayment("checkout__pay__tap__other_payment"),
 
     CheckoutPayTapUseNewCard("checkout__pay__tap__use_new_card"),
 

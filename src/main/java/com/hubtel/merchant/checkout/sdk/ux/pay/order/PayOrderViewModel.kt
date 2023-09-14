@@ -26,6 +26,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
+import com.hubtel.merchant.checkout.sdk.platform.model.OtherPaymentWallet
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
@@ -41,6 +42,8 @@ internal class PayOrderViewModel constructor(
 
     var bankWallets by mutableStateOf(emptyList<Wallet>())
         private set
+
+    var  othersWallets by mutableStateOf(emptyList<OtherPaymentWallet>())
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
@@ -59,6 +62,9 @@ internal class PayOrderViewModel constructor(
 
     var momoChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
+
+    var otherChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
+        private set // TODO: remove
 
     var paymentInfo by mutableStateOf<PaymentInfo?>(null)
         private set
@@ -87,6 +93,7 @@ internal class PayOrderViewModel constructor(
         payOrderWalletType: PayOrderWalletType,
         momoWalletUiState: MomoWalletUiState,
         bankCardUiState: BankCardUiState,
+        otherPaymentUiState: OtherPaymentUiState,
     ) {
         paymentInfo = when (payOrderWalletType) {
             PayOrderWalletType.MOBILE_MONEY -> {
@@ -120,7 +127,7 @@ internal class PayOrderViewModel constructor(
 
                 val channel = when (accountNumber?.take(1)) {
                     "4" -> "cardnotpresent-visa"
-                    "5" -> "cardnotpresent-master"
+                    "5" -> "cardnotpresent-master" // TODO: may need to change to cardnotpresent-mastercard
                     else -> "cardnotpresent"
                 }
 
@@ -137,6 +144,18 @@ internal class PayOrderViewModel constructor(
                 )
             }
 
+            PayOrderWalletType.OTHERS -> {
+                val provider = otherPaymentUiState.paymentProvider
+
+                PaymentInfo(
+                    walletId = "",
+                    accountName = "",
+                    accountNumber = otherPaymentUiState.number,
+                    paymentType = payOrderWalletType.paymentTypeName,
+                    providerName = provider?.provider,
+                    channel = provider?.name // TODO: replace
+                )
+            }
         }.also {
             Timber.i("PaymentInfo: $it")
         }
@@ -260,6 +279,10 @@ internal class PayOrderViewModel constructor(
 
                 PayOrderWalletType.MOBILE_MONEY -> {
                     payOrderWithMomo(config)
+                }
+
+                PayOrderWalletType.OTHERS -> {
+                    payOrderWithCard(config)
                 }
             }
         }

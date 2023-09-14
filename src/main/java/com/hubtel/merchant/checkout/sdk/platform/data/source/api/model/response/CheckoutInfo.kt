@@ -18,3 +18,35 @@ data class CheckoutInfo(
     @SerializedName("jwt")
     val jwt: String?,
 )
+
+
+data class MomoCheckoutInfo(
+    @SerializedName("charges")
+    val charges: Double?,
+    @SerializedName("amount")
+    val amount: Double?,
+    @SerializedName("amountAfterCharges")
+    val amountAfterCharges: Double?,
+    @SerializedName("amountCharged")
+    val amountCharged: Double?,
+    @SerializedName("deliveryFee")
+    val deliveryFee: Double?,
+    @SerializedName("description")
+    val description: String?,
+    @SerializedName("clientReference")
+    val clientReference: String?,
+)
+
+
+/*
+
+let transactionId: String?
+      charges: Double?
+      amount: Double?
+      amountAfterCharges: Double?
+      amountCharged: Double?
+      deliveryFee: Double?
+      description: String?
+      clientReference: String?
+
+ */

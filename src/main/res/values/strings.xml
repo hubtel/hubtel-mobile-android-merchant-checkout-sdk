@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <string name="checkout_heading">Checkout</string>
     <string name="checkout_visa">Visa</string>
     <string name="checkout_mastercard">Mastercard</string>
     <string name="checkout_american_express">American Express</string>
+    <string name="checkout_hubtel">Hubtel</string>
+    <string name="checkout_zeepay">Zeepay</string>
+    <string name="checkout_g_money">G-Money</string>
 
     <string name="checkout_use_new_card">Use new card</string>
     <string name="checkout_use_saved_card">Use saved card</string>
     <string name="checkout_bank_card">Bank Card</string>
+    <string name="checkout_others">Others</string>
     <string name="checkout_mobile_money">Mobile Money</string>
     <string name="checkout_wallet_phone_number">Wallet Phone Number</string>
 
@@ -23,21 +29,29 @@
 
     <string name="checkout_okay">Okay</string>
     <string name="checkout_close">close</string>
+    <string name="checkout_back_arrow">Back</string>
     <string name="checkout_pay">Pay</string>
     <string name="checkout_pay_with">Pay with</string>
     <string name="checkout_please_wait">Please wait</string>
 
+    <string name="checkout_cancel_order">Cancel</string>
     <string name="checkout_cancel_transaction_title">Cancel Transaction?</string>
+    <string name="checkout_cancel_transaction">CANCEL TRANSACTION</string>
     <string name="checkout_cancel_transaction_msg">Do you want to cancel this transaction?</string>
 
     <string name="checkout_yes">Yes</string>
     <string name="checkout_no">No</string>
+    <string name="checkout_done">Done</string>
 
     <string name="checkout_additional_verification_title">Contacting your bank for additional verification</string>
     <string name="checkout_additional_verification_subtitle">You will have to provide a correct token to proceed. \nScroll to the bottom if you cannot see the CONTINUE button</string>
 
+    <string name="checkout_business_name">BusinessName</string>
+    <string name="checkout_business_contact">BusinessContact</string>
+
     <string name="checkout_amount_charged_msg">You will be charged</string>
     <string name="checkout_amount">Amount</string>
+    <string name="checkout_view_fees">View Fees &amp; Taxes</string>
 
     <string name="checkout_sorry_an_error_occurred">Sorry an error occurred.</string>
 
@@ -55,6 +69,9 @@
 
 
     <string name="checkout_processing_payment">Processing Payment</string>
+    <string name="checkout_confirm_order">Confirm Order</string>
+    <string name="checkout_orders_and_delivery">Orders and Delivery</string>
+    <string name="checkout_paid_message">has been paid</string>
     <string name="checkout_payment_being_processed_msg">Your payment is being processed. Tap on the “Check Again” button to confirm final payment status</string>
     <string name="checkout_other_bill_prompt_msg">Your payment is being processed. Tap the button below to check payment status.</string>
     <string name="checkout_i_have_paid">I Have Paid</string>

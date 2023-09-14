@@ -8,3 +8,5 @@ internal data class Wallet(
     val cvv: String?,
     val provider: String?
 )
+
+internal data class OtherPaymentWallet(val id: Long, val number: String?)

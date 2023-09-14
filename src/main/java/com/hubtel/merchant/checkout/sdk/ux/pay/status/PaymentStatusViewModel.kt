@@ -33,6 +33,7 @@ internal class PaymentStatusViewModel(
             _uiState.update { UiState2(isLoading = true) }
 
             val result = checkoutRepository.getTransactionStatus(
+//            val result = checkoutRepository.getDirectTransactionStatus(
                 salesId = config.posSalesId ?: "",
                 clientReference = config.clientReference ?: ""
             )
@@ -53,6 +54,33 @@ internal class PaymentStatusViewModel(
             }
         }
     }
+
+//    fun checkPaymentStatusDirectDebit(config: CheckoutConfig) {
+//        viewModelScope.launch {
+//            _uiState.update { UiState2(isLoading = true) }
+//
+////            val result = checkoutRepository.getTransactionStatus(
+//            val result = checkoutRepository.getDirectTransactionStatus(
+//                salesId = config.posSalesId ?: "",
+//                clientReference = config.clientReference ?: ""
+//            )
+//
+//            if (result is ApiResult.Success) {
+//                _uiState.update {
+//                    UiState2(
+//                        data = result.response.data,
+//                        success = true
+//                    )
+//                }
+//            } else {
+//                _uiState.update {
+//                    UiState2(
+//                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+//                    )
+//                }
+//            }
+//        }
+//    }
 
     companion object {
         fun getViewModelFactory(apiKey: String?): ViewModelProvider.Factory = viewModelFactory {

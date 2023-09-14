@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.PurchaseOrderItem
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.DbWallet
+import com.hubtel.merchant.checkout.sdk.platform.model.OtherPaymentWallet
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
@@ -38,6 +39,10 @@ internal class PaymentWalletUiState(
         payOrderWalletType == PayOrderWalletType.MOBILE_MONEY
     }
 
+    val isOtherPayment by derivedStateOf {
+        payOrderWalletType == PayOrderWalletType.OTHERS
+    }
+
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
     }
@@ -52,6 +57,16 @@ internal class MomoWalletUiState() {
     val isValid
         get() = (mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null
+}
+
+internal class OtherPaymentUiState(method: OtherPaymentWallet? = null) {
+    var number by mutableStateOf<String?>(null)
+    var paymentProvider by mutableStateOf<WalletProvider?>(WalletProvider.Hubtel)
+    var selectedMethod by mutableStateOf<OtherPaymentWallet?>(method)
+    var enterNewNumber by mutableStateOf("")
+
+    val isValid
+        get() = (number?.length ?: 0) >= 9 && paymentProvider != null
 }
 
 internal class BankCardUiState(
@@ -154,7 +169,8 @@ internal data class PaymentInfo(
 
 internal enum class PayOrderWalletType {
     MOBILE_MONEY,
-    BANK_CARD;
+    BANK_CARD,
+    OTHERS;
 }
 
 internal val PayOrderWalletType.paymentTypeName: String
@@ -162,6 +178,7 @@ internal val PayOrderWalletType.paymentTypeName: String
         return when (this) {
             PayOrderWalletType.MOBILE_MONEY -> "mobilemoney"
             PayOrderWalletType.BANK_CARD -> "card"
+            PayOrderWalletType.OTHERS -> "others"
         }
     }
 
@@ -176,9 +193,25 @@ internal val WalletProvider.channelName: String
                 "tigo-gh"
             }
 
-            else -> "${provider.lowercase()}-gh"
+//            else -> "${provider.lowercase()}-gh"
+            else -> "mtn-gh-direct-debit"
         }
     }
+
+//internal val WalletProvider.channelName: String
+//    get() {
+//        return when {
+//            provider.contains("vodafone", ignoreCase = true) -> {
+//                "${provider.lowercase()}-gh-ussd"
+//            }
+//
+//            provider.contains("airtel", ignoreCase = true) -> {
+//                "tigo-gh"
+//            }
+//
+//            else -> "${provider.lowercase()}-gh"
+//        }
+//    }
 
 internal data class ThreeDSSetupState(
     val accessToken: String?,
@@ -188,9 +221,14 @@ internal data class ThreeDSSetupState(
 internal enum class PaymentChannel(val rawValue: String) {
     VISA("cardnotpresent-visa"),
     MASTERCARD("cardnotpresent-mastercard"),
-    MTN("mtn-gh"),
-    VODAFONE("vodafone-gh"),
-    AIRTEL_TIGO("tigo-gh");
+//    MTN("mtn-gh"),
+    MTN("mtn-gh-direct-debit"),
+    VODAFONE("vodafone-gh-direct-debit"),
+//    VODAFONE("vodafone-gh"),
+    AIRTEL_TIGO("tigo-gh"),
+    G_MONEY("gmoney"),
+    ZEE_PAY("zee-pay"),
+    HUBTEL("hubtel");
 }
 
 internal fun List<String>.toPaymentChannels(): List<PaymentChannel> {
@@ -201,6 +239,9 @@ internal fun List<String>.toPaymentChannels(): List<PaymentChannel> {
             PaymentChannel.MTN.rawValue -> PaymentChannel.MTN
             PaymentChannel.VODAFONE.rawValue -> PaymentChannel.VODAFONE
             PaymentChannel.AIRTEL_TIGO.rawValue -> PaymentChannel.AIRTEL_TIGO
+            PaymentChannel.HUBTEL.rawValue -> PaymentChannel.HUBTEL
+            PaymentChannel.G_MONEY.rawValue -> PaymentChannel.G_MONEY
+            PaymentChannel.ZEE_PAY.rawValue -> PaymentChannel.ZEE_PAY
             else -> null
         }
     }
@@ -222,6 +263,17 @@ internal fun List<PaymentChannel>.toBankWalletProviders(): List<WalletProvider> 
         when (channel) {
             PaymentChannel.VISA -> WalletProvider.Visa
             PaymentChannel.MASTERCARD -> WalletProvider.Mastercard
+            else -> null
+        }
+    }
+}
+
+internal fun List<PaymentChannel>.toOthersWalletProviders(): List<WalletProvider> {
+    return mapNotNull { channel ->
+        when (channel) {
+            PaymentChannel.G_MONEY -> WalletProvider.GMoney
+            PaymentChannel.ZEE_PAY -> WalletProvider.ZeePay
+            PaymentChannel.HUBTEL -> WalletProvider.Hubtel
             else -> null
         }
     }
