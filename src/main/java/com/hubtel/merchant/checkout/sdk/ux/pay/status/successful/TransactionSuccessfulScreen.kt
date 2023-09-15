@@ -197,7 +197,7 @@ internal data class TransactionSuccessfulScreen(
                             modifier = Modifier.size(25.dp)
                         )
                         Text(
-                            text = stringResource(id = R.string.checkout_orders_and_delivery),
+                            text = stringResource(id = R.string.checkout_paid_message),
                             style = HubtelTheme.typography.body1,
                             modifier = Modifier.padding(
                                 bottom = Dimens.paddingDefault,

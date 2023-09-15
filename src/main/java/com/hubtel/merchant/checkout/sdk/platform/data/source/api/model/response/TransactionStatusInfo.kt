@@ -69,7 +69,7 @@ internal data class TransactionStatusInfo(
     val transactionAmount: Double?,
     @SerializedName("transactionId")
     val transactionId: String?,
-    @SerializedName("transactionStatus")
+    @SerializedName("status")
     val transactionStatus: String?,
     @SerializedName("transactionType")
     val transactionType: String?
@@ -78,10 +78,11 @@ internal data class TransactionStatusInfo(
     val paymentStatus: PaymentStatus
         get() {
             return when (transactionStatus?.lowercase()) {
-                "success" -> PaymentStatus.PAID
-                "failed" -> PaymentStatus.UNPAID
+                "paid" -> PaymentStatus.PAID
+                "unpaid" -> PaymentStatus.UNPAID
                 "pending" -> PaymentStatus.PENDING
-                else -> PaymentStatus.EXPIRED
+                "expired" -> PaymentStatus.EXPIRED
+                else -> PaymentStatus.FAILED
             }
         }
 }

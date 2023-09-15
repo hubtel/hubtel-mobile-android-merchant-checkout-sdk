@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -165,6 +164,8 @@ internal data class PayOrderScreen(
                     Text(
                         text = stringResource(id = R.string.checkout_heading),
                     )
+                }, onNavigateUp = {
+
                 })
             },
             bottomBar = {
@@ -179,6 +180,7 @@ internal data class PayOrderScreen(
                         text = stringResource(R.string.checkout_pay),
                         onClick = {
                             currentCheckoutStep = PAY_ORDER
+//                            currentCheckoutStep = PAYMENT_COMPLETED
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapButtonPay)
                         },
                         enabled = isPayButtonEnabled,
@@ -319,6 +321,14 @@ internal data class PayOrderScreen(
             HBProgressDialog(
                 message = "${stringResource(R.string.checkout_please_wait)}...",
                 progressColor = CheckoutTheme.colors.colorPrimary,
+//                onDismissRequest = {
+//                    currentCheckoutStep = PAYMENT_COMPLETED
+//                    navigator?.push(
+//                        PaymentStatusScreen(
+//                            providerName = paymentInfo?.providerName, config = config
+//                        )
+//                    )
+//                }
             )
         }
 
@@ -365,21 +375,21 @@ internal data class PayOrderScreen(
             )
         }
 
-        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG) {
-            CheckoutMessageDialog(
-                onDismissRequest = {},
-                titleText = stringResource(R.string.checkout_success),
-                message = stringResource(
-                    R.string.checkout_momo_bill_prompt_msg,
-                    paymentInfo?.accountNumber ?: "",
-                ),
-                positiveText = stringResource(R.string.checkout_okay),
-                onPositiveClick = { currentCheckoutStep = PAYMENT_COMPLETED },
-                properties = DialogProperties(
-                    dismissOnBackPress = false, dismissOnClickOutside = false
-                )
-            )
-        }
+//        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG) {
+//            CheckoutMessageDialog(
+//                onDismissRequest = {},
+//                titleText = stringResource(R.string.checkout_success),
+//                message = stringResource(
+//                    R.string.checkout_momo_bill_prompt_msg,
+//                    paymentInfo?.accountNumber ?: "",
+//                ),
+//                positiveText = stringResource(R.string.checkout_okay),
+//                onPositiveClick = { currentCheckoutStep = PAYMENT_COMPLETED },
+//                properties = DialogProperties(
+//                    dismissOnBackPress = false, dismissOnClickOutside = false
+//                )
+//            )
+//        }
 
 //        if (currentCheckoutStep == PAY_ORDER) {
 //            currentCheckoutStep = PAYMENT_COMPLETED
@@ -404,6 +414,17 @@ internal data class PayOrderScreen(
                 positiveText = stringResource(R.string.checkout_okay),
                 onPositiveClick = { currentCheckoutStep = GET_FEES },
             )
+        }
+
+        LaunchedEffect(isLoading) {
+            if (!isLoading && currentCheckoutStep == CHECKOUT) {
+                navigator?.push(
+                    PaymentStatusScreen(
+                        providerName = paymentInfo?.providerName,
+                        config = config
+                    )
+                )
+            }
         }
 
         LaunchedEffect(Unit) {
@@ -472,8 +493,7 @@ internal data class PayOrderScreen(
             when (currentCheckoutStep) {
                 PAY_ORDER -> {
                     walletUiState.payOrderWalletType?.let { walletType ->
-                        currentCheckoutStep =
-                            getNextStepAfterPayOrder(walletType, checkoutFeesUiState)
+                        currentCheckoutStep = getNextStepAfterPayOrder(walletType, checkoutFeesUiState)
                     }
                 }
 
@@ -492,8 +512,7 @@ internal data class PayOrderScreen(
                     // TODO: Test new screens here
                     navigator?.push(
                         PaymentStatusScreen(
-                            providerName = paymentInfo?.providerName,
-                            config = config
+                            providerName = paymentInfo?.providerName, config = config
                         )
 
 //                        ConfirmOrderScreen(
@@ -549,9 +568,11 @@ internal data class PayOrderScreen(
         val hasFees = checkoutFeeUiState.success && !checkoutFeeUiState.isLoading
 
         val nextStep = when (walletType) {
+//            MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             BANK_CARD -> if (hasFees) CARD_SETUP else null
-            PayOrderWalletType.OTHERS -> if (hasFees) CARD_SETUP else null
+//            PayOrderWalletType.OTHERS -> if (hasFees) CARD_SETUP else null
+            else -> null
         }
 
         // if next is null go back down to get fees

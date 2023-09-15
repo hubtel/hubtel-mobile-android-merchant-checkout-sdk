@@ -19,6 +19,7 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,9 +40,17 @@ import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
+import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
+import java.util.Locale
 
 internal data class WrongPINScreen(
     private val providerName: String?,
+    private val status: TransactionStatusInfo,
+    private val config: CheckoutConfig
 //    private val config: CheckoutConfig
 ) : Screen {
     @Composable
@@ -63,6 +72,7 @@ internal data class WrongPINScreen(
         val context = LocalContext.current
         val activity = LocalActivity.current
         val navigator = LocalNavigator.current
+        val checkoutActivity = remember(activity) { activity as? CheckoutActivity }
 
         HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2, bottomBar = {
             Column(
@@ -77,6 +87,7 @@ internal data class WrongPINScreen(
 //                              navigator?.push(
 //                                  ConfirmOrderScreen("")
 //                              )
+                              checkoutActivity?.finishWithResult()
                     }, modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize()
@@ -137,13 +148,17 @@ internal data class WrongPINScreen(
                                 .padding(Dimens.paddingNano)
                         )
                         Text(
-                            text = "Failed",
+                            text = status.paymentStatus.name.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.ROOT
+                                ) else it.toString()
+                            },
                             style = HubtelTheme.typography.h3,
                             modifier = Modifier.padding(bottom = Dimens.paddingDefault)
                         )
 
                         Text(
-                            text = "You entered a wrong PIN",
+                            text = "You entered wrong PIN", // TODO: get correct message
                             style = HubtelTheme.typography.body1
                         )
                     }
@@ -175,14 +190,14 @@ internal data class WrongPINScreen(
                             )
                         }
                         Text(
-                            text = "MTN Mobile Wallet",
+                            text = providerName?.toUpperCase() ?: "",
                             style = HubtelTheme.typography.body1,
                             modifier = Modifier.padding(
                                 bottom = Dimens.paddingNano,
                                 top = Dimens.paddingNano,
                             )
                         )
-                        Text(text = "0241234567", style = HubtelTheme.typography.body1)
+                        Text(text = status.mobileNumber ?: "", style = HubtelTheme.typography.body1)
                     }
                 }
 
@@ -192,7 +207,8 @@ internal data class WrongPINScreen(
                         .padding(Dimens.paddingDefault)
 //                    .background(color = Color.Blue)
                         .clickable {
-                            // TODO: implement
+                            checkoutActivity?.finishWithResult()
+                            navigator?.push(PayOrderScreen(config = config))
                         }
                         .layoutId("buttonBox")
                 ) {

@@ -74,7 +74,7 @@ import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.confirm.ConfirmOrderScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.incorrect_pin.WrongPINScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful.TransactionSuccessfulScreen
 import kotlinx.coroutines.delay
 
@@ -180,23 +180,21 @@ internal data class PaymentStatusScreen(
                 ) {
 
                     when {
-
                         beforeInitialLoad -> {
                             LoadingTextButton(
                                 text = stringResource(R.string.checkout_i_have_paid),
                                 onClick = {
                                     paymentStatusViewModel.checkPaymentStatus(config)
                                     recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
-                                    navigator?.push(
-                                        ConfirmOrderScreen(
-                                            providerName = providerName,
-                                            config = config
-                                        )
-                                    )
+//                                    navigator?.push(
+//                                        ConfirmOrderScreen(
+//                                            providerName = providerName,
+//                                            config = config
+//                                        )
+//                                    )
                                 }, loading = isLoading, modifier = Modifier.fillMaxWidth()
                             )
                         }
-
 
                         paymentStatus == PaymentStatus.PAID -> {
                             Divider(
@@ -216,19 +214,6 @@ internal data class PaymentStatusScreen(
                             )
                         }
 
-                        // TODO: to be looked into
-                        paymentStatus == PaymentStatus.UNPAID -> {
-                            LoadingTextButton(
-                                text = stringResource(R.string.checkout_cancel_transaction_title),
-                                onClick = {
-                                    checkoutActivity?.finishWithResult()
-//                                    onPaymentComplete(false)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        // TODO: to be looked into
                         paymentStatus == PaymentStatus.PENDING -> {
                             LoadingTextButton(
                                 text = if (isCountingDown) {
@@ -243,6 +228,54 @@ internal data class PaymentStatusScreen(
                                         recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
                                     }
                                 }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                            )
+//                            navigator?.push(
+//                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
+//                            )
+                        }
+
+                        paymentStatus == PaymentStatus.UNPAID -> {
+                            LoadingTextButton(
+                                text = if (isCountingDown) {
+                                    val time = countDownMillis.formatTime()
+                                    "${stringResource(R.string.checkout_check_again)} ($time)"
+                                } else stringResource(R.string.checkout_check_again), onClick = {
+                                    if (!isCountingDown) {
+                                        countDownMillis = CHECK_COUNTDOWN_TIME
+//                                        tapCount++
+
+                                        paymentStatusViewModel.checkPaymentStatus(config)
+                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                    }
+                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        paymentStatus == PaymentStatus.EXPIRED -> {
+                            LoadingTextButton(
+                                text = stringResource(R.string.checkout_cancel_transaction_title),
+                                onClick = {
+                                    checkoutActivity?.finishWithResult()
+//                                    onPaymentComplete(false)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            navigator?.push(
+                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
+                            )
+                        }
+
+                        paymentStatus == PaymentStatus.FAILED -> {
+                            LoadingTextButton(
+                                text = stringResource(R.string.checkout_cancel_transaction_title),
+                                onClick = {
+                                    checkoutActivity?.finishWithResult()
+//                                    onPaymentComplete(false)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            navigator?.push(
+                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
                             )
                         }
                     }
@@ -290,6 +323,24 @@ internal data class PaymentStatusScreen(
                             style = HubtelTheme.typography.h3,
                         )
                     }
+                }
+
+                if (paymentStatus == PaymentStatus.PENDING) {
+                    Image(
+                        painter = painterResource(R.drawable.checkout_ic_receipt_payment),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(bottom = Dimens.paddingLarge)
+                            .size(90.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    Text(
+                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
+                        style = HubtelTheme.typography.body2,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
+                    )
                 }
 
 //                if (!isLoading && orderStatus != null) {

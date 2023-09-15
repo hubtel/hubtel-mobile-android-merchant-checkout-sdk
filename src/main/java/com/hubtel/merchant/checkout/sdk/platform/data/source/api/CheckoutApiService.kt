@@ -10,7 +10,6 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo2
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -67,7 +66,7 @@ internal interface CheckoutApiService {
     suspend fun getTransactionStatusDirectDebit(
         @Path("salesId") salesId: String,
         @Path("clientReference") clientReference: String,
-    ): DataResponse2<TransactionStatusInfo2>
+    ): DataResponse2<TransactionStatusInfo>
 
     @GET("/v2/merchantaccount/merchants/{salesId}/paymentchannels")
     suspend fun getBusinessPaymentChannels(

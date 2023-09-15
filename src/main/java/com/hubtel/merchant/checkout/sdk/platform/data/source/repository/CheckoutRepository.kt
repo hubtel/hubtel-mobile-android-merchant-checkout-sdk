@@ -10,7 +10,6 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo2
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.DbWallet
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
@@ -51,7 +50,7 @@ internal class CheckoutRepository(
         salesId: String,
         req: MobileMoneyCheckoutReq,
     ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
-        checkoutApiService.receiveMobileMoney(salesId, req)
+        checkoutApiService.receiveMobileMoneyDirectDebit(salesId, req)
     }
 
     suspend fun getFees(
@@ -78,7 +77,7 @@ internal class CheckoutRepository(
     suspend fun getTransactionStatusDirectDebit(
         salesId: String,
         clientReference: String,
-    ): ResultWrapper2<TransactionStatusInfo2> = makeRequestToApi {
+    ): ResultWrapper2<TransactionStatusInfo> = makeRequestToApi {
         checkoutApiService.getTransactionStatusDirectDebit(salesId, clientReference)
     }
 
