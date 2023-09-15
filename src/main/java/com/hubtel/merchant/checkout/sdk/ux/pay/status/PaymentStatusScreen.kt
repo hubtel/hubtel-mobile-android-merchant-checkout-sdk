@@ -327,7 +327,7 @@ internal data class PaymentStatusScreen(
 
                 if (paymentStatus == PaymentStatus.PENDING) {
                     Image(
-                        painter = painterResource(R.drawable.checkout_ic_receipt_payment),
+                        painter = painterResource(R.drawable.checkout_ic_pending),
                         contentDescription = null,
                         modifier = Modifier
                             .padding(bottom = Dimens.paddingLarge)

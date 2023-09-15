@@ -43,6 +43,10 @@ internal interface CheckoutApiService {
         @Body req: MobileMoneyCheckoutReq,
     ): DataResponse2<CheckoutInfo>
 
+    // https://checkout.hubtel.com/api/v1/merchant/11684/unifiedcheckout/preapprovalconfirm?Channel=mtn-gh-direct-debit&CustomerMsisdn=233249126761&ClientReference=test-flight-Last-12345
+    @POST("https://checkout.hubtel.com/api/v1/merchant/11684/unifiedcheckout/preapprovalconfirm?Channel=mtn-gh-direct-debit&CustomerMsisdn=233249126761&ClientReference=test-flight-Last-12345")
+    suspend fun receiveMoneyPreapproval()
+
 
     @POST("/v2/merchantaccount/merchants/{salesId}/fees")
     suspend fun getFees(

@@ -336,6 +336,13 @@ internal class PayOrderViewModel constructor(
     ) {
         _checkoutUiState.update { UiState2(isLoading = true) }
 
+//        val checkoutTypeResult = checkoutRepository
+        // 1. Get Checkout type
+        // 2. If it's directdebit hit apiReceiveMobileMoneyDirectDebit
+        // 3. If it's receivemoneyprompt hit apiReceiveMobileMoneyReceiveMoneyPrompt
+
+
+
         val result = checkoutRepository.apiReceiveMobileMoneyDirectDebit(
             salesId = config.posSalesId ?: "",
             req = MobileMoneyCheckoutReq(
