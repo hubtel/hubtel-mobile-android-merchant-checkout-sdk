@@ -192,9 +192,8 @@ internal val WalletProvider.channelName: String
             provider.contains("airtel", ignoreCase = true) -> {
                 "tigo-gh"
             }
-
-//            else -> "${provider.lowercase()}-gh"
-            else -> "mtn-gh-direct-debit"
+            else -> "${provider.lowercase()}-gh-direct-debit"
+//            else -> "mtn-gh-direct-debit"
         }
     }
 

@@ -71,7 +71,9 @@
     <string name="checkout_processing_payment">Processing Payment</string>
     <string name="checkout_confirm_order">Confirm Order</string>
     <string name="checkout_orders_and_delivery">Orders and Delivery</string>
+    <string name="checkout_success_message">"Your payment was successful. Thank you for choosing us"</string>
     <string name="checkout_paid_message">has been paid</string>
+    <string name="checkout_failed">Failed</string>
     <string name="checkout_payment_being_processed_msg">Your payment is being processed. Tap on the “Check Again” button to confirm final payment status</string>
     <string name="checkout_other_bill_prompt_msg">Your payment is being processed. Tap the button below to check payment status.</string>
     <string name="checkout_i_have_paid">I Have Paid</string>

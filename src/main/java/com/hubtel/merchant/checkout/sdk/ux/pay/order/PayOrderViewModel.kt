@@ -23,6 +23,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.M
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
@@ -43,13 +44,13 @@ internal class PayOrderViewModel constructor(
     var bankWallets by mutableStateOf(emptyList<Wallet>())
         private set
 
-    var  othersWallets by mutableStateOf(emptyList<OtherPaymentWallet>())
+    var othersWallets by mutableStateOf(emptyList<OtherPaymentWallet>())
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
 
-    private val _checkoutFeesUiState = mutableStateOf(UiState2<List<CheckoutFee>>())
-    val checkoutFeesUiState: State<UiState2<List<CheckoutFee>>> = _checkoutFeesUiState
+    private val _checkoutFeesUiState = mutableStateOf(UiState2<CheckoutFee>())
+    val checkoutFeesUiState: State<UiState2<CheckoutFee>> = _checkoutFeesUiState
 
     private val _threeDSSetupUiState = mutableStateOf(UiState2<ThreeDSSetupInfo>())
     val threeDSSetupUiState: State<UiState2<ThreeDSSetupInfo>> = _threeDSSetupUiState
@@ -166,7 +167,7 @@ internal class PayOrderViewModel constructor(
     }
 
     private fun updateOrderTotal(amount: Double, fees: List<CheckoutFee>) {
-        orderTotal = amount + (fees.sumOf { it.feeAmount ?: 0.0 })
+        orderTotal = amount + (fees.sumOf { it.amountPayable ?: 0.0 })
     }
 
     private fun saveCard(paymentInfo: PaymentInfo) {
@@ -179,10 +180,14 @@ internal class PayOrderViewModel constructor(
         loadServiceFeesJob = viewModelScope.launch {
             getTransactionFees(config)
 
-            val fees = _checkoutFeesUiState.value.data ?: emptyList()
+            val fee = _checkoutFeesUiState.value.data ?: CheckoutFee(
+                0.0,
+                0.0,
+                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue
+            )
 
             // update order total with fee amount added
-            updateOrderTotal(config.amount, fees)
+            updateOrderTotal(config.amount, listOf(fee))
         }
     }
 
@@ -196,15 +201,18 @@ internal class PayOrderViewModel constructor(
             channel = paymentInfo?.channel,
         )
 
-        val result = checkoutRepository.getFees(config.posSalesId ?: "", feesReq)
+        val result = checkoutRepository.getFeesDirectDebit(config.posSalesId ?: "", feesReq)
 
         if (result is ApiResult.Success) {
+
             _checkoutFeesUiState.update {
                 UiState2(
                     success = true,
-                    data = result.response.data ?: emptyList()
+                    data = result.response.data ?: CheckoutFee(0.0, 0.0, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue)
                 )
             }
+
+            Timber.d("Checkout data", _checkoutFeesUiState.value.data)
         } else {
             _checkoutFeesUiState.update {
                 UiState2(
@@ -336,51 +344,144 @@ internal class PayOrderViewModel constructor(
     ) {
         _checkoutUiState.update { UiState2(isLoading = true) }
 
-//        val checkoutTypeResult = checkoutRepository
-        // 1. Get Checkout type
-        // 2. If it's directdebit hit apiReceiveMobileMoneyDirectDebit
-        // 3. If it's receivemoneyprompt hit apiReceiveMobileMoneyReceiveMoneyPrompt
-
-
-
-        val result = checkoutRepository.apiReceiveMobileMoneyDirectDebit(
-            salesId = config.posSalesId ?: "",
-            req = MobileMoneyCheckoutReq(
-                amount = orderTotal,
-                channel = paymentInfo?.channel,
-                clientReference = config.clientReference,
-                customerMsisdn = paymentInfo?.accountNumber,
-                customerName = "",
-                description = config.description,
-                primaryCallbackUrl = config.callbackUrl
-            )
+        val feesReq = GetFeesReq(
+            amount = config.amount,
+            channel = paymentInfo?.channel,
         )
+        val checkoutTypeResult = checkoutRepository.getFeesDirectDebit(config.posSalesId ?: "", feesReq)
 
-        when (result) {
-            is ApiResult.Success -> {
-                _checkoutUiState.update {
-                    UiState2(
-                        success = true,
-                        data = result.response.data
+        if (checkoutTypeResult is ApiResult.Success) {
+            val type = checkoutTypeResult.response.data?.getCheckoutType ?: CheckoutType.DIRECT_DEBIT
+
+            when (type) {
+                CheckoutType.RECEIVE_MONEY_PROMPT -> {
+                    val result = checkoutRepository.apiReceiveMobileMoney(
+                        salesId = config.posSalesId ?: "",
+                        req = MobileMoneyCheckoutReq(
+                            amount = orderTotal,
+                            channel = if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
+                            clientReference = config.clientReference,
+                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerName = "",
+                            description = config.description,
+                            primaryCallbackUrl = config.callbackUrl
+                        )
                     )
+
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = true,
+                                    data = result.response.data
+                                )
+                            }
+                        }
+
+                        is ApiResult.HttpError -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.DynamicString(result.message ?: ""),
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-
-            is ApiResult.HttpError -> {
-                _checkoutUiState.update {
-                    UiState2(
-                        success = false,
-                        error = UiText.DynamicString(result.message ?: ""),
+                CheckoutType.DIRECT_DEBIT -> {
+                    val result = checkoutRepository.apiReceiveMobileMoneyDirectDebit(
+                        salesId = config.posSalesId ?: "",
+                        req = MobileMoneyCheckoutReq(
+                            amount = orderTotal,
+                            channel = paymentInfo?.channel,
+                            clientReference = config.clientReference,
+                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerName = "",
+                            description = config.description,
+                            primaryCallbackUrl = config.callbackUrl
+                        )
                     )
+
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = true,
+                                    data = result.response.data
+                                )
+                            }
+                        }
+
+                        is ApiResult.HttpError -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.DynamicString(result.message ?: ""),
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-
-            else -> {
-                _checkoutUiState.update {
-                    UiState2(
-                        success = false,
-                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                CheckoutType.PRE_APPROVAL_CONFIRM -> {
+                    val result = checkoutRepository.apiReceiveMoneyPreapproval(
+                        salesId = config.posSalesId ?: "",
+                        req = MobileMoneyCheckoutReq(
+                            amount = orderTotal,
+                            channel = paymentInfo?.channel,
+                            clientReference = config.clientReference,
+                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerName = "",
+                            description = config.description,
+                            primaryCallbackUrl = config.callbackUrl
+                        )
                     )
+
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = true,
+                                    data = result.response.data
+                                )
+                            }
+                        }
+
+                        is ApiResult.HttpError -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.DynamicString(result.message ?: ""),
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

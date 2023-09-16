@@ -33,7 +33,6 @@ internal class PaymentStatusViewModel(
             _uiState.update { UiState2(isLoading = true) }
 
             val result = checkoutRepository.getTransactionStatusDirectDebit(
-//            val result = checkoutRepository.getDirectTransactionStatus(
                 salesId = config.posSalesId ?: "",
                 clientReference = config.clientReference ?: ""
             )

@@ -36,6 +36,7 @@ import com.hubtel.core_utils.extensions.formatMoneyParts
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BusinessInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.ux.components.FlatButton
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 
@@ -195,9 +196,9 @@ internal fun CheckoutReceiptCard(
 private fun CheckoutReceiptCardPreview() {
 
     val fees = listOf<CheckoutFee>(
-        CheckoutFee(10.11, "10.11"),
-        CheckoutFee(10.11, "10.11"),
-        CheckoutFee(10.11, "10.11")
+        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue),
+        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue),
+        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue),
     )
 
     CheckoutReceiptCard(fees = fees, amount = 34.33, total = 34.33)
@@ -260,8 +261,8 @@ internal fun ExpandableFeesCard(fees: List<CheckoutFee>) {
             ) {
                 for (feeItem in fees) {
                     FeeListItem(
-                        title = feeItem.feeName ?: "",
-                        fee = feeItem.feeAmount ?: 0.0,
+                        title = "",
+                        fee = feeItem.amountPayable ?: 0.0,
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                     )
                 }

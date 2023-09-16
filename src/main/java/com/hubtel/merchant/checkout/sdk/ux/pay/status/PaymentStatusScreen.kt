@@ -15,11 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -64,8 +62,10 @@ import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.Purchase
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordPurchaseFailedEvent
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentStatus
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
+import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.platform.model.toWalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
@@ -74,12 +74,13 @@ import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.incorrect_pin.WrongPINScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful.TransactionSuccessfulScreen
 import kotlinx.coroutines.delay
 
 internal data class PaymentStatusScreen(
-    private val providerName: String?, private val config: CheckoutConfig
+    private val providerName: String?,
+    private val config: CheckoutConfig,
+    private val checkoutType: CheckoutType?
 ) : Screen {
 
     @Composable
@@ -145,142 +146,131 @@ internal data class PaymentStatusScreen(
 
         val paymentStatusMessage = remember(paymentStatus) {
             when (paymentStatus) {
-                PaymentStatus.UNPAID,
-                PaymentStatus.PAID -> orderStatus?.invoiceStatus
+                PaymentStatus.UNPAID, PaymentStatus.PAID -> orderStatus?.invoiceStatus
 
                 else -> context.getString(R.string.checkout_payment_being_processed_msg)
             } ?: ""
         }
 
         HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2, topBar = {
-            HBTopAppBar(
-                title = {
+            HBTopAppBar(title = {
+                Text(
+                    text = stringResource(id = R.string.checkout_processing_payment),
+                    style = HubtelTheme.typography.body1
+                )
+            }, actions = {
+                TextButton(onClick = {
+                    checkoutActivity?.finishWithResult()
+                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCancel)
+                }) {
                     Text(
-                        text = stringResource(id = R.string.checkout_processing_payment),
-                        style = HubtelTheme.typography.body1
+                        text = stringResource(id = R.string.checkout_cancel_order),
+                        color = HubtelTheme.colors.error,
                     )
-                },
-                actions = {
-                    TextButton(onClick = {
-                        checkoutActivity?.finishWithResult()
-                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCancel)
-                    }) {
-                        Text(
-                            text = stringResource(id = R.string.checkout_cancel_order),
-                            color = HubtelTheme.colors.error,
+                }
+            })
+        }, bottomBar = {
+            Column(
+                Modifier
+                    .padding(Dimens.paddingDefault)
+                    .animateContentSize(),
+            ) {
+
+                when {
+                    beforeInitialLoad -> {
+                        LoadingTextButton(
+                            text = stringResource(R.string.checkout_i_have_paid), onClick = {
+                                paymentStatusViewModel.checkPaymentStatus(config)
+                                recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
+                            }, loading = isLoading, modifier = Modifier.fillMaxWidth()
                         )
                     }
-                })
-        },
-            bottomBar = {
-                Column(
-                    Modifier
-                        .padding(Dimens.paddingDefault)
-                        .animateContentSize(),
-                ) {
 
-                    when {
-                        beforeInitialLoad -> {
-                            LoadingTextButton(
-                                text = stringResource(R.string.checkout_i_have_paid),
-                                onClick = {
-                                    paymentStatusViewModel.checkPaymentStatus(config)
-                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
-//                                    navigator?.push(
-//                                        ConfirmOrderScreen(
-//                                            providerName = providerName,
-//                                            config = config
-//                                        )
-//                                    )
-                                }, loading = isLoading, modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        paymentStatus == PaymentStatus.PAID -> {
-                            Divider(
-                                color = HubtelTheme.colors.outline,
-                            )
-                            LoadingTextButton(
-                                text = stringResource(com.hubtel.core_ui.R.string.done), onClick = {
+                    // TODO: Should be removed
+                    paymentStatus == PaymentStatus.PAID -> {
+                        Divider(
+                            color = HubtelTheme.colors.outline,
+                        )
+                        LoadingTextButton(
+                            text = stringResource(com.hubtel.core_ui.R.string.done), onClick = {
 //                                    checkoutActivity?.finishWithResult(orderStatus, paymentStatus)
-                                    navigator?.push(
-                                        TransactionSuccessfulScreen(
-                                            providerName = providerName,
-                                            config = config
-                                        ),
-                                    )
-                                    recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                                }, modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                                navigator?.push(
+                                    TransactionSuccessfulScreen(
+                                        providerName = providerName, config = config
+                                    ),
+                                )
+                                recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
+                            }, modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
-                        paymentStatus == PaymentStatus.PENDING -> {
-                            LoadingTextButton(
-                                text = if (isCountingDown) {
-                                    val time = countDownMillis.formatTime()
-                                    "${stringResource(R.string.checkout_check_again)} ($time)"
-                                } else stringResource(R.string.checkout_check_again), onClick = {
-                                    if (!isCountingDown) {
-                                        countDownMillis = CHECK_COUNTDOWN_TIME
+                    paymentStatus == PaymentStatus.PENDING -> {
+                        LoadingTextButton(
+                            text = if (isCountingDown) {
+                                val time = countDownMillis.formatTime()
+                                "${stringResource(R.string.checkout_check_again)} ($time)"
+                            } else stringResource(R.string.checkout_check_again), onClick = {
+                                if (!isCountingDown) {
+                                    countDownMillis = CHECK_COUNTDOWN_TIME
 //                                        tapCount++
 
-                                        paymentStatusViewModel.checkPaymentStatus(config)
-                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
-                                    }
-                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
-                            )
+                                    paymentStatusViewModel.checkPaymentStatus(config)
+                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                }
+                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                        )
 //                            navigator?.push(
 //                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
 //                            )
-                        }
+                    }
 
-                        paymentStatus == PaymentStatus.UNPAID -> {
-                            LoadingTextButton(
-                                text = if (isCountingDown) {
-                                    val time = countDownMillis.formatTime()
-                                    "${stringResource(R.string.checkout_check_again)} ($time)"
-                                } else stringResource(R.string.checkout_check_again), onClick = {
-                                    if (!isCountingDown) {
-                                        countDownMillis = CHECK_COUNTDOWN_TIME
+                    paymentStatus == PaymentStatus.UNPAID -> {
+                        LoadingTextButton(
+                            text = if (isCountingDown) {
+                                val time = countDownMillis.formatTime()
+                                "${stringResource(R.string.checkout_check_again)} ($time)"
+                            } else stringResource(R.string.checkout_check_again), onClick = {
+                                if (!isCountingDown) {
+                                    countDownMillis = CHECK_COUNTDOWN_TIME
 //                                        tapCount++
 
-                                        paymentStatusViewModel.checkPaymentStatus(config)
-                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
-                                    }
-                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                                    paymentStatusViewModel.checkPaymentStatus(config)
+                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                }
+                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
-                        paymentStatus == PaymentStatus.EXPIRED -> {
-                            LoadingTextButton(
-                                text = stringResource(R.string.checkout_cancel_transaction_title),
-                                onClick = {
-                                    checkoutActivity?.finishWithResult()
+                    paymentStatus == PaymentStatus.EXPIRED -> {
+                        LoadingTextButton(
+                            text = stringResource(R.string.checkout_cancel_transaction_title),
+                            onClick = {
+                                checkoutActivity?.finishWithResult()
 //                                    onPaymentComplete(false)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            navigator?.push(
-                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
-                            )
-                        }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+//                            navigator?.push(
+//                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
+//                            )
+                    }
 
-                        paymentStatus == PaymentStatus.FAILED -> {
-                            LoadingTextButton(
-                                text = stringResource(R.string.checkout_cancel_transaction_title),
-                                onClick = {
-                                    checkoutActivity?.finishWithResult()
+                    paymentStatus == PaymentStatus.FAILED -> {
+                        LoadingTextButton(
+                            text = stringResource(R.string.checkout_cancel_transaction_title),
+                            onClick = {
+                                checkoutActivity?.finishWithResult()
 //                                    onPaymentComplete(false)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            navigator?.push(
-                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
-                            )
-                        }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+//                            navigator?.push(
+//                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
+//                            )
                     }
                 }
-            }) { paddingValues ->
+            }
+        }) { paddingValues ->
             Column(
                 modifier = Modifier
                     .padding(paddingValues)
@@ -325,7 +315,7 @@ internal data class PaymentStatusScreen(
                     }
                 }
 
-                if (paymentStatus == PaymentStatus.PENDING) {
+                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
                     Image(
                         painter = painterResource(R.drawable.checkout_ic_pending),
                         contentDescription = null,
@@ -343,19 +333,54 @@ internal data class PaymentStatusScreen(
                     )
                 }
 
-//                if (!isLoading && orderStatus != null) {
+                if (paymentStatus == PaymentStatus.PAID && (checkoutType == CheckoutType.DIRECT_DEBIT || checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT)) {
+//                    PaidSuccessContent()
+                    // TODO: navigate to paid screen
+                    navigator?.push(PaidSuccessScreen())
+                }
+
                 if (paymentStatus == PaymentStatus.PAID) {
+//                    SuccessfulTransaction(
+//                        maxHeight = maxHeight,
+//                        amountPaid = orderStatus?.transactionAmount
+//                    )
 
-//                    SuccessfulTransaction(maxHeight = maxHeight, amountPaid = amountPaid)
-
-                    PaymentProcessingContent()
+                    // TODO: navigate to paid screen
+                    navigator?.push(PaidSuccessScreen())
                 }
 
                 if (paymentStatus == PaymentStatus.UNPAID) {
-                    UnsuccessfulTransaction(maxHeight = maxHeight)
+//                    UnsuccessfulTransaction(maxHeight = maxHeight, orderStatus = orderStatus)
+                    // TODO: stay here as pending
+                    Image(
+                        painter = painterResource(R.drawable.checkout_ic_pending),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(bottom = Dimens.paddingLarge)
+                            .size(90.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    Text(
+                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
+                        style = HubtelTheme.typography.body2,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
+                    )
                 }
 
-                /*if (walletProvider == WalletProvider.MTN && paymentStatus != PaymentStatus.PAID && !uiState.isLoading) {
+                if (paymentStatus == PaymentStatus.EXPIRED || paymentStatus == PaymentStatus.FAILED) {
+                    // TODO: navigate to payment failed screen
+                    navigator?.push(
+                        FailedPaymentScreen(
+                            providerName = providerName,
+                            orderStatus?.mobileNumber,
+                            config = config
+                        )
+                    )
+                }
+
+                if (walletProvider == WalletProvider.MTN && paymentStatus != PaymentStatus.PAID && !uiState.isLoading && checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
                     MTNPromptApprovalGuide(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -365,7 +390,7 @@ internal data class PaymentStatusScreen(
                                 end = Dimens.paddingDefault
                             ),
                     )
-                }*/
+                }
             }
         }
 
@@ -400,8 +425,7 @@ internal data class PaymentStatusScreen(
                         val orderItems = listOf(config.toPurchaseOrderItem())
 
                         recordPurchaseFailedEvent(
-                            PurchaseFailedEvent(
-                                amount = orderStatus?.transactionAmount ?: 0.0,
+                            PurchaseFailedEvent(amount = orderStatus?.transactionAmount ?: 0.0,
                                 errorMessage = errorMessage,
                                 paymentType = walletProvider?.provider,
                                 paymentChannel = walletProvider?.channelName,
@@ -419,8 +443,7 @@ internal data class PaymentStatusScreen(
                         val orderItems = listOf(config.toPurchaseOrderItem())
 
                         recordPurchaseEvent(
-                            PurchaseEvent(
-                                orderId = orderStatus?.clientReference,
+                            PurchaseEvent(orderId = orderStatus?.clientReference,
                                 amount = orderStatus?.transactionAmount ?: 0.0,
                                 paymentType = walletProvider?.provider,
                                 paymentChannel = walletProvider?.channelName,
@@ -530,8 +553,7 @@ internal data class PaymentStatusScreen(
                         text = stringResource(id = R.string.checkout_orders_and_delivery),
                         style = HubtelTheme.typography.body1,
                         modifier = Modifier.padding(
-                            bottom = Dimens.paddingDefault,
-                            top = Dimens.paddingNano
+                            bottom = Dimens.paddingDefault, top = Dimens.paddingNano
                         )
                     )
                 }
@@ -540,7 +562,7 @@ internal data class PaymentStatusScreen(
     }
 
     @Composable
-    private fun PaymentProcessingContent() {
+    private fun PaidSuccessContent() {
         HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2) {
             Column(
                 modifier = Modifier
@@ -568,7 +590,7 @@ internal data class PaymentStatusScreen(
                         modifier = Modifier.padding(vertical = Dimens.spacingDefault)
                     )
                     Text(
-                        text = "Your payment was successful. Thank you for choosing us",
+                        text = stringResource(id = R.string.checkout_success_message),
                         style = HubtelTheme.typography.body2,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(vertical = Dimens.spacingDefault)
@@ -580,7 +602,7 @@ internal data class PaymentStatusScreen(
     }
 
     @Composable
-    private fun UnsuccessfulTransaction(maxHeight: Dp) {
+    private fun UnsuccessfulTransaction(maxHeight: Dp, orderStatus: TransactionStatusInfo?) {
         val constraints = ConstraintSet {
             val backgroundBox = createRefFor("backgroundBox")
             val topBox = createRefFor("topBox")
@@ -606,8 +628,7 @@ internal data class PaymentStatusScreen(
         }
 
         ConstraintLayout(
-            constraints, modifier = Modifier
-                .fillMaxSize()
+            constraints, modifier = Modifier.fillMaxSize()
         ) {
             Box(
                 contentAlignment = Alignment.Center,
@@ -629,13 +650,13 @@ internal data class PaymentStatusScreen(
                             .padding(Dimens.paddingNano)
                     )
                     Text(
-                        text = "Failed",
+                        text = stringResource(id = R.string.checkout_failed),
                         style = HubtelTheme.typography.h3,
                         modifier = Modifier.padding(bottom = Dimens.paddingDefault)
                     )
 
                     Text(
-                        text = "You entered a wrong PIN",
+                        text = stringResource(id = R.string.checkout_failed),
                         style = HubtelTheme.typography.body1
                     )
                 }
@@ -645,7 +666,6 @@ internal data class PaymentStatusScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-//                    .height(120.dp)
                     .padding(Dimens.paddingDefault)
                     .background(Color(0xFFFFF4CC), shape = RoundedCornerShape(10.dp))
                     .layoutId("topBox")
@@ -655,39 +675,39 @@ internal data class PaymentStatusScreen(
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier.padding(Dimens.paddingDefault)
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.White,
-                        modifier = Modifier.padding(Dimens.paddingNano)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.checkout_mtn_momo),
-                            contentDescription = null,
-                            modifier = Modifier.size(30.dp)
-                        )
-                    }
+//                    Surface(
+//                        shape = CircleShape,
+//                        color = Color.White,
+//                        modifier = Modifier.padding(Dimens.paddingNano)
+//                    ) {
+//                        Image(
+//                            painter = painterResource(id = R.drawable.checkout_mtn_momo),
+//                            contentDescription = null,
+//                            modifier = Modifier.size(30.dp)
+//                        )
+//                    }
                     Text(
-                        text = "MTN Mobile Wallet",
+                        text = providerName ?: "",
                         style = HubtelTheme.typography.body1,
                         modifier = Modifier.padding(
                             bottom = Dimens.paddingNano,
                             top = Dimens.paddingNano,
                         )
                     )
-                    Text(text = "0241234567", style = HubtelTheme.typography.body1)
+                    Text(
+                        text = orderStatus?.mobileNumber ?: "", style = HubtelTheme.typography.body1
+                    )
                 }
             }
 
-            Box(
-                contentAlignment = Alignment.Center,
+            Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .padding(Dimens.paddingDefault)
 //                    .background(color = Color.Blue)
                     .clickable {
                         // TODO: implement
                     }
-                    .layoutId("buttonBox")
-            ) {
+                    .layoutId("buttonBox")) {
                 Column {
                     Divider(
                         color = HubtelTheme.colors.outline,
@@ -696,8 +716,7 @@ internal data class PaymentStatusScreen(
                         Text(
                             text = "Change Wallet", modifier = Modifier
                                 .padding(
-                                    top = Dimens.paddingDefault,
-                                    bottom = Dimens.paddingDefault
+                                    top = Dimens.paddingDefault, bottom = Dimens.paddingDefault
                                 )
                                 .weight(2f)
                         )

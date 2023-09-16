@@ -26,9 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -46,6 +46,7 @@ import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEv
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
@@ -93,6 +94,7 @@ internal data class PayOrderScreen(
         val cardSetupUiState by viewModel.threeDSSetupUiState
         val checkoutUiState by viewModel.checkoutUiState
 
+
         val paymentChannelsUiState by viewModel.paymentChannelsUiState
         val bankChannels = viewModel.bankChannels
         val momoChannels = viewModel.momoChannels
@@ -113,8 +115,12 @@ internal data class PayOrderScreen(
 
         val otherPaymentUiState = remember { OtherPaymentUiState() }
 
-        val feeItems = remember(checkoutFeesUiState) {
-            checkoutFeesUiState.data ?: emptyList()
+        val feeItem = remember(checkoutFeesUiState) {
+            checkoutFeesUiState.data ?: CheckoutFee(
+                0.0,
+                0.0,
+                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue
+            )
         }
 
         val shouldShowWebView = remember(
@@ -180,7 +186,6 @@ internal data class PayOrderScreen(
                         text = stringResource(R.string.checkout_pay),
                         onClick = {
                             currentCheckoutStep = PAY_ORDER
-//                            currentCheckoutStep = PAYMENT_COMPLETED
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapButtonPay)
                         },
                         enabled = isPayButtonEnabled,
@@ -203,7 +208,7 @@ internal data class PayOrderScreen(
             ) {
 
                 CheckoutReceiptCard(
-                    fees = feeItems,
+                    fees = listOf(feeItem),
                     amount = config.amount,
                     total = orderTotal,
                     modifier = Modifier
@@ -321,14 +326,6 @@ internal data class PayOrderScreen(
             HBProgressDialog(
                 message = "${stringResource(R.string.checkout_please_wait)}...",
                 progressColor = CheckoutTheme.colors.colorPrimary,
-//                onDismissRequest = {
-//                    currentCheckoutStep = PAYMENT_COMPLETED
-//                    navigator?.push(
-//                        PaymentStatusScreen(
-//                            providerName = paymentInfo?.providerName, config = config
-//                        )
-//                    )
-//                }
             )
         }
 
@@ -375,25 +372,21 @@ internal data class PayOrderScreen(
             )
         }
 
-//        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG) {
-//            CheckoutMessageDialog(
-//                onDismissRequest = {},
-//                titleText = stringResource(R.string.checkout_success),
-//                message = stringResource(
-//                    R.string.checkout_momo_bill_prompt_msg,
-//                    paymentInfo?.accountNumber ?: "",
-//                ),
-//                positiveText = stringResource(R.string.checkout_okay),
-//                onPositiveClick = { currentCheckoutStep = PAYMENT_COMPLETED },
-//                properties = DialogProperties(
-//                    dismissOnBackPress = false, dismissOnClickOutside = false
-//                )
-//            )
-//        }
-
-//        if (currentCheckoutStep == PAY_ORDER) {
-//            currentCheckoutStep = PAYMENT_COMPLETED
-//        }
+        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
+            CheckoutMessageDialog(
+                onDismissRequest = {},
+                titleText = stringResource(R.string.checkout_success),
+                message = stringResource(
+                    R.string.checkout_momo_bill_prompt_msg,
+                    paymentInfo?.accountNumber ?: "",
+                ),
+                positiveText = stringResource(R.string.checkout_okay),
+                onPositiveClick = { currentCheckoutStep = PAYMENT_COMPLETED },
+                properties = DialogProperties(
+                    dismissOnBackPress = false, dismissOnClickOutside = false
+                )
+            )
+        }
 
         if (currentCheckoutStep == CARD_SETUP && cardSetupUiState.hasError) {
             CheckoutMessageDialog(
@@ -406,22 +399,23 @@ internal data class PayOrderScreen(
             )
         }
 
-        if (checkoutUiState.hasError && currentCheckoutStep == CHECKOUT) {
-            CheckoutMessageDialog(
-                onDismissRequest = { currentCheckoutStep = GET_FEES },
-                painter = painterResource(R.drawable.checkout_ic_alert_red),
-                message = checkoutUiState.error?.asString() ?: "",
-                positiveText = stringResource(R.string.checkout_okay),
-                onPositiveClick = { currentCheckoutStep = GET_FEES },
-            )
-        }
+//        if (checkoutUiState.hasError && currentCheckoutStep == CHECKOUT) {
+//            CheckoutMessageDialog(
+//                onDismissRequest = { currentCheckoutStep = GET_FEES },
+//                painter = painterResource(R.drawable.checkout_ic_alert_red),
+//                message = checkoutUiState.error?.asString() ?: "",
+//                positiveText = stringResource(R.string.checkout_okay),
+//                onPositiveClick = { currentCheckoutStep = GET_FEES },
+//            )
+//        }
 
         LaunchedEffect(isLoading) {
             if (!isLoading && currentCheckoutStep == CHECKOUT) {
                 navigator?.push(
                     PaymentStatusScreen(
                         providerName = paymentInfo?.providerName,
-                        config = config
+                        config = config,
+                        checkoutType = checkoutFeesUiState.data?.getCheckoutType
                     )
                 )
             }
@@ -493,7 +487,8 @@ internal data class PayOrderScreen(
             when (currentCheckoutStep) {
                 PAY_ORDER -> {
                     walletUiState.payOrderWalletType?.let { walletType ->
-                        currentCheckoutStep = getNextStepAfterPayOrder(walletType, checkoutFeesUiState)
+                        currentCheckoutStep =
+                            getNextStepAfterPayOrder(walletType, checkoutFeesUiState)
                     }
                 }
 
@@ -512,7 +507,8 @@ internal data class PayOrderScreen(
                     // TODO: Test new screens here
                     navigator?.push(
                         PaymentStatusScreen(
-                            providerName = paymentInfo?.providerName, config = config
+                            providerName = paymentInfo?.providerName, config = config,
+                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
                         )
 
 //                        ConfirmOrderScreen(
@@ -563,12 +559,11 @@ internal data class PayOrderScreen(
 
 
     private fun getNextStepAfterPayOrder(
-        walletType: PayOrderWalletType, checkoutFeeUiState: UiState2<List<CheckoutFee>>
+        walletType: PayOrderWalletType, checkoutFeeUiState: UiState2<CheckoutFee>
     ): CheckoutStep {
         val hasFees = checkoutFeeUiState.success && !checkoutFeeUiState.isLoading
 
         val nextStep = when (walletType) {
-//            MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             BANK_CARD -> if (hasFees) CARD_SETUP else null
 //            PayOrderWalletType.OTHERS -> if (hasFees) CARD_SETUP else null

@@ -5,15 +5,18 @@ import com.hubtel.merchant.checkout.sdk.network.createRetrofitService
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 internal interface CheckoutApiService {
 
@@ -37,6 +40,12 @@ internal interface CheckoutApiService {
         @Body req: MobileMoneyCheckoutReq,
     ): DataResponse2<CheckoutInfo>
 
+    @POST("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/receive/mobilemoney/prompt")
+    suspend fun receiveReceiveMoneyPrompt(
+        @Path("salesId") salesId: String,
+        @Body req: MobileMoneyCheckoutReq,
+    ): DataResponse2<CheckoutInfo>
+
     @POST("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/receive/mobilemoney/directdebit")
     suspend fun receiveMobileMoneyDirectDebit(
         @Path("salesId") salesId: String,
@@ -44,21 +53,27 @@ internal interface CheckoutApiService {
     ): DataResponse2<CheckoutInfo>
 
     // https://checkout.hubtel.com/api/v1/merchant/11684/unifiedcheckout/preapprovalconfirm?Channel=mtn-gh-direct-debit&CustomerMsisdn=233249126761&ClientReference=test-flight-Last-12345
-    @POST("https://checkout.hubtel.com/api/v1/merchant/11684/unifiedcheckout/preapprovalconfirm?Channel=mtn-gh-direct-debit&CustomerMsisdn=233249126761&ClientReference=test-flight-Last-12345")
-    suspend fun receiveMoneyPreapproval()
+    @GET("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/preapprovalconfirm")
+    suspend fun receiveMoneyPreapprovalConfirm(
+        @Path("salesId") salesId: String,
+        @Query("Channel") channel: String?,
+        @Query("CustomerMsisdn") customerMsisdn: String?,
+        @Query("ClientReference") clientReference: String?,
+    ): DataResponse2<CheckoutInfo>
 
 
     @POST("/v2/merchantaccount/merchants/{salesId}/fees")
     suspend fun getFees(
         @Path("salesId") salesId: String,
         @Body req: GetFeesReq,
-    ): DataResponse2<List<CheckoutFee>>
+    ): DataResponse2<CheckoutFee>
 
-    @POST("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/feecalculation")
+    @GET("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/feecalculation")
     suspend fun getFeesDirectDebitCall(
         @Path("salesId") salesId: String,
-        @Body req: GetFeesReq,
-    ): DataResponse2<List<CheckoutFee>>
+        @Query("ChannelPassed") channel: String?,
+        @Query("Amount") amount: Double?,
+    ): DataResponse2<CheckoutFee>
 
     @GET("/v2/merchantaccount/merchants/{salesId}/statuscheck/{clientReference}")
     suspend fun getTransactionStatus(
@@ -71,6 +86,12 @@ internal interface CheckoutApiService {
         @Path("salesId") salesId: String,
         @Path("clientReference") clientReference: String,
     ): DataResponse2<TransactionStatusInfo>
+
+    @POST("https://checkout.hubtel.com/api/v1/merchant/2017766/unifiedcheckout/verifyotp")
+    suspend fun verifyOtp(
+        @Path("salesId") salesId: String,
+        @Body req: OtpReq,
+    ): DataResponse2<OtpResponse>
 
     @GET("/v2/merchantaccount/merchants/{salesId}/paymentchannels")
     suspend fun getBusinessPaymentChannels(
