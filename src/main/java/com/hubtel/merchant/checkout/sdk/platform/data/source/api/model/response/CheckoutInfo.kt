@@ -17,7 +17,33 @@ data class CheckoutInfo(
     val customData: String?,
     @SerializedName("jwt")
     val jwt: String?,
+    @SerializedName("preapprovalStatus")
+    val preapprovalStatus: String
 )
+
+/*{
+    val getPreapprovalStatus: PreapprovalStatus
+        get() = when (preapprovalStatus.lowercase()) {
+            "approved" -> PreapprovalStatus.APPROVED
+            "pending" -> PreapprovalStatus.PENDING
+        }
+}*/
+
+/*
+
+val getCheckoutType: CheckoutType
+        get() = when (checkoutType.lowercase()) {
+            CheckoutType.RECEIVE_MONEY_PROMPT.rawValue -> CheckoutType.RECEIVE_MONEY_PROMPT
+            CheckoutType.DIRECT_DEBIT.rawValue -> CheckoutType.DIRECT_DEBIT
+            CheckoutType.PRE_APPROVAL_CONFIRM.rawValue -> CheckoutType.PRE_APPROVAL_CONFIRM
+            else -> CheckoutType.RECEIVE_MONEY_PROMPT
+        }
+ */
+
+enum class PreapprovalStatus(val rawValue: String){
+    APPROVED("approved"),
+    PENDING("pending"),
+}
 
 
 data class MomoCheckoutInfo(

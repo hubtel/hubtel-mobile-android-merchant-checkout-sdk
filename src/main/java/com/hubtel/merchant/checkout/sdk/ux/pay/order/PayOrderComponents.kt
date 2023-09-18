@@ -196,9 +196,9 @@ internal fun CheckoutReceiptCard(
 private fun CheckoutReceiptCardPreview() {
 
     val fees = listOf<CheckoutFee>(
-        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue),
-        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue),
-        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue),
+        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0),
+        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0),
+        CheckoutFee(10.11, 10.11, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0),
     )
 
     CheckoutReceiptCard(fees = fees, amount = 34.33, total = 34.33)
@@ -261,8 +261,8 @@ internal fun ExpandableFeesCard(fees: List<CheckoutFee>) {
             ) {
                 for (feeItem in fees) {
                     FeeListItem(
-                        title = "",
-                        fee = feeItem.amountPayable ?: 0.0,
+                        title = "Fees",
+                        fee = feeItem.fees ?: 0.0,
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                     )
                 }

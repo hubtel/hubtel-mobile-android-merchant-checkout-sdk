@@ -40,7 +40,7 @@ internal class PaymentWalletUiState(
     }
 
     val isOtherPayment by derivedStateOf {
-        payOrderWalletType == PayOrderWalletType.OTHERS
+//        payOrderWalletType == PayOrderWalletType.OTHERS
     }
 
     fun setWalletType(type: PayOrderWalletType?) {
@@ -170,7 +170,7 @@ internal data class PaymentInfo(
 internal enum class PayOrderWalletType {
     MOBILE_MONEY,
     BANK_CARD,
-    OTHERS;
+//    OTHERS;
 }
 
 internal val PayOrderWalletType.paymentTypeName: String
@@ -178,7 +178,7 @@ internal val PayOrderWalletType.paymentTypeName: String
         return when (this) {
             PayOrderWalletType.MOBILE_MONEY -> "mobilemoney"
             PayOrderWalletType.BANK_CARD -> "card"
-            PayOrderWalletType.OTHERS -> "others"
+//            PayOrderWalletType.OTHERS -> "others"
         }
     }
 
@@ -235,8 +235,8 @@ internal fun List<String>.toPaymentChannels(): List<PaymentChannel> {
         when (channelName.lowercase()) {
             PaymentChannel.VISA.rawValue -> PaymentChannel.VISA
             PaymentChannel.MASTERCARD.rawValue -> PaymentChannel.MASTERCARD
-            PaymentChannel.MTN.rawValue -> PaymentChannel.MTN
-            PaymentChannel.VODAFONE.rawValue -> PaymentChannel.VODAFONE
+            PaymentChannel.MTN.rawValue, "mtn-gh" -> PaymentChannel.MTN
+            PaymentChannel.VODAFONE.rawValue, "vodafone-gh" -> PaymentChannel.VODAFONE
             PaymentChannel.AIRTEL_TIGO.rawValue -> PaymentChannel.AIRTEL_TIGO
             PaymentChannel.HUBTEL.rawValue -> PaymentChannel.HUBTEL
             PaymentChannel.G_MONEY.rawValue -> PaymentChannel.G_MONEY

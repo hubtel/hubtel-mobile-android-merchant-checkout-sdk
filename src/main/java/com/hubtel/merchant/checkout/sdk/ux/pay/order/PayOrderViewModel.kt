@@ -145,18 +145,18 @@ internal class PayOrderViewModel constructor(
                 )
             }
 
-            PayOrderWalletType.OTHERS -> {
-                val provider = otherPaymentUiState.paymentProvider
-
-                PaymentInfo(
-                    walletId = "",
-                    accountName = "",
-                    accountNumber = otherPaymentUiState.number,
-                    paymentType = payOrderWalletType.paymentTypeName,
-                    providerName = provider?.provider,
-                    channel = provider?.name // TODO: replace
-                )
-            }
+//            PayOrderWalletType.OTHERS -> {
+//                val provider = otherPaymentUiState.paymentProvider
+//
+//                PaymentInfo(
+//                    walletId = "",
+//                    accountName = "",
+//                    accountNumber = otherPaymentUiState.number,
+//                    paymentType = payOrderWalletType.paymentTypeName,
+//                    providerName = provider?.provider,
+//                    channel = provider?.name // TODO: replace
+//                )
+//            }
         }.also {
             Timber.i("PaymentInfo: $it")
         }
@@ -167,7 +167,7 @@ internal class PayOrderViewModel constructor(
     }
 
     private fun updateOrderTotal(amount: Double, fees: List<CheckoutFee>) {
-        orderTotal = amount + (fees.sumOf { it.amountPayable ?: 0.0 })
+        orderTotal = /*amount*/ + (fees.sumOf { it.amountPayable ?: 0.0 })
     }
 
     private fun saveCard(paymentInfo: PaymentInfo) {
@@ -183,7 +183,8 @@ internal class PayOrderViewModel constructor(
             val fee = _checkoutFeesUiState.value.data ?: CheckoutFee(
                 0.0,
                 0.0,
-                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue
+                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue,
+                0.0,
             )
 
             // update order total with fee amount added
@@ -208,7 +209,7 @@ internal class PayOrderViewModel constructor(
             _checkoutFeesUiState.update {
                 UiState2(
                     success = true,
-                    data = result.response.data ?: CheckoutFee(0.0, 0.0, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue)
+                    data = result.response.data ?: CheckoutFee(0.0, 0.0, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0)
                 )
             }
 
@@ -289,9 +290,9 @@ internal class PayOrderViewModel constructor(
                     payOrderWithMomo(config)
                 }
 
-                PayOrderWalletType.OTHERS -> {
-                    payOrderWithCard(config)
-                }
+//                PayOrderWalletType.OTHERS -> {
+//                    payOrderWithCard(config)
+//                }
             }
         }
     }
@@ -355,11 +356,14 @@ internal class PayOrderViewModel constructor(
 
             when (type) {
                 CheckoutType.RECEIVE_MONEY_PROMPT -> {
+                    // TODO: correct this
                     val result = checkoutRepository.apiReceiveMobileMoney(
+//                    val result = checkoutRepository.apiReceiveMoneyPreapproval(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
-                            amount = orderTotal,
+                            amount = config.amount,
                             channel = if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
+//                            channel = "mtn-gh-direct-debit",
                             clientReference = config.clientReference,
                             customerMsisdn = paymentInfo?.accountNumber,
                             customerName = "",
@@ -401,7 +405,7 @@ internal class PayOrderViewModel constructor(
                     val result = checkoutRepository.apiReceiveMobileMoneyDirectDebit(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
-                            amount = orderTotal,
+                            amount = config.amount,
                             channel = paymentInfo?.channel,
                             clientReference = config.clientReference,
                             customerMsisdn = paymentInfo?.accountNumber,
@@ -444,7 +448,7 @@ internal class PayOrderViewModel constructor(
                     val result = checkoutRepository.apiReceiveMoneyPreapproval(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
-                            amount = orderTotal,
+                            amount = config.amount,
                             channel = paymentInfo?.channel,
                             clientReference = config.clientReference,
                             customerMsisdn = paymentInfo?.accountNumber,

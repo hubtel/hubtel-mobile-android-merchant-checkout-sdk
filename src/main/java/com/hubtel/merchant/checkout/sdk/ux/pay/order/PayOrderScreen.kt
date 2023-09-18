@@ -63,6 +63,7 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_CAR
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.OrderPlacedScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.VerificationDialog3ds
@@ -119,7 +120,8 @@ internal data class PayOrderScreen(
             checkoutFeesUiState.data ?: CheckoutFee(
                 0.0,
                 0.0,
-                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue
+                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue,
+                0.0
             )
         }
 
@@ -143,35 +145,13 @@ internal data class PayOrderScreen(
 
         HBScaffold(
             topBar = {
-//                HBTopAppBar {
-//                    Row(
-//                        horizontalArrangement = Arrangement.Start,
-//                        modifier = Modifier
-//                            .fillMaxWidth(),
-//                    ) {
-//                        IconButton(
-//                            onClick = {
-//                                showCancelDialog = true
-//                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapClose)
-//                            },
-//                        ) {
-//                            Icon(
-//                                painter = painterResource(R.drawable.checkout_ic_back_arrow),
-//                                contentDescription = stringResource(R.string.checkout_back_arrow),
-//                                modifier = Modifier
-//                                    .width(16.dp)
-//                                    .height(16.dp),
-//                            )
-//                        }
-//                    }
-//                }
-
                 HBTopAppBar(title = {
                     Text(
                         text = stringResource(id = R.string.checkout_heading),
                     )
                 }, onNavigateUp = {
-
+                    showCancelDialog = true
+                    recordCheckoutEvent(CheckoutEvent.CheckoutPayTapClose)
                 })
             },
             bottomBar = {
@@ -381,9 +361,29 @@ internal data class PayOrderScreen(
                     paymentInfo?.accountNumber ?: "",
                 ),
                 positiveText = stringResource(R.string.checkout_okay),
-                onPositiveClick = { currentCheckoutStep = PAYMENT_COMPLETED },
+                onPositiveClick = {
+                    currentCheckoutStep = PAYMENT_COMPLETED
+                    navigator?.push(
+                        PaymentStatusScreen(
+                            providerName = paymentInfo?.providerName,
+                            config = config,
+                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                        )
+                    )
+                },
                 properties = DialogProperties(
                     dismissOnBackPress = false, dismissOnClickOutside = false
+                )
+            )
+        }
+
+        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
+            currentCheckoutStep = PAYMENT_COMPLETED
+            navigator?.push(
+                PaymentStatusScreen(
+                    providerName = paymentInfo?.providerName,
+                    config = config,
+                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
                 )
             )
         }
@@ -411,13 +411,24 @@ internal data class PayOrderScreen(
 
         LaunchedEffect(isLoading) {
             if (!isLoading && currentCheckoutStep == CHECKOUT) {
-                navigator?.push(
-                    PaymentStatusScreen(
-                        providerName = paymentInfo?.providerName,
-                        config = config,
-                        checkoutType = checkoutFeesUiState.data?.getCheckoutType
+
+                checkoutFeesUiState.data?.getCheckoutType
+                if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
+                    navigator?.push(
+                        OrderPlacedScreen(
+                            walletName = "Mobile Money Wallet",
+                            amount = checkoutFeesUiState.data?.amountPayable
+                        )
                     )
-                )
+                }
+
+//                navigator?.push(
+//                    PaymentStatusScreen(
+//                        providerName = paymentInfo?.providerName,
+//                        config = config,
+//                        checkoutType = checkoutFeesUiState.data?.getCheckoutType
+//                    )
+//                )
             }
         }
 
@@ -446,7 +457,7 @@ internal data class PayOrderScreen(
             isPayButtonEnabled = when (walletType) {
                 MOBILE_MONEY -> momoWalletUiState.isValid
                 BANK_CARD -> bankCardUiState.isValid
-                PayOrderWalletType.OTHERS -> otherPaymentUiState.isValid
+//                PayOrderWalletType.OTHERS -> otherPaymentUiState.isValid
             }
 
             viewModel.updatePaymentInfo(
@@ -460,7 +471,7 @@ internal data class PayOrderScreen(
             // fees state or user wallet is hubtel balance
             if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
 
-            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid) || (walletUiState.isOtherPayment && !otherPaymentUiState.isValid)) return@LaunchedEffect
+            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid) /*|| (walletUiState.isOtherPayment && !otherPaymentUiState.isValid)*/) return@LaunchedEffect
 
             viewModel.getCheckoutFees(config)
         }
@@ -504,12 +515,22 @@ internal data class PayOrderScreen(
 
                 PAYMENT_COMPLETED -> {
 
-                    // TODO: Test new screens here
-                    navigator?.push(
-                        PaymentStatusScreen(
-                            providerName = paymentInfo?.providerName, config = config,
-                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
+
+                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
+                        navigator?.push(
+                            OrderPlacedScreen(
+                                walletName = "Mobile Money Wallet",
+                                amount = checkoutFeesUiState.data?.amountPayable
+                            )
                         )
+                    }
+
+//                    navigator?.push(
+//                        PaymentStatusScreen(
+//                            providerName = paymentInfo?.providerName, config = config,
+//                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
+//                        )
+//                    )
 
 //                        ConfirmOrderScreen(
 //                            providerName = paymentInfo?.providerName,
@@ -525,7 +546,7 @@ internal data class PayOrderScreen(
 //                            providerName = paymentInfo?.providerName,
 //                            config = config
 //                        )
-                    )
+//                    )
 
                     return@LaunchedEffect
                 }
@@ -589,7 +610,7 @@ internal data class PayOrderScreen(
             when (walletType) {
                 BANK_CARD -> VERIFY_CARD
                 MOBILE_MONEY -> CHECKOUT_SUCCESS_DIALOG
-                PayOrderWalletType.OTHERS -> CHECKOUT_SUCCESS_DIALOG
+//                PayOrderWalletType.OTHERS -> CHECKOUT_SUCCESS_DIALOG
             }
         } else CHECKOUT
     }

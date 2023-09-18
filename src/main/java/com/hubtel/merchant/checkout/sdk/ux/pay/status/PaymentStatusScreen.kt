@@ -333,20 +333,45 @@ internal data class PaymentStatusScreen(
                     )
                 }
 
+                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.DIRECT_DEBIT) {
+                    Image(
+                        painter = painterResource(R.drawable.checkout_ic_pending),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(bottom = Dimens.paddingLarge)
+                            .size(90.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    Text(
+                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
+                        style = HubtelTheme.typography.body2,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
+                    )
+                }
+
                 if (paymentStatus == PaymentStatus.PAID && (checkoutType == CheckoutType.DIRECT_DEBIT || checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT)) {
 //                    PaidSuccessContent()
                     // TODO: navigate to paid screen
                     navigator?.push(PaidSuccessScreen())
                 }
 
-                if (paymentStatus == PaymentStatus.PAID) {
+                if (paymentStatus == PaymentStatus.PAID && checkoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
 //                    SuccessfulTransaction(
 //                        maxHeight = maxHeight,
 //                        amountPaid = orderStatus?.transactionAmount
 //                    )
 
                     // TODO: navigate to paid screen
-                    navigator?.push(PaidSuccessScreen())
+//                    navigator?.push(PaidSuccessScreen())
+
+                    navigator?.push(
+                        OrderPlacedScreen(
+                            walletName = walletProvider?.name ?: "",
+                            amount = orderStatus?.transactionAmount ?: 0.0
+                        )
+                    )
                 }
 
                 if (paymentStatus == PaymentStatus.UNPAID) {

@@ -8,7 +8,9 @@ internal data class CheckoutFee(
     @SerializedName("amountPayable")
     val amountPayable: Double,
     @SerializedName("checkoutType")
-    val checkoutType: String
+    val checkoutType: String,
+    @SerializedName("amount")
+    val amount: Double
 ) {
     val getCheckoutType: CheckoutType
         get() = when (checkoutType.lowercase()) {
