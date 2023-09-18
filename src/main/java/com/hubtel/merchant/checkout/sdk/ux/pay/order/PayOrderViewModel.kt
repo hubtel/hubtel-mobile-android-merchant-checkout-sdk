@@ -27,7 +27,6 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
-import com.hubtel.merchant.checkout.sdk.platform.model.OtherPaymentWallet
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
@@ -43,8 +42,6 @@ internal class PayOrderViewModel constructor(
 
     var bankWallets by mutableStateOf(emptyList<Wallet>())
         private set
-
-    var othersWallets by mutableStateOf(emptyList<OtherPaymentWallet>())
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
@@ -289,10 +286,6 @@ internal class PayOrderViewModel constructor(
                 PayOrderWalletType.MOBILE_MONEY -> {
                     payOrderWithMomo(config)
                 }
-
-//                PayOrderWalletType.OTHERS -> {
-//                    payOrderWithCard(config)
-//                }
             }
         }
     }
@@ -356,9 +349,7 @@ internal class PayOrderViewModel constructor(
 
             when (type) {
                 CheckoutType.RECEIVE_MONEY_PROMPT -> {
-                    // TODO: correct this
                     val result = checkoutRepository.apiReceiveMobileMoney(
-//                    val result = checkoutRepository.apiReceiveMoneyPreapproval(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
                             amount = config.amount,

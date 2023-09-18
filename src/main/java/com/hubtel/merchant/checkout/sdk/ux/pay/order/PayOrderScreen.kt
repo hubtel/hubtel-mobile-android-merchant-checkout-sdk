@@ -87,7 +87,6 @@ internal data class PayOrderScreen(
         viewModel: PayOrderViewModel,
     ) {
         val bankWallets = viewModel.bankWallets
-        val othersWallets = viewModel.othersWallets
         val paymentInfo = viewModel.paymentInfo
         val orderTotal = viewModel.orderTotal
 
@@ -399,16 +398,6 @@ internal data class PayOrderScreen(
             )
         }
 
-//        if (checkoutUiState.hasError && currentCheckoutStep == CHECKOUT) {
-//            CheckoutMessageDialog(
-//                onDismissRequest = { currentCheckoutStep = GET_FEES },
-//                painter = painterResource(R.drawable.checkout_ic_alert_red),
-//                message = checkoutUiState.error?.asString() ?: "",
-//                positiveText = stringResource(R.string.checkout_okay),
-//                onPositiveClick = { currentCheckoutStep = GET_FEES },
-//            )
-//        }
-
         LaunchedEffect(isLoading) {
             if (!isLoading && currentCheckoutStep == CHECKOUT) {
 
@@ -421,14 +410,6 @@ internal data class PayOrderScreen(
                         )
                     )
                 }
-
-//                navigator?.push(
-//                    PaymentStatusScreen(
-//                        providerName = paymentInfo?.providerName,
-//                        config = config,
-//                        checkoutType = checkoutFeesUiState.data?.getCheckoutType
-//                    )
-//                )
             }
         }
 
@@ -525,29 +506,6 @@ internal data class PayOrderScreen(
                         )
                     }
 
-//                    navigator?.push(
-//                        PaymentStatusScreen(
-//                            providerName = paymentInfo?.providerName, config = config,
-//                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
-//                        )
-//                    )
-
-//                        ConfirmOrderScreen(
-//                            providerName = paymentInfo?.providerName,
-//                            config = config
-//                        )
-
-//                        TransactionSuccessfulScreen(
-//                            providerName = paymentInfo?.providerName,
-//                            config = config
-//                        )
-
-//                        WrongPINScreen(
-//                            providerName = paymentInfo?.providerName,
-//                            config = config
-//                        )
-//                    )
-
                     return@LaunchedEffect
                 }
 
@@ -587,8 +545,6 @@ internal data class PayOrderScreen(
         val nextStep = when (walletType) {
             MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             BANK_CARD -> if (hasFees) CARD_SETUP else null
-//            PayOrderWalletType.OTHERS -> if (hasFees) CARD_SETUP else null
-            else -> null
         }
 
         // if next is null go back down to get fees
@@ -610,7 +566,6 @@ internal data class PayOrderScreen(
             when (walletType) {
                 BANK_CARD -> VERIFY_CARD
                 MOBILE_MONEY -> CHECKOUT_SUCCESS_DIALOG
-//                PayOrderWalletType.OTHERS -> CHECKOUT_SUCCESS_DIALOG
             }
         } else CHECKOUT
     }
