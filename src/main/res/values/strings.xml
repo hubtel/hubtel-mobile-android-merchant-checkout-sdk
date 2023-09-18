@@ -52,6 +52,7 @@
     <string name="checkout_amount_charged_msg">You will be charged</string>
     <string name="checkout_amount">Amount</string>
     <string name="checkout_view_fees">View Fees &amp; Taxes</string>
+    <string name="checkout_less_details">Less details</string>
 
     <string name="checkout_sorry_an_error_occurred">Sorry an error occurred.</string>
 

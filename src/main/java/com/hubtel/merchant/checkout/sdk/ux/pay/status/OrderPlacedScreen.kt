@@ -125,13 +125,13 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
                         )
                         Text(
                             text = "Your order has been placed",
-                            style = HubtelTheme.typography.h3,
+                            style = HubtelTheme.typography.body1,
                             modifier = Modifier.padding(bottom = Dimens.paddingDefault)
                         )
 
                         Text(
                             text = "Your $walletName will be debited with GHS $amount after your order is confirmed  ",
-                            style = HubtelTheme.typography.body1,
+                            style = HubtelTheme.typography.h3,
                             textAlign = TextAlign.Center
                         )
                     }
