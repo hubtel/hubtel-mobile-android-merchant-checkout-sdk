@@ -18,32 +18,98 @@ data class CheckoutInfo(
     @SerializedName("jwt")
     val jwt: String?,
     @SerializedName("preapprovalStatus")
-    val preapprovalStatus: String
-)
+    val preapprovalStatus: String?,
 
-/*{
+    // added
+    @SerializedName("customerMsisdn")
+    val customerMsisdn: String?,
+    @SerializedName("verificationType")
+    val verificationType: String?,
+    @SerializedName("hubtelPreapprovalId")
+    val hubtelPreapprovalId: String?,
+    @SerializedName("otpPrefix")
+    val otpPrefix: String?,
+    @SerializedName("skipOtp")
+    val skipOtp: Boolean?,
+) {
+    val getVerificationType: VerificationType
+        get() = when(verificationType?.lowercase()) {
+            VerificationType.OTP.rawValue -> VerificationType.OTP
+            VerificationType.USSD.rawValue -> VerificationType.USSD
+            else -> VerificationType.USSD
+        }
+
     val getPreapprovalStatus: PreapprovalStatus
-        get() = when (preapprovalStatus.lowercase()) {
-            "approved" -> PreapprovalStatus.APPROVED
-            "pending" -> PreapprovalStatus.PENDING
+        get() = when(preapprovalStatus?.lowercase()) {
+            PreapprovalStatus.APPROVED.rawValue -> PreapprovalStatus.APPROVED
+            PreapprovalStatus.PENDING.rawValue -> PreapprovalStatus.PENDING
+            else -> PreapprovalStatus.PENDING
         }
-}*/
+}
 
-/*
+enum class VerificationType(val rawValue: String) {
+    OTP("otp"),
+    USSD("ussd")
+}
 
-val getCheckoutType: CheckoutType
-        get() = when (checkoutType.lowercase()) {
-            CheckoutType.RECEIVE_MONEY_PROMPT.rawValue -> CheckoutType.RECEIVE_MONEY_PROMPT
-            CheckoutType.DIRECT_DEBIT.rawValue -> CheckoutType.DIRECT_DEBIT
-            CheckoutType.PRE_APPROVAL_CONFIRM.rawValue -> CheckoutType.PRE_APPROVAL_CONFIRM
-            else -> CheckoutType.RECEIVE_MONEY_PROMPT
-        }
- */
-
-enum class PreapprovalStatus(val rawValue: String){
+enum class PreapprovalStatus(val rawValue: String) {
     APPROVED("approved"),
     PENDING("pending"),
 }
+
+data class CheckoutInfo2(
+    @SerializedName("transactionId")
+    val transactionId: String?,
+    @SerializedName("description")
+    val description: String?,
+    @SerializedName("clientReference")
+    val clientReference: String?,
+    @SerializedName("amount")
+    val amount: Double?,
+    @SerializedName("charges")
+    val charges: Double?,
+    @SerializedName("customData")
+    val customData: String?,
+    @SerializedName("jwt")
+    val jwt: String?,
+    @SerializedName("preapprovalStatus")
+
+    // added
+    val preapprovalStatus: String,
+    @SerializedName("customerMsisdn")
+    val customerMsisdn: String,
+    @SerializedName("verificationType")
+    val verificationType: String,
+    @SerializedName("hubtelPreapprovalId")
+    val hubtelPreapprovalId: String,
+    @SerializedName("otpPrefix")
+    val otpPrefix: String,
+    @SerializedName("skipOtp")
+    val skipOtp: Boolean,
+)
+
+/*
+
+    {
+        "customerMsisdn": "233551520348",
+        "verificationType": "OTP",
+        "preapprovalStatus": "PENDING",
+        "hubtelPreapprovalId": "9938799b168d4f5bbe9653b31316baaa",
+        "clientReferenceId": "test1",
+        "otpPrefix": "PFEW",
+        "skipOtp": false
+    }
+
+    let channel: String?
+    let customerMsisdn: String?
+    let primaryCallbackUrl: String?
+    let clientReference: String?
+    let amount: String?
+    let description: String?
+    let skipOtp: Bool?
+    let otpPrefix: String?
+
+ */
 
 
 data class MomoCheckoutInfo(

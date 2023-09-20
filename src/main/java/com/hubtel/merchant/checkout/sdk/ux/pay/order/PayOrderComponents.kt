@@ -275,8 +275,8 @@ internal fun ExpandableFeesCard(fees: List<CheckoutFee>) {
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
         ) {
             Text(
-                text = if (isExpanded) stringResource(id = R.string.checkout_view_fees) else stringResource(
-                    id = R.string.checkout_less_details
+                text = if (isExpanded) stringResource(id = R.string.checkout_less_details) else stringResource(
+                    id = R.string.checkout_view_fees
                 ),
                 style = HubtelTheme.typography.h3,
                 color = CheckoutTheme.colors.colorAccent.copy(alpha = 0.5f),

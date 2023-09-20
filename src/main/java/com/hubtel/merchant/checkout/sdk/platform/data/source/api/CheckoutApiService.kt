@@ -2,6 +2,7 @@ package com.hubtel.merchant.checkout.sdk.platform.data.source.api
 
 
 import com.hubtel.merchant.checkout.sdk.network.createRetrofitService
+import com.hubtel.merchant.checkout.sdk.network.response.DataListResponse
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
@@ -12,6 +13,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -86,6 +88,12 @@ internal interface CheckoutApiService {
         @Path("salesId") salesId: String,
         @Path("clientReference") clientReference: String,
     ): DataResponse2<TransactionStatusInfo>
+
+    @GET("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/wallets/{PhoneNumber}")
+    suspend fun getWallets(
+        @Path("salesId") salesId: String?,
+        @Path("PhoneNumber") phoneNumber: String?,
+    ): DataListResponse<WalletResponse>
 
     @POST("https://checkout.hubtel.com/api/v1/merchant/2017766/unifiedcheckout/verifyotp")
     suspend fun verifyOtp(

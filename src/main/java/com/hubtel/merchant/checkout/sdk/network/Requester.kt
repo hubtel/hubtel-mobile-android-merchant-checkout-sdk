@@ -1,6 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.network
 
 import com.hubtel.merchant.checkout.sdk.BuildConfig
+import com.hubtel.merchant.checkout.sdk.network.response.DataListResponse
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
 import com.hubtel.merchant.checkout.sdk.platform.analytics.util.NetworkAnalyticsInterceptor
 import okhttp3.OkHttpClient
@@ -48,6 +49,7 @@ internal inline fun <reified T> createRetrofitService(
 }
 
 internal typealias ResultWrapper2<T> = ApiResult<DataResponse2<T>>
+internal typealias ResultListWrapper<T> = ApiResult<DataListResponse<T>>
 
 internal sealed class ApiResult<out T : Any> {
 

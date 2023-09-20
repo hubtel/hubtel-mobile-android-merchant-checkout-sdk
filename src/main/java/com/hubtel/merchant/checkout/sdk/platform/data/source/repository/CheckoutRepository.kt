@@ -1,5 +1,6 @@
 package com.hubtel.merchant.checkout.sdk.platform.data.source.repository
 
+import com.hubtel.merchant.checkout.sdk.network.ResultListWrapper
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper2
 import com.hubtel.merchant.checkout.sdk.network.repository.Repository
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
@@ -12,6 +13,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.DbWallet
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
@@ -107,6 +109,13 @@ internal class CheckoutRepository(
         req: OtpReq
     ): ResultWrapper2<OtpResponse> = makeRequestToApi {
         checkoutApiService.verifyOtp(salesId, req)
+    }
+
+    suspend fun getCustomerWallets(
+        salesId: String?,
+        phoneNumber: String?
+    ): ResultListWrapper<WalletResponse> = makeRequestToApi {
+        checkoutApiService.getWallets(salesId, phoneNumber)
     }
 
     suspend fun getBusinessPaymentChannels(

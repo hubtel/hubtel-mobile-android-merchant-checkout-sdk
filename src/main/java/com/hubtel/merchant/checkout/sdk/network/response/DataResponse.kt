@@ -19,3 +19,19 @@ data class DataResponse2<T>(
     val code: String?
 )
 
+data class DataListResponse<T>(
+    @SerializedName("data")
+    val data: List<T>?,
+
+    @SerializedName("errors")
+    val errors: List<String>? = emptyList(),
+
+    @SerializedName("message")
+    val message: String?,
+
+    @SerializedName("code", alternate = ["status"])
+    val code: String?,
+
+    @SerializedName("responseCode")
+    val responseCode: String?
+)

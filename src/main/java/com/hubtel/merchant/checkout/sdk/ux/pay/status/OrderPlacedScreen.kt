@@ -30,7 +30,6 @@ import androidx.constraintlayout.compose.layoutId
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.hubtel.core_ui.components.custom.HBTopAppBar
-import com.hubtel.core_ui.components.custom.TealButton
 import com.hubtel.core_ui.extensions.LocalActivity
 import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
@@ -39,6 +38,7 @@ import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 
 internal data class OrderPlacedScreen(val walletName: String?, val amount: Double?) : Screen {
     @Composable
@@ -64,17 +64,11 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
         }, bottomBar = {
             Column(modifier = Modifier.animateContentSize()) {
                 Divider(color = HubtelTheme.colors.outline)
-                TealButton(
-                    onClick = {
-                        checkoutActivity?.finishWithResult()
+                LoadingTextButton(text = "AGREE & CONTINUE", onClick = {
+                    checkoutActivity?.finishWithResult()
 
-                        recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                    }, modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimens.paddingSmall)
-                ) {
-                    Text(text = "AGREE & CONTINUE")
-                }
+                    recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
+                }, Modifier.fillMaxWidth().padding(Dimens.paddingSmall))
             }
         }) {
             val constraints = ConstraintSet {
@@ -115,6 +109,7 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(Dimens.paddingDefault)
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.checkout_ic_success),

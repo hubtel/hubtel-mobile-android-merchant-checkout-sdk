@@ -30,7 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -50,6 +50,7 @@ import com.hubtel.core_ui.components.custom.HBTextField
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.MomoWalletUiState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
@@ -64,9 +65,18 @@ internal fun ExpandableMomoOption(
     expanded: Boolean,
     onExpand: () -> Unit,
     modifier: Modifier = Modifier,
+    wallets: List<WalletResponse> = emptyList(),
 ) {
     val context = LocalContext.current
     val momoProviders = remember(channels) { channels.toMomoWalletProviders() }
+
+    val index by remember {
+        mutableStateOf(0)
+    }
+
+    var walletState by remember {
+        mutableStateOf(if (wallets.isEmpty()) WalletResponse() else wallets[index])
+    }
 
     val phoneNumberFocusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -78,7 +88,7 @@ internal fun ExpandableMomoOption(
         decoration = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spacingDefault),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = CenterVertically,
                 modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
             ) {
                 momoProviders.forEach { provider ->
@@ -96,20 +106,32 @@ internal fun ExpandableMomoOption(
             modifier = Modifier.padding(Dimens.paddingDefault),
             verticalArrangement = Arrangement.spacedBy(Dimens.paddingDefault),
         ) {
-            HBTextField(
-                value = state.mobileNumber ?: "",
-                onValueChange = { value ->
-                    if (value.isDigitsOnly()) state.mobileNumber = value
-                },
-                placeholder = {
-                    Text(stringResource(R.string.checkout_wallet_phone_number))
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(phoneNumberFocusRequester)
-                    .bringIntoViewRequester(bringIntoViewRequester)
-            )
+            if (wallets.isEmpty()) {
+                HBTextField(
+                    value = state.mobileNumber ?: "",
+                    onValueChange = { value ->
+                        if (value.isDigitsOnly()) state.mobileNumber = value
+                    },
+                    placeholder = {
+                        Text(stringResource(R.string.checkout_wallet_phone_number))
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(phoneNumberFocusRequester)
+                        .bringIntoViewRequester(bringIntoViewRequester)
+                )
+            } else {
+                WalletDropdownMenu(
+                    wallet = walletState,
+                    onValueChange = {
+                        walletState = it
+
+                        if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber = it.accountNo
+                    },
+                    wallets = wallets
+                )
+            }
 
             MobileWalletProviderDownMenu(
                 value = state.walletProvider,
@@ -150,8 +172,105 @@ internal fun ExpandableMomoOption(
         if (!expanded) return@LaunchedEffect
 
         delay(500)
-        phoneNumberFocusRequester.requestFocus()
-        bringIntoViewRequester.bringIntoView()
+
+        if (wallets.isEmpty()) {
+            phoneNumberFocusRequester.requestFocus()
+            bringIntoViewRequester.bringIntoView()
+        }
+    }
+}
+
+@Composable
+private fun WalletDropdownMenu(
+    wallet: WalletResponse,
+    onValueChange: (WalletResponse) -> Unit,
+    modifier: Modifier = Modifier,
+    wallets: List<WalletResponse?> = listOf(),
+    placeholder: @Composable (() -> Unit)? = null,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val density = LocalDensity.current
+    var dropDownWidth by remember { mutableStateOf(0.dp) }
+    var dropDownHeight by remember { mutableStateOf(0.dp) }
+
+    Box(modifier = modifier) {
+        HBTextField(readOnly = true,
+            value = wallet.accountNo ?: "",
+            onValueChange = {},
+            placeholder = placeholder,
+            trailingIcon = {
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp
+                        else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (expanded) stringResource(com.hubtel.core_ui.R.string.close_drop_down_menu)
+                        else stringResource(com.hubtel.core_ui.R.string.open_drop_down_menu),
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned {
+                    dropDownWidth = with(density) { it.size.width.toDp() }
+                    dropDownHeight = with(density) { it.size.height.toDp() }
+                })
+
+        Box(
+            modifier = Modifier
+                .height(dropDownHeight)
+                .width(dropDownWidth)
+                .clickable { expanded = !expanded },
+        )
+
+        MaterialTheme(
+            colors = MaterialTheme.colors.copy(
+                surface = HubtelTheme.colors.cardBackground,
+                onSurface = HubtelTheme.colors.textPrimary,
+            )
+        ) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.width(dropDownWidth)
+            ) {
+                wallets.forEach { selectionOption ->
+                    DropdownMenuItem(onClick = {
+                        onValueChange(selectionOption!!)
+                        expanded = false
+                    }) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                verticalAlignment = CenterVertically,
+                                modifier = Modifier.padding(vertical = Dimens.paddingNano),
+                            ) {
+                                selectionOption?.accountNo?.let {
+                                    Text(
+                                        text = it,
+                                        color = HubtelTheme.colors.textPrimary,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+//                Row(
+//                    verticalAlignment = CenterVertically,
+//                    modifier = Modifier.padding(
+//                        vertical = Dimens.paddingNano,
+//                        horizontal = Dimens.paddingDefault
+//                    ),
+//                ) {
+//                    Text(
+//                        text = "Add new number",
+//                        color = HubtelTheme.colors.textPrimary,
+//                        modifier = Modifier.weight(1f)
+//                    )
+//                }
+            }
+        }
     }
 }
 
@@ -170,8 +289,7 @@ private fun MobileWalletProviderDownMenu(
     var dropDownHeight by remember { mutableStateOf(0.dp) }
 
     Box(modifier) {
-        HBTextField(
-            readOnly = true,
+        HBTextField(readOnly = true,
             value = value?.let { stringResource(it.providerNameResId) } ?: "",
             onValueChange = {},
             placeholder = placeholder,
@@ -190,8 +308,7 @@ private fun MobileWalletProviderDownMenu(
                 .onGloballyPositioned {
                     dropDownWidth = with(density) { it.size.width.toDp() }
                     dropDownHeight = with(density) { it.size.height.toDp() }
-                }
-        )
+                })
 
         Box(
             modifier = Modifier
@@ -214,14 +331,12 @@ private fun MobileWalletProviderDownMenu(
             ) {
 
                 providers.forEach { selectionOption ->
-                    DropdownMenuItem(
-                        onClick = {
-                            onValueChange(selectionOption)
-                            expanded = false
-                        }
-                    ) {
+                    DropdownMenuItem(onClick = {
+                        onValueChange(selectionOption)
+                        expanded = false
+                    }) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = CenterVertically,
                             modifier = Modifier.padding(vertical = Dimens.paddingNano),
                         ) {
                             Text(

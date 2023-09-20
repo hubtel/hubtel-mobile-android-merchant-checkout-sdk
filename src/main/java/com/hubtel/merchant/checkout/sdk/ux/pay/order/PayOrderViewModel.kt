@@ -25,6 +25,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
@@ -43,6 +44,9 @@ internal class PayOrderViewModel constructor(
     var bankWallets by mutableStateOf(emptyList<Wallet>())
         private set
 
+    private var _customerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
+    val customerWalletsUiState: State<UiState2<List<WalletResponse>>> = _customerWalletsUiState
+
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
 
@@ -60,9 +64,6 @@ internal class PayOrderViewModel constructor(
 
     var momoChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
-
-    var otherChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
-        private set // TODO: remove
 
     var paymentInfo by mutableStateOf<PaymentInfo?>(null)
         private set
@@ -87,11 +88,46 @@ internal class PayOrderViewModel constructor(
         }
     }
 
+    fun getCustomerWallets(config: CheckoutConfig) {
+        viewModelScope.launch {
+            val result = checkoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
+
+            _customerWalletsUiState.update {
+                UiState2(isLoading = true)
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    _customerWalletsUiState.update {
+                        UiState2(isLoading = false, data = result.response.data)
+                    }
+                }
+
+                is ApiResult.HttpError -> {
+                    _customerWalletsUiState.update {
+                        UiState2(
+                            isLoading = false,
+                            data = null,
+                            error = UiText.DynamicString(result.message ?: "")
+                        )
+                    }
+                }
+
+                else -> {
+                    _customerWalletsUiState.update {
+                        UiState2(
+                            success = false,
+                            error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun updatePaymentInfo(
         payOrderWalletType: PayOrderWalletType,
         momoWalletUiState: MomoWalletUiState,
         bankCardUiState: BankCardUiState,
-        otherPaymentUiState: OtherPaymentUiState,
     ) {
         paymentInfo = when (payOrderWalletType) {
             PayOrderWalletType.MOBILE_MONEY -> {
@@ -164,7 +200,7 @@ internal class PayOrderViewModel constructor(
     }
 
     private fun updateOrderTotal(amount: Double, fees: List<CheckoutFee>) {
-        orderTotal = /*amount*/ + (fees.sumOf { it.amountPayable ?: 0.0 })
+        orderTotal = /*amount*/ +(fees.sumOf { it.amountPayable ?: 0.0 })
     }
 
     private fun saveCard(paymentInfo: PaymentInfo) {
@@ -206,7 +242,12 @@ internal class PayOrderViewModel constructor(
             _checkoutFeesUiState.update {
                 UiState2(
                     success = true,
-                    data = result.response.data ?: CheckoutFee(0.0, 0.0, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0)
+                    data = result.response.data ?: CheckoutFee(
+                        0.0,
+                        0.0,
+                        CheckoutType.RECEIVE_MONEY_PROMPT.rawValue,
+                        0.0
+                    )
                 )
             }
 
@@ -342,10 +383,12 @@ internal class PayOrderViewModel constructor(
             amount = config.amount,
             channel = paymentInfo?.channel,
         )
-        val checkoutTypeResult = checkoutRepository.getFeesDirectDebit(config.posSalesId ?: "", feesReq)
+        val checkoutTypeResult =
+            checkoutRepository.getFeesDirectDebit(config.posSalesId ?: "", feesReq)
 
         if (checkoutTypeResult is ApiResult.Success) {
-            val type = checkoutTypeResult.response.data?.getCheckoutType ?: CheckoutType.DIRECT_DEBIT
+            val type =
+                checkoutTypeResult.response.data?.getCheckoutType ?: CheckoutType.DIRECT_DEBIT
 
             when (type) {
                 CheckoutType.RECEIVE_MONEY_PROMPT -> {
@@ -392,6 +435,7 @@ internal class PayOrderViewModel constructor(
                         }
                     }
                 }
+
                 CheckoutType.DIRECT_DEBIT -> {
                     val result = checkoutRepository.apiReceiveMobileMoneyDirectDebit(
                         salesId = config.posSalesId ?: "",
@@ -435,6 +479,7 @@ internal class PayOrderViewModel constructor(
                         }
                     }
                 }
+
                 CheckoutType.PRE_APPROVAL_CONFIRM -> {
                     val result = checkoutRepository.apiReceiveMoneyPreapproval(
                         salesId = config.posSalesId ?: "",

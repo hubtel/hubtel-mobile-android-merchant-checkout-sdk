@@ -48,6 +48,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.VerificationType
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
@@ -63,6 +64,7 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_CAR
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
+import com.hubtel.merchant.checkout.sdk.ux.pay.otp.OtpVerifyScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.OrderPlacedScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
@@ -98,7 +100,6 @@ internal data class PayOrderScreen(
         val paymentChannelsUiState by viewModel.paymentChannelsUiState
         val bankChannels = viewModel.bankChannels
         val momoChannels = viewModel.momoChannels
-        val otherChannels = viewModel.otherChannels
 
         var showCancelDialog by remember { mutableStateOf(false) }
 
@@ -113,7 +114,7 @@ internal data class PayOrderScreen(
 
         val momoWalletUiState = remember { MomoWalletUiState() }
 
-        val otherPaymentUiState = remember { OtherPaymentUiState() }
+        val customerWalletsUiState by viewModel.customerWalletsUiState
 
         val feeItem = remember(checkoutFeesUiState) {
             checkoutFeesUiState.data ?: CheckoutFee(
@@ -227,7 +228,7 @@ internal data class PayOrderScreen(
                     }
                 }
 
-                AnimatedVisibility(momoChannels.isNotEmpty()) {
+/*                AnimatedVisibility(momoChannels.isNotEmpty() && customerWalletsUiState.data?.isNotEmpty() == true) {
                     // Mobile Money
                     ExpandableMomoOption(
                         state = momoWalletUiState,
@@ -238,8 +239,43 @@ internal data class PayOrderScreen(
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
                         },
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = customerWalletsUiState.data!!
                     )
                 }
+
+                AnimatedVisibility(momoChannels.isNotEmpty() && customerWalletsUiState.hasError) {
+                    // Mobile Money
+                    ExpandableMomoOption(
+                        state = momoWalletUiState,
+                        channels = momoChannels,
+                        expanded = walletUiState.isMomoWallet,
+                        onExpand = {
+                            walletUiState.setWalletType(MOBILE_MONEY)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = customerWalletsUiState.data ?: emptyList()
+                        *//*listOf(config.msisdn)*//* // TODO: pass wallets here
+                    )
+                }*/
+
+                AnimatedVisibility(
+                    momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
+                ) {
+                    // Mobile Money
+                    ExpandableMomoOption(
+                        state = momoWalletUiState,
+                        channels = momoChannels,
+                        expanded = walletUiState.isMomoWallet,
+                        onExpand = {
+                            walletUiState.setWalletType(MOBILE_MONEY)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = customerWalletsUiState.data ?: emptyList()
+                    )
+                }
+
 
                 if (bankChannels.isNotEmpty()) {
                     Divider(
@@ -267,21 +303,6 @@ internal data class PayOrderScreen(
                     color = HubtelTheme.colors.outline,
                     modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
                 )
-
-//                AnimatedVisibility(visible = otherChannels.isEmpty()) {
-//                    ExpandableOthersOption(
-//                        state = otherPaymentUiState,
-//                        channels = otherChannels,
-//                        wallets = othersWallets,
-//                        expanded = walletUiState.isOtherPayment,
-//                        onExpand = {
-//                            Timber.d("Others tapped ...")
-//                            walletUiState.setWalletType(OTHERS)
-//                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapOtherPayment)
-//                        },
-//                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-//                    )
-//                }
 
                 Box(
                     modifier = Modifier
@@ -351,6 +372,17 @@ internal data class PayOrderScreen(
             )
         }
 
+        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
+            currentCheckoutStep = PAYMENT_COMPLETED
+            navigator?.push(
+                PaymentStatusScreen(
+                    providerName = paymentInfo?.providerName,
+                    config = config,
+                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                )
+            )
+        }
+
         if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
             CheckoutMessageDialog(
                 onDismissRequest = {},
@@ -372,17 +404,6 @@ internal data class PayOrderScreen(
                 },
                 properties = DialogProperties(
                     dismissOnBackPress = false, dismissOnClickOutside = false
-                )
-            )
-        }
-
-        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
-            currentCheckoutStep = PAYMENT_COMPLETED
-            navigator?.push(
-                PaymentStatusScreen(
-                    providerName = paymentInfo?.providerName,
-                    config = config,
-                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
                 )
             )
         }
@@ -409,11 +430,14 @@ internal data class PayOrderScreen(
                             amount = checkoutFeesUiState.data?.amountPayable
                         )
                     )
+
+//                    navigator?.push(OtpVerifyScreen(""))
                 }
             }
         }
 
         LaunchedEffect(Unit) {
+            viewModel.getCustomerWallets(config) // TODO: combine this and next line
             viewModel.getPaymentChannels(config.posSalesId)
             viewModel.initData(config.amount)
             recordCheckoutEvent(CheckoutEvent.CheckoutPayViewPagePay)
@@ -445,7 +469,6 @@ internal data class PayOrderScreen(
                 walletType,
                 momoWalletUiState,
                 bankCardUiState,
-                otherPaymentUiState,
             )
 
             // ignore state change if we're not in the get
@@ -504,6 +527,10 @@ internal data class PayOrderScreen(
                                 amount = checkoutFeesUiState.data?.amountPayable
                             )
                         )
+                    }
+
+                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT && checkoutUiState.data?.skipOtp == false && checkoutUiState.data?.getVerificationType == VerificationType.OTP) {
+                        navigator?.push(OtpVerifyScreen(config, checkoutUiState.data!!))
                     }
 
                     return@LaunchedEffect
