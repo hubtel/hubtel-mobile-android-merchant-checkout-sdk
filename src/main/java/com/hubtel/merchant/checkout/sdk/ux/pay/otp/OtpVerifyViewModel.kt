@@ -13,16 +13,16 @@ import com.hubtel.core_ui.model.UiState2
 import com.hubtel.core_ui.model.UiText
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
-import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
+import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import kotlinx.coroutines.launch
 
-internal class OtpVerifyViewModel(private val checkoutRepository: CheckoutRepository) :
+internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: UnifiedCheckoutRepository) :
     ViewModel() {
     private val _otpUiState = mutableStateOf(UiState2<OtpResponse>())
     val otpUiState: State<UiState2<OtpResponse>> = _otpUiState
@@ -36,7 +36,7 @@ internal class OtpVerifyViewModel(private val checkoutRepository: CheckoutReposi
     private suspend fun verifyOtp(config: CheckoutConfig, req: OtpReq) {
         _otpUiState.update { UiState2(isLoading = true) }
 
-        val result = checkoutRepository.verifyTop(config.posSalesId ?: "", req)
+        val result = unifiedCheckoutRepository.verifyOtp(config.posSalesId ?: "", req)
 
         when (result) {
             is ApiResult.Success -> {
@@ -65,11 +65,11 @@ internal class OtpVerifyViewModel(private val checkoutRepository: CheckoutReposi
                 val application = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as Application
 
                 val database = CheckoutDB.getInstance(application)
-                val checkoutService = CheckoutApiService(apiKey ?: "")
+                val unifiedCheckoutService = UnifiedCheckoutApiService(apiKey ?: "")
                 val checkoutPrefManager = CheckoutPrefManager(application)
 
-                val checkoutRepository = CheckoutRepository(
-                    database, checkoutService, checkoutPrefManager
+                val checkoutRepository = UnifiedCheckoutRepository(
+                    database, unifiedCheckoutService, checkoutPrefManager
                 )
 
                 OtpVerifyViewModel(checkoutRepository)

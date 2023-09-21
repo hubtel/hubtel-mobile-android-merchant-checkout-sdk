@@ -74,7 +74,10 @@ import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful.TransactionSuccessfulScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.failed_transaction.FailedPaymentScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction.PaidSuccessScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction.TransactionSuccessfulScreen
 import kotlinx.coroutines.delay
 
 internal data class PaymentStatusScreen(

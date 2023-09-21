@@ -1,4 +1,4 @@
-package com.hubtel.merchant.checkout.sdk.ux.pay.status
+package com.hubtel.merchant.checkout.sdk.ux.pay.status.failed_transaction
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -41,6 +41,7 @@ import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
 
 internal data class FailedPaymentScreen(
     val providerName: String?,

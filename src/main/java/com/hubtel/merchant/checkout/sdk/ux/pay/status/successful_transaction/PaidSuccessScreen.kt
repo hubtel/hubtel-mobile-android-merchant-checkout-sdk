@@ -1,4 +1,4 @@
-package com.hubtel.merchant.checkout.sdk.ux.pay.status
+package com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -32,6 +32,7 @@ import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
 
 internal class PaidSuccessScreen : Screen {
     @Composable

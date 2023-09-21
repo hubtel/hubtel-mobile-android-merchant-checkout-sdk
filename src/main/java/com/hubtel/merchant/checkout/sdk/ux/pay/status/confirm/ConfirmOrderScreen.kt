@@ -37,7 +37,7 @@ import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusViewModel
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful.TransactionSuccessfulScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction.TransactionSuccessfulScreen
 
 internal data class ConfirmOrderScreen(
     private val providerName: String?,

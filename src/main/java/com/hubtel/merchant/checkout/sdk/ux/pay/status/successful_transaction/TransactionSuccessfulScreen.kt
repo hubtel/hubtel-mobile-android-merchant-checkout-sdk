@@ -1,4 +1,4 @@
-package com.hubtel.merchant.checkout.sdk.ux.pay.status.successful
+package com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image

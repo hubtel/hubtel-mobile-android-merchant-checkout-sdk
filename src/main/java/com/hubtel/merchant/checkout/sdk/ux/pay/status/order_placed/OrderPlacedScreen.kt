@@ -1,4 +1,4 @@
-package com.hubtel.merchant.checkout.sdk.ux.pay.status
+package com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -39,6 +39,7 @@ import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.Check
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
 
 internal data class OrderPlacedScreen(val walletName: String?, val amount: Double?) : Screen {
     @Composable

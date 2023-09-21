@@ -66,7 +66,7 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_M
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.otp.OtpVerifyScreen
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.OrderPlacedScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.VerificationDialog3ds

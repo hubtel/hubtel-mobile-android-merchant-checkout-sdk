@@ -3,7 +3,7 @@ package com.hubtel.merchant.checkout.sdk.platform.data.source.repository
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper2
 import com.hubtel.merchant.checkout.sdk.network.repository.Repository
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
@@ -24,52 +24,44 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class CheckoutRepository(
+internal class UnifiedCheckoutRepository(
     private val database: CheckoutDB,
-    private val checkoutApiService: CheckoutApiService,
+    private val unifiedCheckoutApiService: UnifiedCheckoutApiService,
     private val checkoutPrefManager: CheckoutPrefManager,
-) : Repository() {
-
+): Repository() {
     suspend fun apiSetup3DS(
         salesId: String,
         req: ThreeDSSetupReq
     ): ResultWrapper2<ThreeDSSetupInfo> = makeRequestToApi {
-        checkoutApiService.setup3DS(salesId, req)
+        unifiedCheckoutApiService.setup3DS(salesId, req)
     }
 
     suspend fun apiEnroll3DS(
         salesId: String,
         transactionId: String
     ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
-        checkoutApiService.enroll3DS(salesId, transactionId)
+        unifiedCheckoutApiService.enroll3DS(salesId, transactionId)
     }
 
-    suspend fun apiReceiveMoneyPrompt(
+    suspend fun apiReceiveMobilePrompt(
         salesId: String,
         req: MobileMoneyCheckoutReq,
     ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
-        checkoutApiService.receiveReceiveMoneyPrompt(salesId, req)
+        unifiedCheckoutApiService.receiveMoneyPrompt(salesId, req)
     }
 
-    suspend fun apiReceiveMobileMoney(
+    suspend fun apiDirectDebit(
         salesId: String,
         req: MobileMoneyCheckoutReq,
     ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
-        checkoutApiService.receiveReceiveMoneyPrompt(salesId, req)
+        unifiedCheckoutApiService.mobileMoneyDirectDebit(salesId, req)
     }
 
-    suspend fun apiReceiveMobileMoneyDirectDebit(
+    suspend fun apiPreapproval(
         salesId: String,
         req: MobileMoneyCheckoutReq,
     ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
-        checkoutApiService.receiveMobileMoneyDirectDebit(salesId, req)
-    }
-
-    suspend fun apiReceiveMoneyPreapproval(
-        salesId: String,
-        req: MobileMoneyCheckoutReq,
-    ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
-        checkoutApiService.receiveMoneyPreapprovalConfirm(
+        unifiedCheckoutApiService.mobileMoneyPreapproval(
             salesId = salesId,
             channel = req.channel,
             customerMsisdn = req.customerMsisdn,
@@ -81,53 +73,33 @@ internal class CheckoutRepository(
         salesId: String,
         req: GetFeesReq,
     ): ResultWrapper2<CheckoutFee> = makeRequestToApi {
-        checkoutApiService.getFees(salesId, req)
-    }
-
-    suspend fun getFeesDirectDebit(
-        salesId: String,
-        req: GetFeesReq,
-    ): ResultWrapper2<CheckoutFee> = makeRequestToApi {
-        checkoutApiService.getFeesDirectDebitCall(salesId, req.channel, req.amount)
-    }
-
-    suspend fun getTransactionStatus(
-        salesId: String,
-        clientReference: String,
-    ): ResultWrapper2<TransactionStatusInfo> = makeRequestToApi {
-        checkoutApiService.getTransactionStatus(salesId, clientReference)
+        unifiedCheckoutApiService.getFeesDirectDebitCall(salesId, req.channel, req.amount)
     }
 
     suspend fun getTransactionStatusDirectDebit(
         salesId: String,
         clientReference: String,
     ): ResultWrapper2<TransactionStatusInfo> = makeRequestToApi {
-        checkoutApiService.getTransactionStatusDirectDebit(salesId, clientReference)
+        unifiedCheckoutApiService.getTransactionStatusDirectDebit(salesId, clientReference)
     }
 
     suspend fun verifyOtp(
         salesId: String,
         req: OtpReq
     ): ResultWrapper2<OtpResponse> = makeRequestToApi {
-        checkoutApiService.verifyOtp(salesId, req)
+        unifiedCheckoutApiService.verifyOtp(salesId, req)
     }
 
     suspend fun getCustomerWallets(
         salesId: String?,
         phoneNumber: String?
     ): ResultWrapper<List<WalletResponse>> = makeRequestToApi {
-        checkoutApiService.getWallets(salesId, phoneNumber)
+        unifiedCheckoutApiService.getWallets(salesId, phoneNumber)
     }
 
-    suspend fun getBusinessPaymentChannels(
-        salesId: String,
-    ): ResultWrapper2<List<String>> = makeRequestToApi {
-        checkoutApiService.getBusinessPaymentChannels(salesId)
-    }
-
-    suspend fun getBusinessPaymentChannelsNew(salesId: String): ResultWrapper<PaymentChannelResponse> =
+    suspend fun getBusinessPaymentChannels(salesId: String): ResultWrapper<PaymentChannelResponse> =
         makeRequestToApi {
-            checkoutApiService.getBusinessChannels(salesId)
+            unifiedCheckoutApiService.getBusinessChannels(salesId)
         }
 
     fun getPaymentChannels(): List<PaymentChannel> {
@@ -149,4 +121,5 @@ internal class CheckoutRepository(
             database.walletDao().insert(wallet)
         }
     }
+
 }

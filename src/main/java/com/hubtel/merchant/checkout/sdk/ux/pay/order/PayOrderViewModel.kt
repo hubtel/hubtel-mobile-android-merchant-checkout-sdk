@@ -18,7 +18,7 @@ import com.hubtel.core_ui.model.UiText
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
@@ -29,7 +29,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
-import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
+import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 internal class PayOrderViewModel constructor(
-    private val checkoutRepository: CheckoutRepository,
+    private val unifiedCheckoutRepository: UnifiedCheckoutRepository,
 ) : ViewModel() {
 
     var bankWallets by mutableStateOf(emptyList<Wallet>())
@@ -91,13 +91,13 @@ internal class PayOrderViewModel constructor(
 
     private fun getUserWallets() {
         viewModelScope.launch {
-            bankWallets = checkoutRepository.getWallets().map { it.toWallet() }
+            bankWallets = unifiedCheckoutRepository.getWallets().map { it.toWallet() }
         }
     }
 
     fun getCustomerWallets(config: CheckoutConfig) {
         viewModelScope.launch {
-            val result = checkoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
+            val result = unifiedCheckoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
 
             _customerWalletsUiState.update {
                 UiState2(isLoading = true)
@@ -211,7 +211,7 @@ internal class PayOrderViewModel constructor(
     }
 
     private fun saveCard(paymentInfo: PaymentInfo) {
-        checkoutRepository.saveCard(paymentInfo.toWallet())
+        unifiedCheckoutRepository.saveCard(paymentInfo.toWallet())
     }
 
     fun getCheckoutFees(config: CheckoutConfig) {
@@ -242,7 +242,7 @@ internal class PayOrderViewModel constructor(
             channel = paymentInfo?.channel,
         )
 
-        val result = checkoutRepository.getFeesDirectDebit(config.posSalesId ?: "", feesReq)
+        val result = unifiedCheckoutRepository.getFees(config.posSalesId ?: "", feesReq)
 
         if (result is ApiResult.Success) {
 
@@ -288,7 +288,7 @@ internal class PayOrderViewModel constructor(
                 callbackUrl = config.callbackUrl
             )
 
-            val result = checkoutRepository.apiSetup3DS(config.posSalesId ?: "", req)
+            val result = unifiedCheckoutRepository.apiSetup3DS(config.posSalesId ?: "", req)
 
             when (result) {
                 is ApiResult.Success -> {
@@ -341,7 +341,7 @@ internal class PayOrderViewModel constructor(
     private suspend fun payOrderWithCard(config: CheckoutConfig) {
         _checkoutUiState.update { UiState2(isLoading = true) }
 
-        val result = checkoutRepository.apiEnroll3DS(
+        val result = unifiedCheckoutRepository.apiEnroll3DS(
             salesId = config.posSalesId ?: "",
             transactionId = transactionId ?: ""
         )
@@ -391,7 +391,7 @@ internal class PayOrderViewModel constructor(
             channel = paymentInfo?.channel,
         )
         val checkoutTypeResult =
-            checkoutRepository.getFeesDirectDebit(config.posSalesId ?: "", feesReq)
+            unifiedCheckoutRepository.getFees(config.posSalesId ?: "", feesReq)
 
         if (checkoutTypeResult is ApiResult.Success) {
             val type =
@@ -399,7 +399,7 @@ internal class PayOrderViewModel constructor(
 
             when (type) {
                 CheckoutType.RECEIVE_MONEY_PROMPT -> {
-                    val result = checkoutRepository.apiReceiveMobileMoney(
+                    val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
                             amount = config.amount,
@@ -444,7 +444,7 @@ internal class PayOrderViewModel constructor(
                 }
 
                 CheckoutType.DIRECT_DEBIT -> {
-                    val result = checkoutRepository.apiReceiveMobileMoneyDirectDebit(
+                    val result = unifiedCheckoutRepository.apiDirectDebit(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
                             amount = config.amount,
@@ -488,7 +488,7 @@ internal class PayOrderViewModel constructor(
                 }
 
                 CheckoutType.PRE_APPROVAL_CONFIRM -> {
-                    val result = checkoutRepository.apiReceiveMoneyPreapproval(
+                    val result = unifiedCheckoutRepository.apiPreapproval(
                         salesId = config.posSalesId ?: "",
                         req = MobileMoneyCheckoutReq(
                             amount = config.amount,
@@ -547,7 +547,7 @@ internal class PayOrderViewModel constructor(
         viewModelScope.launch {
             salesId ?: return@launch
 
-            val savedChannels = checkoutRepository.getPaymentChannels().apply {
+            val savedChannels = unifiedCheckoutRepository.getPaymentChannels().apply {
                 bankChannels = this.getBankChannels()
                 momoChannels = this.getMomoChannels()
             }
@@ -559,7 +559,7 @@ internal class PayOrderViewModel constructor(
                 )
             }
 
-            val result = checkoutRepository.getBusinessPaymentChannelsNew(salesId)
+            val result = unifiedCheckoutRepository.getBusinessPaymentChannels(salesId)
 
             when (result) {
                 is ApiResult.Success -> {
@@ -576,7 +576,7 @@ internal class PayOrderViewModel constructor(
                     bankChannels = resultChannels.getBankChannels()
                     momoChannels = resultChannels.getMomoChannels()
 
-                    checkoutRepository.savePaymentChannels(resultChannels)
+                    unifiedCheckoutRepository.savePaymentChannels(resultChannels)
                 }
 
                 is ApiResult.HttpError -> {}
@@ -600,10 +600,10 @@ internal class PayOrderViewModel constructor(
     private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
         coroutineScope {
             val customerWalletsDeferred = async {
-                checkoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
+                unifiedCheckoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
             }
             val paymentChannelsDeferred = async {
-                val savedChannels = checkoutRepository.getPaymentChannels().apply {
+                val savedChannels = unifiedCheckoutRepository.getPaymentChannels().apply {
                     bankChannels = this.getBankChannels()
                     momoChannels = this.getMomoChannels()
                 }
@@ -615,9 +615,7 @@ internal class PayOrderViewModel constructor(
                     )
                 }
 
-
-//            checkoutRepository.getBusinessPaymentChannels(config.posSalesId ?: "")
-                checkoutRepository.getBusinessPaymentChannelsNew(config.posSalesId ?: "")
+                unifiedCheckoutRepository.getBusinessPaymentChannels(config.posSalesId ?: "")
 
             }
 
@@ -678,7 +676,7 @@ internal class PayOrderViewModel constructor(
                     bankChannels = resultChannels.getBankChannels()
                     momoChannels = resultChannels.getMomoChannels()
 
-                    checkoutRepository.savePaymentChannels(resultChannels)
+                    unifiedCheckoutRepository.savePaymentChannels(resultChannels)
 
                     // business info
                     val businessInfo = BusinessResponseInfo(
@@ -711,11 +709,11 @@ internal class PayOrderViewModel constructor(
                 val application = this[APPLICATION_KEY] as Application
 
                 val database = CheckoutDB.getInstance(application)
-                val checkoutService = CheckoutApiService(apiKey ?: "")
+                val unifiedCheckoutService = UnifiedCheckoutApiService(apiKey ?: "")
                 val checkoutPrefManager = CheckoutPrefManager(application)
 
-                val checkoutRepository = CheckoutRepository(
-                    database, checkoutService, checkoutPrefManager
+                val checkoutRepository = UnifiedCheckoutRepository(
+                    database, unifiedCheckoutService, checkoutPrefManager
                 )
 
                 PayOrderViewModel(checkoutRepository)
