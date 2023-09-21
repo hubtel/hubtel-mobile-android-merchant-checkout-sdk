@@ -32,5 +32,5 @@ internal data class BusinessInfo(
     @SerializedName("name")
     val name: String?,
     @SerializedName("contact")
-    val contact: String?
+    val logo: String?
 )

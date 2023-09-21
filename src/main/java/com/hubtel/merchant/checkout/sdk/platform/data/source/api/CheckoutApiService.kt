@@ -2,7 +2,7 @@ package com.hubtel.merchant.checkout.sdk.platform.data.source.api
 
 
 import com.hubtel.merchant.checkout.sdk.network.createRetrofitService
-import com.hubtel.merchant.checkout.sdk.network.response.DataListResponse
+import com.hubtel.merchant.checkout.sdk.network.response.DataResponse
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
@@ -11,6 +11,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.T
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
@@ -19,6 +20,8 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+
+internal interface CheckoutApiService2 {}
 
 internal interface CheckoutApiService {
 
@@ -93,7 +96,7 @@ internal interface CheckoutApiService {
     suspend fun getWallets(
         @Path("salesId") salesId: String?,
         @Path("PhoneNumber") phoneNumber: String?,
-    ): DataListResponse<WalletResponse>
+    ): DataResponse<List<WalletResponse>>
 
     @POST("https://checkout.hubtel.com/api/v1/merchant/2017766/unifiedcheckout/verifyotp")
     suspend fun verifyOtp(
@@ -101,10 +104,16 @@ internal interface CheckoutApiService {
         @Body req: OtpReq,
     ): DataResponse2<OtpResponse>
 
+    // https://merchantcard-proxy.hubtel.com/v2/merchantaccount/merchants/{salesId}/paymentchannels
     @GET("/v2/merchantaccount/merchants/{salesId}/paymentchannels")
     suspend fun getBusinessPaymentChannels(
         @Path("salesId") salesId: String
     ): DataResponse2<List<String>>
+
+    @GET("https://checkout.hubtel.com/api/v1/merchant/{salesId}/unifiedcheckout/checkoutchannels")
+    suspend fun getBusinessChannels(
+        @Path("salesId") salesId: String
+    ): DataResponse<PaymentChannelResponse>
 
     companion object {
         operator fun invoke(apiKey: String): CheckoutApiService {

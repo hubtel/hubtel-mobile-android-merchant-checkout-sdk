@@ -44,6 +44,7 @@ import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.Check
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BusinessInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
@@ -100,6 +101,8 @@ internal data class PayOrderScreen(
         val paymentChannelsUiState by viewModel.paymentChannelsUiState
         val bankChannels = viewModel.bankChannels
         val momoChannels = viewModel.momoChannels
+
+        val businessInfoUiState by viewModel.businessInfoUiState
 
         var showCancelDialog by remember { mutableStateOf(false) }
 
@@ -191,6 +194,10 @@ internal data class PayOrderScreen(
                     fees = listOf(feeItem),
                     amount = config.amount,
                     total = orderTotal,
+                    businessInfo = BusinessInfo(
+                        businessInfoUiState.data?.businessName,
+                        businessInfoUiState.data?.businessLogoURL
+                    ),
                     modifier = Modifier
                         .padding(Dimens.paddingMedium)
                         .animateContentSize()
@@ -227,37 +234,6 @@ internal data class PayOrderScreen(
                         )
                     }
                 }
-
-/*                AnimatedVisibility(momoChannels.isNotEmpty() && customerWalletsUiState.data?.isNotEmpty() == true) {
-                    // Mobile Money
-                    ExpandableMomoOption(
-                        state = momoWalletUiState,
-                        channels = momoChannels,
-                        expanded = walletUiState.isMomoWallet,
-                        onExpand = {
-                            walletUiState.setWalletType(MOBILE_MONEY)
-                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
-                        },
-                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                        wallets = customerWalletsUiState.data!!
-                    )
-                }
-
-                AnimatedVisibility(momoChannels.isNotEmpty() && customerWalletsUiState.hasError) {
-                    // Mobile Money
-                    ExpandableMomoOption(
-                        state = momoWalletUiState,
-                        channels = momoChannels,
-                        expanded = walletUiState.isMomoWallet,
-                        onExpand = {
-                            walletUiState.setWalletType(MOBILE_MONEY)
-                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
-                        },
-                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                        wallets = customerWalletsUiState.data ?: emptyList()
-                        *//*listOf(config.msisdn)*//* // TODO: pass wallets here
-                    )
-                }*/
 
                 AnimatedVisibility(
                     momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
@@ -437,8 +413,9 @@ internal data class PayOrderScreen(
         }
 
         LaunchedEffect(Unit) {
-            viewModel.getCustomerWallets(config) // TODO: combine this and next line
-            viewModel.getPaymentChannels(config.posSalesId)
+//            viewModel.getCustomerWallets(config)
+//            viewModel.getPaymentChannels(config.posSalesId)
+            viewModel.getCustomerWalletsAndPaymentChannels(config)
             viewModel.initData(config.amount)
             recordCheckoutEvent(CheckoutEvent.CheckoutPayViewPagePay)
         }

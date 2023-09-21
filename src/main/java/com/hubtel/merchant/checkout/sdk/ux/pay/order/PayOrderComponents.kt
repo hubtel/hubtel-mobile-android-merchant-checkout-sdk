@@ -45,11 +45,8 @@ internal fun CheckoutReceiptCard(
     fees: List<CheckoutFee>,
     amount: Double,
     total: Double,
-    businessInfo: BusinessInfo? = BusinessInfo(
-        stringResource(R.string.checkout_business_name),
-        stringResource(R.string.checkout_business_contact)
-    ),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    businessInfo: BusinessInfo? = null,
 ) {
 
     val amountParts = remember(amount) { amount.formatMoneyParts(includeDecimals = true) }
@@ -80,29 +77,27 @@ internal fun CheckoutReceiptCard(
         ) {
 
             // business info
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = Dimens.paddingDefault)
-                    .padding(top = Dimens.paddingLarge),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.mtn_ic_logo),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillBounds,
+            if (businessInfo?.name != null && businessInfo.logo != null) {
+                Row(
                     modifier = Modifier
-                        .height(40.dp)
-                        .width(40.dp),
-                )
-                Column(modifier = Modifier.padding(Dimens.paddingNano)) {
-                    Text(
-                        text = businessInfo?.name!!,
-                        style = HubtelTheme.typography.body1,
+                        .padding(horizontal = Dimens.paddingDefault)
+                        .padding(top = Dimens.paddingLarge),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.mtn_ic_logo), // businessInfo.logo
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .height(40.dp)
+                            .width(40.dp),
                     )
-                    Text(
-                        text = businessInfo.contact!!,
-                        style = HubtelTheme.typography.body1,
-                    )
+                    Column(modifier = Modifier.padding(Dimens.paddingNano)) {
+                        Text(
+                            text = businessInfo.name,
+                            style = HubtelTheme.typography.body1,
+                        )
+                    }
                 }
             }
 

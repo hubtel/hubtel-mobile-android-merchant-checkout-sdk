@@ -39,10 +39,6 @@ internal class PaymentWalletUiState(
         payOrderWalletType == PayOrderWalletType.MOBILE_MONEY
     }
 
-    val isOtherPayment by derivedStateOf {
-//        payOrderWalletType == PayOrderWalletType.OTHERS
-    }
-
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
     }
@@ -192,6 +188,7 @@ internal val WalletProvider.channelName: String
             provider.contains("airtel", ignoreCase = true) -> {
                 "tigo-gh"
             }
+
             else -> "${provider.lowercase()}-gh-direct-debit"
 //            else -> "mtn-gh-direct-debit"
         }
@@ -220,10 +217,12 @@ internal data class ThreeDSSetupState(
 internal enum class PaymentChannel(val rawValue: String) {
     VISA("cardnotpresent-visa"),
     MASTERCARD("cardnotpresent-mastercard"),
-//    MTN("mtn-gh"),
+
+    //    MTN("mtn-gh"),
     MTN("mtn-gh-direct-debit"),
     VODAFONE("vodafone-gh-direct-debit"),
-//    VODAFONE("vodafone-gh"),
+
+    //    VODAFONE("vodafone-gh"),
     AIRTEL_TIGO("tigo-gh"),
     G_MONEY("gmoney"),
     ZEE_PAY("zee-pay"),
@@ -287,3 +286,10 @@ internal fun CheckoutConfig.toPurchaseOrderItem(): PurchaseOrderItem {
         amount = this.amount,
     )
 }
+
+
+internal data class BusinessResponseInfo(
+    val businessID: String?,
+    val businessName: String?,
+    val businessLogoURL: String?,
+)

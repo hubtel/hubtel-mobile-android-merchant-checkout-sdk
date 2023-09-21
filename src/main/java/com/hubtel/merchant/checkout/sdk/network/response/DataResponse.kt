@@ -19,9 +19,37 @@ data class DataResponse2<T>(
     val code: String?
 )
 
-data class DataListResponse<T>(
+/*
+
+{
+    "message": "Success",
+    "responseCode": "0000",
+    "code": 200,
+    "data": {
+        "businessId": "gershon",
+        "businessName": "Platform Shop",
+        "businessLogoUrl": "https://dev-hubtel.s3-eu-west-1.amazonaws.com/images/373efe0a7efb467fbfb69529a0d06ed4-05032021135018.jpeg",
+        "channels": [
+            "cardnotpresent-mastercard",
+            "mtn-gh",
+            "hubtel-gh",
+            "cardpresent-visa",
+            "cardpresent-mastercard",
+            "cardnotpresent-visa",
+            "tigo-gh",
+            "vodafone-gh"
+        ]
+    },
+    "subCode": 0,
+    "errors": null
+}
+
+ */
+
+
+data class DataResponse<T>(
     @SerializedName("data")
-    val data: List<T>?,
+    val data: T?,
 
     @SerializedName("errors")
     val errors: List<String>? = emptyList(),

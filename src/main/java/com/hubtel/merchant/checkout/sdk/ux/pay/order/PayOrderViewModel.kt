@@ -17,6 +17,7 @@ import com.hubtel.core_ui.model.UiState2
 import com.hubtel.core_ui.model.UiText
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
+import com.hubtel.merchant.checkout.sdk.network.ResultWrapper
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
@@ -24,6 +25,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.T
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
@@ -33,6 +35,8 @@ import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.utils.toWallet
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -49,6 +53,9 @@ internal class PayOrderViewModel constructor(
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
+
+    private val _businessInfoUiState = mutableStateOf(UiState2<BusinessResponseInfo>())
+    val businessInfoUiState: State<UiState2<BusinessResponseInfo>> = _businessInfoUiState
 
     private val _checkoutFeesUiState = mutableStateOf(UiState2<CheckoutFee>())
     val checkoutFeesUiState: State<UiState2<CheckoutFee>> = _checkoutFeesUiState
@@ -552,11 +559,12 @@ internal class PayOrderViewModel constructor(
                 )
             }
 
-            val result = checkoutRepository.getBusinessPaymentChannels(salesId)
+            val result = checkoutRepository.getBusinessPaymentChannelsNew(salesId)
 
             when (result) {
                 is ApiResult.Success -> {
-                    val resultChannels = result.response.data?.toPaymentChannels() ?: emptyList()
+                    val resultChannels =
+                        result.response.data?.channels?.toPaymentChannels() ?: emptyList()
 
                     _paymentChannelsUiState.update {
                         it.copy(
@@ -589,6 +597,112 @@ internal class PayOrderViewModel constructor(
                 || channel == PaymentChannel.AIRTEL_TIGO
     }
 
+    private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
+        coroutineScope {
+            val customerWalletsDeferred = async {
+                checkoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
+            }
+            val paymentChannelsDeferred = async {
+                val savedChannels = checkoutRepository.getPaymentChannels().apply {
+                    bankChannels = this.getBankChannels()
+                    momoChannels = this.getMomoChannels()
+                }
+
+                _paymentChannelsUiState.update {
+                    UiState2(
+                        isLoading = savedChannels.isEmpty(),
+                        data = savedChannels,
+                    )
+                }
+
+
+//            checkoutRepository.getBusinessPaymentChannels(config.posSalesId ?: "")
+                checkoutRepository.getBusinessPaymentChannelsNew(config.posSalesId ?: "")
+
+            }
+
+            val customerWalletsResult = customerWalletsDeferred.await()
+            val paymentChannelsResult = paymentChannelsDeferred.await()
+
+            customerWalletsResult to paymentChannelsResult
+        }
+
+    fun getCustomerWalletsAndPaymentChannels(config: CheckoutConfig) {
+        viewModelScope.launch {
+            _customerWalletsUiState.update { UiState2(isLoading = true) }
+            _paymentChannelsUiState.update { UiState2(isLoading = true) }
+            _businessInfoUiState.update { UiState2(isLoading = true) }
+
+            val (customerWalletsResult, paymentChannelsResult) = fetchData(config)
+
+            // Handle customerWalletsResult
+            _customerWalletsUiState.update {
+                when (customerWalletsResult) {
+                    is ApiResult.Success -> {
+                        UiState2(isLoading = false, data = customerWalletsResult.response.data)
+                    }
+
+                    is ApiResult.HttpError -> {
+                        UiState2(
+                            isLoading = false,
+                            data = null,
+                            error = UiText.DynamicString(customerWalletsResult.message ?: "")
+                        )
+                    }
+
+                    else -> {
+                        UiState2(
+                            success = false,
+                            error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                        )
+                    }
+                }
+            }
+
+            // Handle paymentChannelsResult & Business info
+            when (paymentChannelsResult) {
+                is ApiResult.Success -> {
+
+                    // payment channels
+                    val resultChannels =
+                        paymentChannelsResult.response.data?.channels?.toPaymentChannels()
+                            ?: emptyList()
+
+                    _paymentChannelsUiState.update {
+                        it.copy(
+                            data = resultChannels,
+                            isLoading = false,
+                        )
+                    }
+
+                    bankChannels = resultChannels.getBankChannels()
+                    momoChannels = resultChannels.getMomoChannels()
+
+                    checkoutRepository.savePaymentChannels(resultChannels)
+
+                    // business info
+                    val businessInfo = BusinessResponseInfo(
+                        businessID = paymentChannelsResult.response.data?.businessID,
+                        businessName = paymentChannelsResult.response.data?.businessName,
+                        businessLogoURL = paymentChannelsResult.response.data?.businessLogoURL
+                    )
+
+                    _businessInfoUiState.update {
+                        UiState2(isLoading = false, data = businessInfo)
+                    }
+
+                }
+
+                is ApiResult.HttpError -> {
+                    // Handle HTTP error
+                }
+
+                else -> {
+                    // Handle other errors
+                }
+            }
+        }
+    }
 
     companion object {
 
@@ -607,6 +721,6 @@ internal class PayOrderViewModel constructor(
                 PayOrderViewModel(checkoutRepository)
             }
         }
-
     }
 }
+

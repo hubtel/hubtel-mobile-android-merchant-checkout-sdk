@@ -35,6 +35,8 @@ import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.GreyShade100
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
+import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.BankCardUiState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
@@ -106,7 +108,7 @@ internal fun ExpandableBankCardOption(
                         selected = state.useSavedBankCard,
                         onClick = {
                             state.useSavedBankCard = true
-//                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseSavedCard)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseSavedCard)
                         },
                     )
                 }
@@ -251,7 +253,7 @@ private fun NewCardInputContent(
             )
         }
 
-        /* Row(
+         Row(
              verticalAlignment = Alignment.CenterVertically,
              modifier = Modifier.clickable {
                  state.saveForLater = state.saveForLater.not()
@@ -274,7 +276,7 @@ private fun NewCardInputContent(
                      .weight(1f)
                      .padding(start = Dimens.spacingDefault),
              )
-         }*/
+         }
     }
 
 
