@@ -67,7 +67,6 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
                 Divider(color = HubtelTheme.colors.outline)
                 LoadingTextButton(text = "AGREE & CONTINUE", onClick = {
                     checkoutActivity?.finishWithResult()
-
                     recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
                 }, Modifier.fillMaxWidth().padding(Dimens.paddingSmall))
             }

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,10 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,11 +36,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.hubtel.core_ui.components.custom.HBTopAppBar
-import com.hubtel.core_ui.components.custom.TealButton
 import com.hubtel.core_ui.extensions.LocalActivity
 import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
@@ -50,12 +48,15 @@ import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
+import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
-import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 
 internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo: CheckoutInfo) :
     Screen {
@@ -74,18 +75,15 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
 
         val otpUiState by viewModel.otpUiState
 
-        val screenHeight = LocalConfiguration.current.screenHeightDp
-        val density = LocalDensity.current.density
-        val maxHeight = (screenHeight / density).dp
-
         val context = LocalContext.current
         val activity = LocalActivity.current
-    val navigator = LocalNavigator.current
-    val checkoutActivity = remember(activity) { activity as? CheckoutActivity }
+        val navigator = LocalNavigator.current
+        val checkoutActivity = remember(activity) { activity as? CheckoutActivity }
 
-        var isButtonEnabled by remember {
-            mutableStateOf(false)
-        }
+        var isButtonEnabled by remember { mutableStateOf(false) }
+
+        var showErrorMessage by remember { mutableStateOf(false) }
+        var isLoading by remember { mutableStateOf(false) }
 
         var otpValue by remember {
             mutableStateOf("")
@@ -99,21 +97,22 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
             })
         }, bottomBar = {
             Column(modifier = Modifier.animateContentSize()) {
-                TealButton(
-                    onClick = {
+
+                LoadingTextButton(
+                    text = "VERIFY", enabled = isButtonEnabled, onClick = {
+//                    val req = OtpReq(
+//                        config.msisdn ?: "",
+//                        checkoutInfo.hubtelPreapprovalId ?: "",
+//                        config.clientReference ?: "",
+//                        "${checkoutInfo.otpPrefix}-$otpValue"
+//                    )
+                        viewModel.verify(config, checkoutInfo, otpValue)
                         recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                    }, modifier = Modifier
+                    }, loading = isLoading, modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Dimens.paddingSmall),
-                    enabled = isButtonEnabled
-                ) {
-                    Text(
-                        text = "VERIFY",
-                        modifier = Modifier
-                            .animateContentSize()
-                            .padding(Dimens.paddingSmall)
-                    )
-                }
+                        .animateContentSize()
+                        .padding(Dimens.paddingSmall)
+                )
             }
         }) {
             Column(
@@ -141,44 +140,65 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
 
                 OtpTextField(
                     otpText = otpValue, otpCount = 4,
-                    onOtpTextChange = { value, otpInputFilled ->
+                    onOtpTextChange = { value, _ ->
                         otpValue = value
-                        if (otpInputFilled) {
-                            isButtonEnabled = otpInputFilled
-                        }
                     }
                 )
 
-                if (isButtonEnabled) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimens.paddingDefault)
-                            .background(HubtelTheme.colors.uiBackground2)
-                            .padding(Dimens.paddingDefault)
-                    ) {
-                        CircularProgressIndicator(
-                            color = CheckoutTheme.colors.colorPrimary,
-                            modifier = Modifier.align(Alignment.Center)
+                Box(modifier = Modifier.padding(Dimens.paddingNano))
+
+                if (showErrorMessage) {
+                    Text(text = "The OTP you have entered is incorrect", color = Color(0xFFFF3344))
+
+                    CheckoutMessageDialog(
+                        onDismissRequest = {},
+                        painter = painterResource(id = R.drawable.checkout_ic_close_circle_white),
+                        titleText = "Error",
+                        message = "Kindly try again.",
+                        positiveText = stringResource(R.string.checkout_okay),
+                        onPositiveClick = {
+                            showErrorMessage = false
+                            navigator?.push(
+                                PayOrderScreen(config = config)
+                            ) // TODO: would produce duplicate client reference error
+                        },
+                        properties = DialogProperties(
+                            dismissOnBackPress = false, dismissOnClickOutside = false
                         )
-                    }
+                    )
                 }
             }
         }
 
-        LaunchedEffect(isButtonEnabled) {
-            val req = OtpReq(
-                customerMsisdn = checkoutInfo.customerMsisdn ?: "",
-                hubtelPreApprovalID = checkoutInfo.hubtelPreapprovalId ?: "",
-                clientReferenceID = checkoutInfo.clientReference ?: "",
-                otpCode = otpValue
-            )
-            viewModel.verify(config, req)
+        LaunchedEffect(otpValue) {
+            if (otpValue.length == 4) {
+//                val req = OtpReq(
+//                    config.msisdn ?: "",
+//                    checkoutInfo.hubtelPreapprovalId ?: "",
+//                    config.clientReference ?: "",
+//                    "${checkoutInfo.otpPrefix}-$otpValue"
+//                )
+                isButtonEnabled = true
+                viewModel.verify(config, checkoutInfo, otpValue)
+//                navigator?.push(PaymentStatusScreen(providerName = "", config = config, checkoutType = CheckoutType.DIRECT_DEBIT))
+
+            }
         }
 
         LaunchedEffect(otpUiState) {
-            if (otpUiState.success) {
+            if (otpUiState.hasData) {
+                navigator?.push(
+                    PaymentStatusScreen(
+                        providerName = "",
+                        config = config,
+                        checkoutType = CheckoutType.DIRECT_DEBIT
+                    )
+                )
+            }
 
+            if (otpUiState.hasError) {
+                showErrorMessage = true
+                isLoading = false
             }
         }
     }
@@ -231,13 +251,16 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
     ) {
         val isFocused = text.length == index
         val char = when {
-            index == text.length -> ""
-            index > text.length -> ""
+            index == text.length -> "•"
+            index > text.length -> "•"
             else -> text[index].toString()
         }
         Text(
             modifier = modifier
-                .background(color = Color(0xFFE6EAED))
+                .background(
+                    color = Color(0xFFE6EAED),
+                    shape = RoundedCornerShape(Dimens.paddingNano)
+                )
                 .width(64.dp)
                 .height(64.dp)
                 .border(

@@ -22,7 +22,8 @@ internal enum class CheckoutStep {
     CHECKOUT,
     VERIFY_CARD,
     CHECKOUT_SUCCESS_DIALOG,
-    PAYMENT_COMPLETED;
+    PAYMENT_COMPLETED,
+    GHANA_CARD_VERIFICATION;
 }
 
 internal class PaymentWalletUiState(
@@ -292,4 +293,6 @@ internal data class BusinessResponseInfo(
     val businessID: String?,
     val businessName: String?,
     val businessLogoURL: String?,
+    val requireNationalID: Boolean?,
+    val isHubtelInternalMerchant: Boolean?
 )

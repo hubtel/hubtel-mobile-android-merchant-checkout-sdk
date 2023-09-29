@@ -1,5 +1,6 @@
 package com.hubtel.merchant.checkout.sdk.platform.data.source.repository
 
+import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper2
 import com.hubtel.merchant.checkout.sdk.network.repository.Repository
@@ -10,6 +11,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.O
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
@@ -17,6 +19,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.DbWallet
+import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.HubtelWallet
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +31,7 @@ internal class UnifiedCheckoutRepository(
     private val database: CheckoutDB,
     private val unifiedCheckoutApiService: UnifiedCheckoutApiService,
     private val checkoutPrefManager: CheckoutPrefManager,
-): Repository() {
+) : Repository() {
     suspend fun apiSetup3DS(
         salesId: String,
         req: ThreeDSSetupReq
@@ -73,14 +76,14 @@ internal class UnifiedCheckoutRepository(
         salesId: String,
         req: GetFeesReq,
     ): ResultWrapper2<CheckoutFee> = makeRequestToApi {
-        unifiedCheckoutApiService.getFeesDirectDebitCall(salesId, req.channel, req.amount)
+        unifiedCheckoutApiService.getFees(salesId, req.channel, req.amount)
     }
 
     suspend fun getTransactionStatusDirectDebit(
         salesId: String,
         clientReference: String,
     ): ResultWrapper2<TransactionStatusInfo> = makeRequestToApi {
-        unifiedCheckoutApiService.getTransactionStatusDirectDebit(salesId, clientReference)
+        unifiedCheckoutApiService.getTransactionStatus(salesId, clientReference)
     }
 
     suspend fun verifyOtp(
@@ -102,6 +105,28 @@ internal class UnifiedCheckoutRepository(
             unifiedCheckoutApiService.getBusinessChannels(salesId)
         }
 
+    suspend fun getGhanaCardDetails(
+        salesId: String?,
+        phoneNumber: String?
+    ): ResultWrapper2<GhanaCardResponse> = makeRequestToApi {
+        unifiedCheckoutApiService.getGhanaCardDetails(salesId, phoneNumber)
+    }
+
+    suspend fun addGhanaCard(
+        salesId: String?,
+        phoneNumber: String?, cardId: String?
+    ): ResultWrapper2<GhanaCardResponse> = makeRequestToApi {
+        unifiedCheckoutApiService.addGhanaCard(salesId, phoneNumber, cardId)
+    }
+
+    suspend fun ghanaCardConfirm(
+        salesId: String?,
+        phoneNumber: String?
+    ): ApiResult<Any> = makeRequestToApi {
+        unifiedCheckoutApiService.ghanaCardConfirm(salesId, phoneNumber)
+    }
+
+    // Db
     fun getPaymentChannels(): List<PaymentChannel> {
         return checkoutPrefManager.allowedPaymentChannels ?: emptyList()
     }
@@ -119,6 +144,18 @@ internal class UnifiedCheckoutRepository(
     fun saveCard(wallet: DbWallet) {
         CoroutineScope(Dispatchers.IO).launch {
             database.walletDao().insert(wallet)
+        }
+    }
+
+    fun saveWallet(vararg wallet: HubtelWallet) {
+        CoroutineScope(Dispatchers.IO).launch {
+            database.hubtelDao().insert(*wallet)
+        }
+    }
+
+    suspend fun savedMomoWallets(): List<HubtelWallet> {
+        return withContext(Dispatchers.IO) {
+            database.hubtelDao().getAllWallets()
         }
     }
 

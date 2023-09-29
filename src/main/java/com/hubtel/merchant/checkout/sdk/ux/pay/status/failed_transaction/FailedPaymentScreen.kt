@@ -32,13 +32,13 @@ import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import com.hubtel.core_ui.components.custom.TealButton
 import com.hubtel.core_ui.extensions.LocalActivity
 import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
@@ -71,20 +71,12 @@ internal data class FailedPaymentScreen(
                 Divider(
                     color = HubtelTheme.colors.outline,
                 )
-                TealButton(
-                    onClick = {
+
+                LoadingTextButton(
+                    text = stringResource(id = R.string.checkout_cancel_transaction).toUpperCase(), onClick = {
                         checkoutActivity?.finishWithResult()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize()
-                        .padding(Dimens.paddingNano)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.checkout_cancel_transaction).toUpperCase(),
-                        style = HubtelTheme.typography.button,
-                    )
-                }
+                    }, modifier = Modifier.fillMaxWidth().padding(Dimens.paddingSmall)
+                )
             }
         }) {
             val constraints = ConstraintSet {

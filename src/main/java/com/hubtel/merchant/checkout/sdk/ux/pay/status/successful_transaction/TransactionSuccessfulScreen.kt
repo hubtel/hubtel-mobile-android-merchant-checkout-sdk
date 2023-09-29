@@ -113,7 +113,7 @@ internal data class TransactionSuccessfulScreen(
                 LoadingTextButton(
                     text = stringResource(R.string.checkout_done),
                     onClick = {
-                              checkoutActivity?.finish()
+                        checkoutActivity?.finish()
 //                              navigator?.push(ConfirmOrderScreen(""))
 //                        recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
                         // TODO: "Implement onClick"
@@ -173,7 +173,8 @@ internal data class TransactionSuccessfulScreen(
 
                         Text(
                             text = text,
-                            style = HubtelTheme.typography.body1
+                            style = HubtelTheme.typography.body1,
+                            modifier = Modifier.padding(Dimens.paddingDefault)
                         )
                     }
                 }
@@ -189,7 +190,8 @@ internal data class TransactionSuccessfulScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(Dimens.paddingNano)
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.ic_enterprise_insurance),
@@ -197,11 +199,10 @@ internal data class TransactionSuccessfulScreen(
                             modifier = Modifier.size(25.dp)
                         )
                         Text(
-                            text = stringResource(id = R.string.checkout_paid_message),
+                            text = stringResource(id = R.string.checkout_success_message),
                             style = HubtelTheme.typography.body1,
-                            modifier = Modifier.padding(
-                                bottom = Dimens.paddingDefault,
-                                top = Dimens.paddingNano
+                            modifier = Modifier.padding(start =
+                                Dimens.paddingSmall, end = Dimens.paddingSmall
                             )
                         )
                     }

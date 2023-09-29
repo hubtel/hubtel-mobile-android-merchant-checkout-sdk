@@ -1,5 +1,6 @@
 package com.hubtel.merchant.checkout.sdk.platform.data.source.api
 
+import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.network.createRetrofitService
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
@@ -8,6 +9,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.O
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
@@ -56,14 +58,14 @@ internal interface UnifiedCheckoutApiService {
     ): DataResponse2<CheckoutInfo>
 
     @GET("/api/v1/merchant/{salesId}/unifiedcheckout/feecalculation")
-    suspend fun getFeesDirectDebitCall(
+    suspend fun getFees(
         @Path("salesId") salesId: String,
         @Query("ChannelPassed") channel: String?,
         @Query("Amount") amount: Double?,
     ): DataResponse2<CheckoutFee>
 
     @GET("/api/v1/merchant/{salesId}/unifiedcheckout/statuscheck/{clientReference}")
-    suspend fun getTransactionStatusDirectDebit(
+    suspend fun getTransactionStatus(
         @Path("salesId") salesId: String,
         @Path("clientReference") clientReference: String,
     ): DataResponse2<TransactionStatusInfo>
@@ -74,7 +76,7 @@ internal interface UnifiedCheckoutApiService {
         @Path("PhoneNumber") phoneNumber: String?,
     ): DataResponse<List<WalletResponse>>
 
-    @POST("/api/v1/merchant/2017766/unifiedcheckout/verifyotp")
+    @POST("/api/v1/merchant/{salesId}/unifiedcheckout/verifyotp")
     suspend fun verifyOtp(
         @Path("salesId") salesId: String,
         @Body req: OtpReq,
@@ -84,6 +86,25 @@ internal interface UnifiedCheckoutApiService {
     suspend fun getBusinessChannels(
         @Path("salesId") salesId: String
     ): DataResponse<PaymentChannelResponse>
+
+    @GET("/api/v1/merchant/{salesId}/ghanacardkyc/addghanacard")
+    suspend fun addGhanaCard(
+        @Path("salesId") salesId: String?,
+        @Query("PhoneNumber") phoneNumber: String?,
+        @Query("CardID") cardId: String?,
+    ): DataResponse2<GhanaCardResponse>
+
+    @GET("/api/v1/merchant/{salesId}/ghanacardkyc/ghanacard-details/{PhoneNumber}")
+    suspend fun getGhanaCardDetails(
+        @Path("salesId") salesId: String?,
+        @Path("PhoneNumber") phoneNumber: String?,
+    ): DataResponse2<GhanaCardResponse>
+
+    @GET("/api/v1/merchant/{salesId}/ghanacardkyc/confirm/{PhoneNumber}")
+    suspend fun ghanaCardConfirm(
+        @Path("salesId") salesId: String?,
+        @Path("PhoneNumber") phoneNumber: String?,
+    ): ApiResult<Any>
 
     companion object {
         operator fun invoke(apiKey: String): UnifiedCheckoutApiService {

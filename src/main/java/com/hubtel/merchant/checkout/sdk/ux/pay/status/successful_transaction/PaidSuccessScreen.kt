@@ -24,7 +24,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.hubtel.core_ui.R
 import com.hubtel.core_ui.components.custom.HBTopAppBar
-import com.hubtel.core_ui.components.custom.TealButton
 import com.hubtel.core_ui.extensions.LocalActivity
 import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
@@ -32,6 +31,7 @@ import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
 
 internal class PaidSuccessScreen : Screen {
@@ -58,16 +58,12 @@ internal class PaidSuccessScreen : Screen {
             })
         }, bottomBar = {
             Column(modifier = Modifier.animateContentSize()) {
-                TealButton(
-                    onClick = {
+                LoadingTextButton(
+                    text = stringResource(R.string.done), onClick = {
                         checkoutActivity?.finishWithResult()
                         recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                    }, modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimens.paddingSmall)
-                ) {
-                    Text(text = stringResource(R.string.done))
-                }
+                    }, modifier = Modifier.fillMaxWidth().padding(Dimens.paddingSmall)
+                )
             }
         }) {
             Column(

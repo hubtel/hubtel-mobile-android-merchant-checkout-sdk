@@ -23,6 +23,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import com.hubtel.core_ui.components.custom.HBTopAppBar
 import com.hubtel.core_ui.extensions.LocalActivity
 import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.model.UiState2
+import com.hubtel.core_ui.model.UiText
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
@@ -44,7 +46,9 @@ import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.Check
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BankCardStatus
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BusinessInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CardStatus
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
@@ -53,11 +57,14 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.pay.gh_card.GhCardConfirmationScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.gh_card.GhCardVerificationScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.CARD_SETUP
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.CHECKOUT
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.CHECKOUT_SUCCESS_DIALOG
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.COLLECT_DEVICE_INFO
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.GET_FEES
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.GHANA_CARD_VERIFICATION
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.PAYMENT_COMPLETED
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.PAY_ORDER
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.VERIFY_CARD
@@ -66,14 +73,15 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_M
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.otp.OtpVerifyScreen
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.VerificationDialog3ds
 import timber.log.Timber
 
 internal data class PayOrderScreen(
     private val config: CheckoutConfig,
+    private val attempt: VerificationAttempt? = null
 ) : AndroidScreen() {
 
     @Composable
@@ -97,6 +105,10 @@ internal data class PayOrderScreen(
         val cardSetupUiState by viewModel.threeDSSetupUiState
         val checkoutUiState by viewModel.checkoutUiState
 
+        val ghanaCardUiState by viewModel.ghanaCardUiState
+        var verificationAttempt by remember {
+            mutableStateOf(attempt)
+        }
 
         val paymentChannelsUiState by viewModel.paymentChannelsUiState
         val bankChannels = viewModel.bankChannels
@@ -107,7 +119,6 @@ internal data class PayOrderScreen(
         var showCancelDialog by remember { mutableStateOf(false) }
 
         val walletUiState = remember { PaymentWalletUiState(null) }
-        var currentCheckoutStep: CheckoutStep by remember { mutableStateOf(GET_FEES) }
 
         val bankCardUiState = remember(bankWallets) {
             BankCardUiState(
@@ -117,20 +128,26 @@ internal data class PayOrderScreen(
 
         val momoWalletUiState = remember { MomoWalletUiState() }
 
+        var currentCheckoutStep: CheckoutStep by rememberSaveable {
+            if (attempt == null) mutableStateOf(GET_FEES) else {
+                momoWalletUiState.mobileNumber = attempt.number
+                mutableStateOf(attempt.step ?: CHECKOUT)
+            }
+//            mutableStateOf(GET_FEES)
+        }
+
         val customerWalletsUiState by viewModel.customerWalletsUiState
+        val cachedMomoWalletsUiState by viewModel.cachedCustomerWalletsUiState
 
         val feeItem = remember(checkoutFeesUiState) {
             checkoutFeesUiState.data ?: CheckoutFee(
-                0.0,
-                0.0,
-                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue,
-                0.0
+                0.0, 0.0, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0
             )
         }
 
-        val shouldShowWebView = remember(
+        var shouldShowWebView = remember(
             walletUiState,
-            currentCheckoutStep,
+            currentCheckoutStep
         ) {
             currentCheckoutStep in COLLECT_DEVICE_INFO..VERIFY_CARD && walletUiState.isBankCard
         }
@@ -139,7 +156,7 @@ internal data class PayOrderScreen(
 
         val isLoading by remember {
             derivedStateOf {
-                (cardSetupUiState.isLoading || checkoutUiState.isLoading || currentCheckoutStep == COLLECT_DEVICE_INFO) && currentCheckoutStep in CARD_SETUP..CHECKOUT
+                (cardSetupUiState.isLoading || checkoutUiState.isLoading || customerWalletsUiState.isLoading || currentCheckoutStep == COLLECT_DEVICE_INFO) && currentCheckoutStep in CARD_SETUP..CHECKOUT
             }
         }
 
@@ -168,6 +185,7 @@ internal data class PayOrderScreen(
 //                        text = "${stringResource(R.string.checkout_pay)} ${orderTotal.formatMoney()}",
                         text = stringResource(R.string.checkout_pay),
                         onClick = {
+                            Timber.d("TAP: PAY tapped!")
                             currentCheckoutStep = PAY_ORDER
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapButtonPay)
                         },
@@ -248,7 +266,9 @@ internal data class PayOrderScreen(
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
                         },
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                        wallets = customerWalletsUiState.data ?: emptyList()
+                        wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
+                            ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList()
+//                        wallets = cachedMomoWalletsUiState.data ?: emptyList()
                     )
                 }
 
@@ -272,6 +292,7 @@ internal data class PayOrderScreen(
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapBankCard)
                         },
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
                     )
                 }
 
@@ -305,6 +326,13 @@ internal data class PayOrderScreen(
             )
         }
 
+        LaunchedEffect(checkoutUiState) {
+            if (checkoutUiState.data?.getBankCardStatus == BankCardStatus.AUTHENTICATION_SUCCESSFUL) {
+                currentCheckoutStep = PAYMENT_COMPLETED
+                shouldShowWebView = false
+            }
+        }
+
         if (shouldShowWebView) {
             VerificationDialog3ds(
                 step = currentCheckoutStep,
@@ -334,6 +362,7 @@ internal data class PayOrderScreen(
             )
 
             Timber.d("Custom Data: ${checkoutUiState.data?.customData}")
+            Timber.d("Bank Card Status: ${checkoutUiState.data?.getBankCardStatus}")
         }
 
         if (showCancelDialog) {
@@ -355,6 +384,46 @@ internal data class PayOrderScreen(
                     providerName = paymentInfo?.providerName,
                     config = config,
                     checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                )
+            )
+        }
+
+        if (attempt?.checkoutType == CheckoutType.DIRECT_DEBIT) {
+            currentCheckoutStep = PAYMENT_COMPLETED
+            navigator?.push(
+                PaymentStatusScreen(
+                    providerName = paymentInfo?.providerName,
+                    config = config,
+                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                )
+            )
+        }
+
+        if (attempt?.checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
+
+            CheckoutMessageDialog(
+                onDismissRequest = {},
+                titleText = stringResource(R.string.checkout_success),
+                message = stringResource(
+                    R.string.checkout_momo_bill_prompt_msg,
+                    paymentInfo?.accountNumber ?: attempt.number ?: "",
+                ),
+                positiveText = stringResource(R.string.checkout_okay),
+                onPositiveClick = {
+                    currentCheckoutStep = PAYMENT_COMPLETED
+//                    walletUiState.payOrderWalletType?.let { walletType ->
+//                        viewModel.payOrder(config, walletType)
+//                    }
+                    navigator?.push(
+                        PaymentStatusScreen(
+                            providerName = paymentInfo?.providerName,
+                            config = config,
+                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                        )
+                    )
+                },
+                properties = DialogProperties(
+                    dismissOnBackPress = false, dismissOnClickOutside = false
                 )
             )
         }
@@ -395,19 +464,73 @@ internal data class PayOrderScreen(
             )
         }
 
+        currentCheckoutStep
+        Timber.d("TAP [BEFORE]: $currentCheckoutStep")
+        if (businessInfoUiState.data?.requireNationalID == true && currentCheckoutStep == PAY_ORDER && attempt == null) {
+            currentCheckoutStep = if (walletUiState.isBankCard) {
+                PAY_ORDER
+            } else {
+                GHANA_CARD_VERIFICATION
+            }
+        }
+        Timber.d("TAP [AFTER]: $currentCheckoutStep")
+
+        if (currentCheckoutStep == GHANA_CARD_VERIFICATION && ghanaCardUiState.data?.getCardStatus == CardStatus.VERIFIED) {
+            viewModel.resetGhanaCardState()
+            currentCheckoutStep = CHECKOUT
+//            navigator?.push(
+//                GhCardConfirmationScreen(
+//                    config,
+//                    momoWalletUiState.mobileNumber ?: "",
+//                    unverified = true,
+//                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
+//                )
+//            )
+        }
+
+        if (currentCheckoutStep == GHANA_CARD_VERIFICATION && ghanaCardUiState.data?.getCardStatus == CardStatus.UN_VERIFIED) {
+            viewModel.resetGhanaCardState()
+            currentCheckoutStep = CHECKOUT
+            navigator?.push(
+                GhCardConfirmationScreen(
+                    config,
+                    momoWalletUiState.mobileNumber ?: "",
+                    unverified = true,
+                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                )
+            )
+        }
+
+        if (currentCheckoutStep == GHANA_CARD_VERIFICATION && ghanaCardUiState.error == UiText.DynamicString(
+                "Not Found"
+            )
+        ) {
+//            verificationAttempt = VerificationAttempt(true, momoWalletUiState.mobileNumber ?: "")
+            viewModel.resetGhanaCardState()
+            currentCheckoutStep = CHECKOUT
+            navigator?.push(
+                GhCardVerificationScreen(
+                    config,
+                    momoWalletUiState.mobileNumber ?: "",
+                    checkoutType = checkoutFeesUiState.data?.getCheckoutType,
+                )
+            )
+//            navigator?.push(GhCardConfirmationScreen(config, momoWalletUiState.mobileNumber ?: ""))
+        }
+
+        currentCheckoutStep
+
         LaunchedEffect(isLoading) {
             if (!isLoading && currentCheckoutStep == CHECKOUT) {
 
-                checkoutFeesUiState.data?.getCheckoutType
-                if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
+                // TODO: fix bank card pushing to OrderPlacedScreen on authenticating
+                if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM && walletUiState.isMomoWallet) {
                     navigator?.push(
                         OrderPlacedScreen(
                             walletName = "Mobile Money Wallet",
                             amount = checkoutFeesUiState.data?.amountPayable
                         )
                     )
-
-//                    navigator?.push(OtpVerifyScreen(""))
                 }
             }
         }
@@ -434,13 +557,18 @@ internal data class PayOrderScreen(
         ) {
             // update payment info object when user checkout input
             // changes
-            val walletType = walletUiState.payOrderWalletType ?: return@LaunchedEffect
+            val walletType: PayOrderWalletType
+            if (attempt != null) {
+                walletUiState.setWalletType(attempt.walletType)
+            }
+            walletType = walletUiState.payOrderWalletType ?: return@LaunchedEffect
 
             isPayButtonEnabled = when (walletType) {
                 MOBILE_MONEY -> momoWalletUiState.isValid
                 BANK_CARD -> bankCardUiState.isValid
-//                PayOrderWalletType.OTHERS -> otherPaymentUiState.isValid
             }
+
+            viewModel.getGhanaCardDetails(config, momoWalletUiState.mobileNumber ?: "")
 
             viewModel.updatePaymentInfo(
                 walletType,
@@ -450,9 +578,10 @@ internal data class PayOrderScreen(
 
             // ignore state change if we're not in the get
             // fees state or user wallet is hubtel balance
+//            if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
             if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
 
-            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid) /*|| (walletUiState.isOtherPayment && !otherPaymentUiState.isValid)*/) return@LaunchedEffect
+            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)) return@LaunchedEffect
 
             viewModel.getCheckoutFees(config)
         }
@@ -475,9 +604,12 @@ internal data class PayOrderScreen(
             }
         }
 
+        Timber.d("TAP [CASES]: $currentCheckoutStep")
+
         LaunchedEffect(currentCheckoutStep) {
             when (currentCheckoutStep) {
                 PAY_ORDER -> {
+                    Timber.d("TAP [INSIDE]: $currentCheckoutStep")
                     walletUiState.payOrderWalletType?.let { walletType ->
                         currentCheckoutStep =
                             getNextStepAfterPayOrder(walletType, checkoutFeesUiState)
@@ -489,15 +621,38 @@ internal data class PayOrderScreen(
                 }
 
                 CHECKOUT -> {
-                    walletUiState.payOrderWalletType?.let { walletType ->
-                        viewModel.payOrder(config, walletType)
+                    Timber.d("TAP [INSIDE]: $currentCheckoutStep")
+                    if (attempt != null) {
+                        Timber.d("National ID Required", "sending prompt after confirmation")
+                        walletUiState.setWalletType(attempt.walletType)
+                        walletUiState.payOrderWalletType?.let { walletType ->
+                            viewModel.payOrder(config, walletType)
+                        }
+                        currentCheckoutStep = PAYMENT_COMPLETED
+                    }
+
+                    if ((businessInfoUiState.data?.requireNationalID != true && !walletUiState.isMomoWallet) || walletUiState.isBankCard) {
+                        Timber.d("No National ID", "sending prompt immediately")
+
+                        walletUiState.payOrderWalletType?.let { walletType ->
+                            viewModel.payOrder(config, walletType)
+                        }
+                    }
+
+                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
+                        walletUiState.payOrderWalletType?.let { walletType ->
+                            viewModel.payOrder(config, walletType)
+                        }
+                    }
+
+                    if (checkoutUiState.data?.getBankCardStatus == BankCardStatus.AUTHENTICATION_SUCCESSFUL) {
+                        currentCheckoutStep = PAYMENT_COMPLETED
                     }
                 }
 
                 PAYMENT_COMPLETED -> {
-
-
-                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
+                    Timber.d("TAP [INSIDE]: $currentCheckoutStep")
+                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM && walletUiState.isMomoWallet) {
                         navigator?.push(
                             OrderPlacedScreen(
                                 walletName = "Mobile Money Wallet",
@@ -506,12 +661,27 @@ internal data class PayOrderScreen(
                         )
                     }
 
-                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT && checkoutUiState.data?.skipOtp == false && checkoutUiState.data?.getVerificationType == VerificationType.OTP) {
+                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT && checkoutUiState.data?.skipOtp == false && checkoutUiState.data?.getVerificationType == VerificationType.OTP /* && walletUiState.isMomoWallet*/) {
                         navigator?.push(OtpVerifyScreen(config, checkoutUiState.data!!))
+                    }
+
+                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
+                        Timber.d("TAP [INSIDE]: $currentCheckoutStep - DIRECT_DEBIT")
+                    }
+
+                    if (walletUiState.isBankCard) {
+                        navigator?.push(
+                            PaymentStatusScreen(
+                                providerName = paymentInfo?.providerName,
+                                config = config,
+                                checkoutType = null
+                            )
+                        )
                     }
 
                     return@LaunchedEffect
                 }
+
 
                 else -> {}
             }
@@ -574,3 +744,11 @@ internal data class PayOrderScreen(
         } else CHECKOUT
     }
 }
+
+internal data class VerificationAttempt(
+    val attempt: Boolean = false,
+    val number: String = "",
+    val step: CheckoutStep? = null,
+    val checkoutType: CheckoutType? = null,
+    val walletType: PayOrderWalletType? = null
+)

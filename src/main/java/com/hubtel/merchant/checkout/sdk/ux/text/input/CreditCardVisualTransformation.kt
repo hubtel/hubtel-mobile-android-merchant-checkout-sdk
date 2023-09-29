@@ -4,6 +4,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import java.util.Locale
 
 /*Visual transformation for Credit card format XXXX XXXX XXXX XXXX */
 internal class CreditCardVisualTransformation : VisualTransformation {
@@ -38,6 +39,74 @@ internal class CreditCardVisualTransformation : VisualTransformation {
             }
         }
 
+
+        return TransformedText(AnnotatedString(outputText), offsetMapping)
+    }
+}
+
+/*Visual transformation for Credit card format GHA-XXXXXXXXX-X */
+internal class GhanaCardVisualTransformation : VisualTransformation {
+
+    override fun filter(text: AnnotatedString): TransformedText {
+
+        val inputText = text.text.take(14)
+        var outputText = ""
+
+        inputText.forEachIndexed { index, char ->
+            outputText += char
+            if (index <= 2) outputText.uppercase(Locale.ROOT)
+            if (index == 2 || index == 11) outputText += "-" // Add a hyphen after the 3rd and 12th characters
+        }
+
+        val offsetMapping = object : OffsetMapping {
+
+            override fun originalToTransformed(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 11) return offset + 1
+                return 14
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 11) return offset - 1
+                return 11
+            }
+        }
+
+        return TransformedText(AnnotatedString(outputText), offsetMapping)
+    }
+}
+
+internal class GhanaCardVisualTransformation2 : VisualTransformation {
+
+    override fun filter(text: AnnotatedString): TransformedText {
+
+        val inputText = text.text.take(14)
+        var outputText = ""
+
+        inputText.forEachIndexed { index, char ->
+            if (index <= 2) {
+                outputText += char.uppercaseChar() // Convert the first three characters to uppercase
+            } else {
+                outputText += char
+            }
+            if (index == 2 || index == 11) outputText += "-" // Add a hyphen after the 3rd and 12th characters
+        }
+
+        val offsetMapping = object : OffsetMapping {
+
+            override fun originalToTransformed(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 11) return offset + 1
+                return 14
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 11) return offset - 1
+                return 11
+            }
+        }
 
         return TransformedText(AnnotatedString(outputText), offsetMapping)
     }

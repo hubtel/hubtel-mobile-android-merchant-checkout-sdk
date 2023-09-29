@@ -76,8 +76,6 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.failed_transaction.FailedPaymentScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction.PaidSuccessScreen
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.successful_transaction.TransactionSuccessfulScreen
 import kotlinx.coroutines.delay
 
 internal data class PaymentStatusScreen(
@@ -196,12 +194,10 @@ internal data class PaymentStatusScreen(
                         )
                         LoadingTextButton(
                             text = stringResource(com.hubtel.core_ui.R.string.done), onClick = {
-//                                    checkoutActivity?.finishWithResult(orderStatus, paymentStatus)
-                                navigator?.push(
-                                    TransactionSuccessfulScreen(
-                                        providerName = providerName, config = config
-                                    ),
-                                )
+                                    checkoutActivity?.finishWithResult(orderStatus, paymentStatus)
+//                                navigator?.push(
+//                                    TransactionSuccessfulScreen(providerName = "", config)
+//                                )
                                 recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
                             }, modifier = Modifier.fillMaxWidth()
                         )
@@ -222,9 +218,6 @@ internal data class PaymentStatusScreen(
                                 }
                             }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
                         )
-//                            navigator?.push(
-//                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
-//                            )
                     }
 
                     paymentStatus == PaymentStatus.UNPAID -> {
@@ -253,9 +246,23 @@ internal data class PaymentStatusScreen(
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
-//                            navigator?.push(
-//                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
-//                            )
+                    }
+
+                    uiState.hasError -> {
+                        LoadingTextButton(
+                            text = if (isCountingDown) {
+                                val time = countDownMillis.formatTime()
+                                "${stringResource(R.string.checkout_check_again)} ($time)"
+                            } else stringResource(R.string.checkout_check_again), onClick = {
+                                if (!isCountingDown) {
+                                    countDownMillis = CHECK_COUNTDOWN_TIME
+//                                        tapCount++
+
+                                    paymentStatusViewModel.checkPaymentStatus(config)
+                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                }
+                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
                     paymentStatus == PaymentStatus.FAILED -> {
@@ -267,9 +274,6 @@ internal data class PaymentStatusScreen(
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
-//                            navigator?.push(
-//                                WrongPINScreen(providerName = providerName, status = orderStatus!!, config = config)
-//                            )
                     }
                 }
             }
@@ -318,7 +322,43 @@ internal data class PaymentStatusScreen(
                     }
                 }
 
-                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
+                /*                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
+                                    Image(
+                                        painter = painterResource(R.drawable.checkout_ic_pending),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .padding(bottom = Dimens.paddingLarge)
+                                            .size(90.dp)
+                                            .align(Alignment.CenterHorizontally)
+                                    )
+
+                                    Text(
+                                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
+                                        style = HubtelTheme.typography.body2,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
+                                    )
+                                }
+
+                                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.DIRECT_DEBIT) {
+                                    Image(
+                                        painter = painterResource(R.drawable.checkout_ic_pending),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .padding(bottom = Dimens.paddingLarge)
+                                            .size(90.dp)
+                                            .align(Alignment.CenterHorizontally)
+                                    )
+
+                                    Text(
+                                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
+                                        style = HubtelTheme.typography.body2,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
+                                    )
+                                }*/
+
+                if (paymentStatus == PaymentStatus.PENDING && (checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT || checkoutType == CheckoutType.DIRECT_DEBIT || checkoutType == null)) {
                     Image(
                         painter = painterResource(R.drawable.checkout_ic_pending),
                         contentDescription = null,
@@ -336,7 +376,7 @@ internal data class PaymentStatusScreen(
                     )
                 }
 
-                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.DIRECT_DEBIT) {
+                if (uiState.hasError) {
                     Image(
                         painter = painterResource(R.drawable.checkout_ic_pending),
                         contentDescription = null,
@@ -353,21 +393,14 @@ internal data class PaymentStatusScreen(
                         modifier = Modifier.padding(vertical = Dimens.spacingDefault)
                     )
                 }
+
 
                 if (paymentStatus == PaymentStatus.PAID && (checkoutType == CheckoutType.DIRECT_DEBIT || checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT)) {
-//                    PaidSuccessContent()
-                    // TODO: navigate to paid screen
-                    navigator?.push(PaidSuccessScreen())
+//                    navigator?.push(PaidSuccessScreen())
+                    PaidSuccessContent()
                 }
 
                 if (paymentStatus == PaymentStatus.PAID && checkoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
-//                    SuccessfulTransaction(
-//                        maxHeight = maxHeight,
-//                        amountPaid = orderStatus?.transactionAmount
-//                    )
-
-                    // TODO: navigate to paid screen
-//                    navigator?.push(PaidSuccessScreen())
 
                     navigator?.push(
                         OrderPlacedScreen(
@@ -377,9 +410,11 @@ internal data class PaymentStatusScreen(
                     )
                 }
 
+                if (paymentStatus == PaymentStatus.PAID && checkoutType == null) {
+                    PaidSuccessContent()
+                }
+
                 if (paymentStatus == PaymentStatus.UNPAID) {
-//                    UnsuccessfulTransaction(maxHeight = maxHeight, orderStatus = orderStatus)
-                    // TODO: stay here as pending
                     Image(
                         painter = painterResource(R.drawable.checkout_ic_pending),
                         contentDescription = null,
@@ -398,7 +433,6 @@ internal data class PaymentStatusScreen(
                 }
 
                 if (paymentStatus == PaymentStatus.EXPIRED || paymentStatus == PaymentStatus.FAILED) {
-                    // TODO: navigate to payment failed screen
                     navigator?.push(
                         FailedPaymentScreen(
                             providerName = providerName,

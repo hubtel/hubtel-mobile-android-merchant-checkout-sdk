@@ -127,7 +127,8 @@ internal fun ExpandableMomoOption(
                     onValueChange = {
                         walletState = it
 
-                        if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber = it.accountNo
+                        if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber =
+                            it.accountNo
                     },
                     wallets = wallets
                 )
@@ -248,6 +249,15 @@ private fun WalletDropdownMenu(
                                     Text(
                                         text = it,
                                         color = HubtelTheme.colors.textPrimary,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                            Row {
+                                selectionOption?.provider?.let {
+                                    val providerName = if (it.contains("mtn")) "MTN Mobile Money" else "MTN"
+                                    Text(
+                                        text = providerName, color = HubtelTheme.colors.textDisabled,
                                         modifier = Modifier.weight(1f)
                                     )
                                 }

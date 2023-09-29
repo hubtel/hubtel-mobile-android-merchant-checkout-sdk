@@ -53,6 +53,7 @@ internal fun ExpandableBankCardOption(
     expanded: Boolean,
     onExpand: () -> Unit,
     modifier: Modifier = Modifier,
+    isInternalMerchant: Boolean = false
 ) {
 
     val bankProviders = remember(channels) { channels.toBankWalletProviders() }
@@ -85,37 +86,40 @@ internal fun ExpandableBankCardOption(
 
             // toggle use saved bank card
             if (wallets.isNotEmpty()) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
 
-                    // use new card
-                    TabChip(
-                        text = stringResource(R.string.checkout_use_new_card),
-                        selected = !state.useSavedBankCard,
-                        onClick = {
-                            state.useSavedBankCard = false
+                if (isInternalMerchant) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+
+                        // use new card
+                        TabChip(
+                            text = stringResource(R.string.checkout_use_new_card),
+                            selected = !state.useSavedBankCard,
+                            onClick = {
+                                state.useSavedBankCard = false
 //                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseNewCard)
-                        },
-                    )
+                            },
+                        )
 
-                    Spacer(Modifier.padding(Dimens.paddingNano))
+                        Spacer(Modifier.padding(Dimens.paddingNano))
 
-                    // use saved bank card
-                    TabChip(
-                        text = stringResource(R.string.checkout_use_saved_card),
-                        selected = state.useSavedBankCard,
-                        onClick = {
-                            state.useSavedBankCard = true
-                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseSavedCard)
-                        },
-                    )
+                        // use saved bank card
+                        TabChip(
+                            text = stringResource(R.string.checkout_use_saved_card),
+                            selected = state.useSavedBankCard,
+                            onClick = {
+                                state.useSavedBankCard = true
+                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseSavedCard)
+                            },
+                        )
+                    }
                 }
             }
 
             if (!state.useSavedBankCard) {
-                NewCardInputContent(state)
+                NewCardInputContent(state, isInternalMerchant = isInternalMerchant)
             } else {
                 SavedCardSelectContent(
                     state,
@@ -131,6 +135,7 @@ internal fun ExpandableBankCardOption(
 private fun NewCardInputContent(
     state: BankCardUiState,
     modifier: Modifier = Modifier,
+    isInternalMerchant: Boolean = false
 ) {
     val cardHolderNameFocusRequester = remember { FocusRequester() }
     val cardNumberFocusRequester = remember { FocusRequester() }
@@ -253,30 +258,32 @@ private fun NewCardInputContent(
             )
         }
 
-         Row(
-             verticalAlignment = Alignment.CenterVertically,
-             modifier = Modifier.clickable {
-                 state.saveForLater = state.saveForLater.not()
-             },
-         ) {
-             Checkbox(
-                 checked = state.saveForLater,
-                 onCheckedChange = null,
-                 colors = CheckboxDefaults.colors(
-                     checkedColor = CheckoutTheme.colors.colorPrimary,
-                     uncheckedColor = CheckoutTheme.colors.colorPrimary,
-                     checkmarkColor = HubtelTheme.colors.colorOnPrimary,
-                     disabledColor = HubtelTheme.colors.outline,
-                 )
-             )
+        if (isInternalMerchant) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable {
+                    state.saveForLater = state.saveForLater.not()
+                },
+            ) {
+                Checkbox(
+                    checked = state.saveForLater,
+                    onCheckedChange = null,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = CheckoutTheme.colors.colorPrimary,
+                        uncheckedColor = CheckoutTheme.colors.colorPrimary,
+                        checkmarkColor = HubtelTheme.colors.colorOnPrimary,
+                        disabledColor = HubtelTheme.colors.outline,
+                    )
+                )
 
-             Text(
-                 text = stringResource(R.string.checkout_card_future_use_mgs),
-                 modifier = Modifier
-                     .weight(1f)
-                     .padding(start = Dimens.spacingDefault),
-             )
-         }
+                Text(
+                    text = stringResource(R.string.checkout_card_future_use_mgs),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = Dimens.spacingDefault),
+                )
+            }
+        }
     }
 
 

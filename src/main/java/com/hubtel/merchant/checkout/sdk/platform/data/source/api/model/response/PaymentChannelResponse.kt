@@ -13,5 +13,11 @@ data class PaymentChannelResponse (
     val businessLogoURL: String?,
 
     @SerializedName("channels")
-    val channels: List<String>?
+    val channels: List<String>?,
+
+    @SerializedName("requireNationalID")
+    val requireNationalID: Boolean?,
+
+    @SerializedName("isHubtelInternalMerchant")
+    val isHubtelInternalMerchant: Boolean?
 )

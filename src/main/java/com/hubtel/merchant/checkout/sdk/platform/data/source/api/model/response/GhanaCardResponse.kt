@@ -15,7 +15,7 @@ data class GhanaCardResponse(
     @SerializedName("othernames")
     val otherNames: String?,
 
-    @SerializedName("dateOfBirth")
+    @SerializedName("birthday"/*, alternate = ["dateofbirth"]*/)
     val dateOfBirth: String?,
 
     @SerializedName("gender")
@@ -35,4 +35,16 @@ data class GhanaCardResponse(
 
     @SerializedName("nationalId")
     val nationalID: String?
-)
+) {
+    val getCardStatus: CardStatus
+        get() = when(status?.lowercase()) {
+            CardStatus.VERIFIED.rawValue -> CardStatus.VERIFIED
+            CardStatus.UN_VERIFIED.rawValue -> CardStatus.UN_VERIFIED
+            else -> CardStatus.UN_VERIFIED
+        }
+}
+
+enum class CardStatus(val rawValue: String) {
+    VERIFIED("verified"),
+    UN_VERIFIED("unverified")
+}

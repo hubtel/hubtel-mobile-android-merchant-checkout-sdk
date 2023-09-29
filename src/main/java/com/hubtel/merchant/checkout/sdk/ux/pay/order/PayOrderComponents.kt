@@ -29,6 +29,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberImagePainter
+import coil.transform.CircleCropTransformation
 import com.hubtel.core_ui.components.custom.HBDivider
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
@@ -81,11 +83,20 @@ internal fun CheckoutReceiptCard(
                 Row(
                     modifier = Modifier
                         .padding(horizontal = Dimens.paddingDefault)
-                        .padding(top = Dimens.paddingLarge),
+                        .padding(top = Dimens.paddingSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val painter =
+                        rememberImagePainter(
+                            data = businessInfo.logo,
+                            builder = {
+                                transformations(
+                                    CircleCropTransformation()
+                                )
+                            },
+                        )
                     Image(
-                        painter = painterResource(R.drawable.mtn_ic_logo), // businessInfo.logo
+                        painter = painter,
                         contentDescription = null,
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier

@@ -15,6 +15,7 @@ import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
@@ -27,8 +28,15 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
     private val _otpUiState = mutableStateOf(UiState2<OtpResponse>())
     val otpUiState: State<UiState2<OtpResponse>> = _otpUiState
 
-    fun verify(config: CheckoutConfig, req: OtpReq) {
+    fun verify(config: CheckoutConfig, checkoutInfo: CheckoutInfo, otpValue: String) {
         viewModelScope.launch {
+
+            val req = OtpReq(
+                checkoutInfo.customerMsisdn ?: "",
+                checkoutInfo.hubtelPreapprovalId ?: "",
+                config.clientReference ?: "",
+                "${checkoutInfo.otpPrefix}-$otpValue"
+            )
             verifyOtp(config, req)
         }
     }

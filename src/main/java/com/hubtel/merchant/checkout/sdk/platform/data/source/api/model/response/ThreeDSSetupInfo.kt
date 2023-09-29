@@ -10,5 +10,5 @@ internal data class ThreeDSSetupInfo(
     @SerializedName("transactionId")
     val transactionId: String?,
     @SerializedName("deviceDataCollectionUrl")
-    val deviceDataCollectionUrl: String?
+    val deviceDataCollectionUrl: String?,
 )
