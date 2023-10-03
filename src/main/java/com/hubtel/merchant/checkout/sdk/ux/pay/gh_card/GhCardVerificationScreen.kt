@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,11 +23,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -39,6 +42,7 @@ import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.text.input.GhanaCardVisualTransformation2
@@ -79,44 +83,45 @@ internal class GhCardVerificationScreen(
 
         var cardNumber by remember { mutableStateOf("") }
 
-        var cardState = viewModel.cardUiState
+        val cardState by viewModel.cardUiState
 
-        HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2, topBar = {
-            HBTopAppBar(title = {
-                Text(text = "Verification")
-            }, onNavigateUp = {
-                navigator?.pop()
-            })
-        }, bottomBar = {
-            Column(modifier = Modifier.animateContentSize()) {
-                Divider(color = HubtelTheme.colors.outline)
-                LoadingTextButton(
-                    text = "SUBMIT",
-                    onClick = {
-                        val card = hyphenate(cardNumber)
-//                        viewModel.addGhanaCard(config, phoneNumber, card)
+        var showErrorDialog by remember { mutableStateOf(false) }
+        var isButtonLoading by remember { mutableStateOf(false) }
 
-                        navigator?.push(
-                            GhCardConfirmationScreen(
-                                config,
-                                phoneNumber,
-                                cardNumber = card,
-                                unverified = false,
-                                checkoutType = checkoutType
-                            )
-                        )
-                    },
-                    enabled = isButtonEnabled,
+        HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2,
+//            modifier = Modifier.verticalScroll(
+//                rememberScrollState()
+//            ),
+            topBar = {
+                HBTopAppBar(title = {
+                    Text(text = "Verification")
+                }, onNavigateUp = {
+                    navigator?.pop()
+                })
+            },
+            bottomBar = {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimens.paddingSmall),
-                )
-            }
-        }) {
+                        .animateContentSize()
+                ) {
+                    Divider(color = HubtelTheme.colors.outline)
+                    LoadingTextButton(
+                        text = "SUBMIT",
+                        onClick = {
+                            isButtonLoading = true
+                            val card = hyphenate(cardNumber)
+                            viewModel.addGhanaCard(config, phoneNumber, card)
+                        },
+                        enabled = isButtonEnabled,
+                        loading = isButtonLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Dimens.paddingSmall),
+                    )
+                }
+            }) {
 
             Column(
-//            horizontalAlignment = Alignment.CenterHorizontally,
-//            verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize()
@@ -183,8 +188,40 @@ internal class GhCardVerificationScreen(
                     visualTransformation = GhanaCardVisualTransformation2()
                 )
 
+                if (showErrorDialog) {
+                    CheckoutMessageDialog(
+                        onDismissRequest = {},
+                        titleText = "Error",
+                        message = cardState.error,
+                        positiveText = stringResource(R.string.checkout_okay),
+                        onPositiveClick = {
+                            showErrorDialog = false
+                        },
+                        properties = DialogProperties(
+                            dismissOnBackPress = false, dismissOnClickOutside = false
+                        )
+                    )
+                }
+
+            }
+        }
+
+        LaunchedEffect(cardState) {
+            if (cardState.success) {
+                navigator?.push(
+                    GhCardConfirmationScreen(
+                        config,
+                        phoneNumber,
+                        cardNumber = "card",
+                        checkoutType = checkoutType
+                    )
+                )
             }
 
+            if (cardState.hasError) {
+                showErrorDialog = true
+                isButtonLoading = false
+            }
         }
     }
 

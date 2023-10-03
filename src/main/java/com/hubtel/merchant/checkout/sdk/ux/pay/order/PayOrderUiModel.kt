@@ -7,7 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.PurchaseOrderItem
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.DbWallet
-import com.hubtel.merchant.checkout.sdk.platform.model.OtherPaymentWallet
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
@@ -40,6 +39,10 @@ internal class PaymentWalletUiState(
         payOrderWalletType == PayOrderWalletType.MOBILE_MONEY
     }
 
+    val isOtherPaymentWallet by derivedStateOf {
+        payOrderWalletType == PayOrderWalletType.MOBILE_MONEY
+    }
+
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
     }
@@ -53,17 +56,15 @@ internal class MomoWalletUiState() {
 
     val isValid
         get() = (mobileNumber?.length ?: 0) >= 9
-                && walletProvider != null
+                    && walletProvider != null
 }
 
-internal class OtherPaymentUiState(method: OtherPaymentWallet? = null) {
-    var number by mutableStateOf<String?>(null)
-    var paymentProvider by mutableStateOf<WalletProvider?>(WalletProvider.Hubtel)
-    var selectedMethod by mutableStateOf<OtherPaymentWallet?>(method)
-    var enterNewNumber by mutableStateOf("")
+internal class OtherPaymentUiState() {
+    var mobileNumber by mutableStateOf<String?>(null)
+    var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.Hubtel)
 
     val isValid
-        get() = (number?.length ?: 0) >= 9 && paymentProvider != null
+        get() = (mobileNumber?.length ?: 0) >= 9 && walletProvider != null
 }
 
 internal class BankCardUiState(
@@ -83,6 +84,8 @@ internal class BankCardUiState(
 
     var saveForLater by mutableStateOf(false)
 
+    var isInternalMerchant by mutableStateOf(false)
+
     var selectedWallet by mutableStateOf<Wallet?>(wallet)
 
     val isValid: Boolean
@@ -90,12 +93,18 @@ internal class BankCardUiState(
             return if (useSavedBankCard) {
                 selectedWallet != null
             } else {
-                cardNumber.length == 16
+                val commonConditions = cardNumber.length == 16
                         && monthYear.text.length == 5
                         && cvv.length == 3
-                        && cardHolderName.isNotBlank()
+
+                return if (!isInternalMerchant) {
+                    commonConditions && cardHolderName.isNotBlank()
+                } else {
+                    commonConditions
+                }
             }
         }
+
 
     override fun toString(): String {
         return """
@@ -167,7 +176,7 @@ internal data class PaymentInfo(
 internal enum class PayOrderWalletType {
     MOBILE_MONEY,
     BANK_CARD,
-//    OTHERS;
+    OTHER_PAYMENT
 }
 
 internal val PayOrderWalletType.paymentTypeName: String
@@ -175,10 +184,11 @@ internal val PayOrderWalletType.paymentTypeName: String
         return when (this) {
             PayOrderWalletType.MOBILE_MONEY -> "mobilemoney"
             PayOrderWalletType.BANK_CARD -> "card"
-//            PayOrderWalletType.OTHERS -> "others"
+            PayOrderWalletType.OTHER_PAYMENT -> "others"
         }
     }
 
+// TODO: Add other payment methods' channels
 internal val WalletProvider.channelName: String
     get() {
         return when {
@@ -225,9 +235,9 @@ internal enum class PaymentChannel(val rawValue: String) {
 
     //    VODAFONE("vodafone-gh"),
     AIRTEL_TIGO("tigo-gh"),
-    G_MONEY("gmoney"),
-    ZEE_PAY("zee-pay"),
-    HUBTEL("hubtel");
+    G_MONEY("g-money"),
+    ZEE_PAY("zeepay"),
+    HUBTEL("hubtel-gh");
 }
 
 internal fun List<String>.toPaymentChannels(): List<PaymentChannel> {
@@ -289,6 +299,7 @@ internal fun CheckoutConfig.toPurchaseOrderItem(): PurchaseOrderItem {
 }
 
 
+// TODO: Move to response package
 internal data class BusinessResponseInfo(
     val businessID: String?,
     val businessName: String?,

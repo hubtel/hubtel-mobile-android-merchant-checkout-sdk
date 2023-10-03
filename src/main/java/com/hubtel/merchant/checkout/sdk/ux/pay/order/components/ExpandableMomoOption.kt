@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
@@ -55,6 +56,7 @@ import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.MomoWalletUiState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toMomoWalletProviders
+import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -65,6 +67,8 @@ internal fun ExpandableMomoOption(
     expanded: Boolean,
     onExpand: () -> Unit,
     modifier: Modifier = Modifier,
+    onAddNewTapped: () -> Unit,
+//    isInternalMerchant: Boolean = false,
     wallets: List<WalletResponse> = emptyList(),
 ) {
     val context = LocalContext.current
@@ -80,6 +84,8 @@ internal fun ExpandableMomoOption(
 
     val phoneNumberFocusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
+
+//    state.isInternalMerchant = isInternalMerchant
 
     ExpandablePaymentOption(
         title = stringResource(R.string.checkout_mobile_money),
@@ -130,7 +136,8 @@ internal fun ExpandableMomoOption(
                         if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber =
                             it.accountNo
                     },
-                    wallets = wallets
+                    wallets = wallets,
+                    onAddNewTapped = onAddNewTapped
                 )
             }
 
@@ -187,6 +194,7 @@ private fun WalletDropdownMenu(
     onValueChange: (WalletResponse) -> Unit,
     modifier: Modifier = Modifier,
     wallets: List<WalletResponse?> = listOf(),
+    onAddNewTapped: () -> Unit,
     placeholder: @Composable (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -248,37 +256,61 @@ private fun WalletDropdownMenu(
                                 selectionOption?.accountNo?.let {
                                     Text(
                                         text = it,
-                                        color = HubtelTheme.colors.textPrimary,
+                                        color = CheckoutTheme.colors.colorPrimary,
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
                             Row {
-                                selectionOption?.provider?.let {
-                                    val providerName = if (it.contains("mtn")) "MTN Mobile Money" else "MTN"
+                                selectionOption?.getProvider?.let {
+                                    val providerName = it
                                     Text(
-                                        text = providerName, color = HubtelTheme.colors.textDisabled,
+                                        text = providerName,
+                                        color = CheckoutTheme.colors.colorAccent,
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
                         }
                     }
+
+                    Divider(
+                        color = HubtelTheme.colors.outline,
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault)
+                    )
                 }
 
-//                Row(
-//                    verticalAlignment = CenterVertically,
-//                    modifier = Modifier.padding(
-//                        vertical = Dimens.paddingNano,
-//                        horizontal = Dimens.paddingDefault
-//                    ),
-//                ) {
-//                    Text(
-//                        text = "Add new number",
-//                        color = HubtelTheme.colors.textPrimary,
-//                        modifier = Modifier.weight(1f)
-//                    )
-//                }
+                // add new number
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.paddingNano),
+                    verticalAlignment = CenterVertically,
+                    modifier = Modifier
+                        .clickable {
+                            onAddNewTapped()
+                        }
+                        .padding(horizontal = Dimens.paddingDefault, vertical = Dimens.paddingNano),
+                ) {
+
+                    Icon(
+                        painter = painterResource(R.drawable.checkout_ic_add_circle_outline),
+                        contentDescription = null,
+                        tint = CheckoutTheme.colors.colorPrimary,
+                        modifier = Modifier.size(26.dp),
+                    )
+
+                    Text(
+                        text = "Add a new number",
+                        color = CheckoutTheme.colors.colorPrimary,
+                        style = HubtelTheme.typography.h3,
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    Icon(
+                        painter = painterResource(R.drawable.checkout_ic_caret_right_deep),
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
             }
         }
     }

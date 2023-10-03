@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
@@ -41,9 +42,11 @@ import com.hubtel.core_ui.layouts.HBScaffold
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.toCardReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
+import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep
@@ -56,7 +59,7 @@ internal data class GhCardConfirmationScreen(
     val config: CheckoutConfig,
     val phoneNumber: String,
     val cardNumber: String? = null,
-    val unverified: Boolean,
+    val unverified: Boolean = true,
     val checkoutType: CheckoutType? = null
 ) :
     Screen {
@@ -81,7 +84,10 @@ internal data class GhCardConfirmationScreen(
             mutableStateOf(false)
         }
 
+        var showErrorDialog by remember { mutableStateOf(false) }
+
         val ghanaCardUiState by viewModel.ghanaCardUiState
+        val confirmUiState by viewModel.confirmUiState
 
         val isLoading by remember {
             derivedStateOf { ghanaCardUiState.isLoading }
@@ -107,6 +113,8 @@ internal data class GhCardConfirmationScreen(
 //                            phoneNumber
 //                        )
 
+                        viewModel.confirmGhanaCard2(config, ghanaCardUiState.data?.toCardReq())
+
                         navigator?.push(
                             PayOrderScreen(
                                 config = config,
@@ -126,7 +134,6 @@ internal data class GhCardConfirmationScreen(
                 )
             }
         }) {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -152,6 +159,47 @@ internal data class GhCardConfirmationScreen(
                     )
                     GhanaCard(cardDetails = ghanaCardUiState.data)
                 }
+
+                if (ghanaCardUiState.hasError) {
+                    CheckoutMessageDialog(
+                        onDismissRequest = {},
+                        titleText = "Card details not found",
+                        message = confirmUiState.error,
+                        positiveText = stringResource(R.string.checkout_okay),
+                        onPositiveClick = {
+                            navigator?.push(
+                                PayOrderScreen(
+                                    config = config,
+                                    attempt = VerificationAttempt(
+                                        false,
+                                        number = phoneNumber,
+                                        step = CheckoutStep.GET_FEES,
+                                        checkoutType = checkoutType,
+                                        walletType = PayOrderWalletType.MOBILE_MONEY
+                                    )
+                                )
+                            )
+                        },
+                        properties = DialogProperties(
+                            dismissOnBackPress = false, dismissOnClickOutside = false
+                        )
+                    )
+                }
+            }
+
+            if (showErrorDialog) {
+                CheckoutMessageDialog(
+                    onDismissRequest = {},
+                    titleText = "Error",
+                    message = confirmUiState.error,
+                    positiveText = stringResource(R.string.checkout_okay),
+                    onPositiveClick = {
+                        showErrorDialog = false
+                    },
+                    properties = DialogProperties(
+                        dismissOnBackPress = false, dismissOnClickOutside = false
+                    )
+                )
             }
 
         } // HBScaffold
@@ -170,10 +218,33 @@ internal data class GhCardConfirmationScreen(
         }
 
         LaunchedEffect(Unit) {
-            if (unverified) {
-                viewModel.getGhanaCardDetails(config, phoneNumber)
-            } else {
-                viewModel.addGhanaCard(config, phoneNumber, cardNumber ?: "")
+//            if (unverified) {
+//                viewModel.getGhanaCardDetails(config, phoneNumber)
+//            } else {
+//                viewModel.addGhanaCard(config, phoneNumber, cardNumber ?: "")
+//            }
+
+            viewModel.getGhanaCardDetails(config, phoneNumber)
+        }
+
+        LaunchedEffect(confirmUiState) {
+            if (confirmUiState.success) {
+                navigator?.push(
+                    PayOrderScreen(
+                        config = config,
+                        attempt = VerificationAttempt(
+                            true,
+                            number = phoneNumber,
+                            step = CheckoutStep.CHECKOUT,
+                            checkoutType = checkoutType,
+                            walletType = PayOrderWalletType.MOBILE_MONEY
+                        )
+                    )
+                )
+            }
+
+            if (confirmUiState.hasError) {
+                showErrorDialog = true
             }
         }
 

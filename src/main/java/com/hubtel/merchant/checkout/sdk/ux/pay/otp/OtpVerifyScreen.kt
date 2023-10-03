@@ -43,6 +43,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import com.hubtel.core_ui.components.custom.HBTopAppBar
 import com.hubtel.core_ui.extensions.LocalActivity
 import com.hubtel.core_ui.layouts.HBScaffold
+import com.hubtel.core_ui.model.UiText
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
@@ -196,7 +197,10 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
                 )
             }
 
-            if (otpUiState.hasError) {
+            if (otpUiState.error == UiText.DynamicString(
+                    "OTP Verification Failed. Try again"
+                )
+            ) {
                 showErrorMessage = true
                 isLoading = false
             }

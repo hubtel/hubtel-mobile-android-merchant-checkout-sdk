@@ -2,6 +2,7 @@ package com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response
 
 import com.google.gson.annotations.SerializedName
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.HubtelWallet
+import java.util.Locale
 
 data class WalletResponse(
     val id: Long? = null,
@@ -67,7 +68,7 @@ data class WalletResponse(
 ) {
     val getProvider: String?
         get() {
-            return when (providerID?.toLowerCase()) {
+            return when (provider?.lowercase(Locale.ROOT)) {
                 "mtn" -> "MTN Mobile Money"
                 "vodafone" -> "Vodafone Cash"
                 "airtel tigo" -> "Airtel Tigo"

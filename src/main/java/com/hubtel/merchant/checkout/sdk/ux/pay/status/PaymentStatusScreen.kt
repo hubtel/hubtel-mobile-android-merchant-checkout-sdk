@@ -76,7 +76,9 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.failed_transaction.FailedPaymentScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
+import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
+import timber.log.Timber
 
 internal data class PaymentStatusScreen(
     private val providerName: String?,
@@ -101,6 +103,9 @@ internal data class PaymentStatusScreen(
         val screenHeight = LocalConfiguration.current.screenHeightDp
         val density = LocalDensity.current.density
         val maxHeight = (screenHeight / density).dp
+
+        var reloadAttempt by remember { mutableStateOf(false) }
+        var buttonReloadAttempt by remember { mutableStateOf(false) }
 
         val context = LocalContext.current
         val activity = LocalActivity.current
@@ -177,17 +182,28 @@ internal data class PaymentStatusScreen(
                     .animateContentSize(),
             ) {
 
+                Timber.d("BEFORE LOAD: $beforeInitialLoad")
                 when {
                     beforeInitialLoad -> {
                         LoadingTextButton(
                             text = stringResource(R.string.checkout_i_have_paid), onClick = {
                                 paymentStatusViewModel.checkPaymentStatus(config)
                                 recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
+                                reloadAttempt = true
                             }, loading = isLoading, modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                    // TODO: Should be removed
+//                    beforeInitialLoad && !buttonReloadAttempt -> {
+//                        LoadingTextButton(
+//                            text = stringResource(R.string.checkout_i_have_paid), onClick = {
+//                                paymentStatusViewModel.checkPaymentStatus(config)
+//                                recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
+//                                reloadAttempt = true
+//                            }, loading = isLoading, modifier = Modifier.fillMaxWidth()
+//                        )
+//                    }
+
                     paymentStatus == PaymentStatus.PAID -> {
                         Divider(
                             color = HubtelTheme.colors.outline,
@@ -275,6 +291,23 @@ internal data class PaymentStatusScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+
+                    else -> {
+                        LoadingTextButton(
+                            text = if (isCountingDown) {
+                                val time = countDownMillis.formatTime()
+                                "${stringResource(R.string.checkout_check_again)} ($time)"
+                            } else stringResource(R.string.checkout_check_again), onClick = {
+                                if (!isCountingDown) {
+                                    countDownMillis = CHECK_COUNTDOWN_TIME
+//                                        tapCount++
+
+                                    paymentStatusViewModel.checkPaymentStatus(config)
+                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                }
+                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }) { paddingValues ->
@@ -287,7 +320,8 @@ internal data class PaymentStatusScreen(
             ) {
 
                 // first time before user attempts to verify order status
-                if (beforeInitialLoad) {
+                beforeInitialLoad
+                if (beforeInitialLoad && !reloadAttempt) {
                     Image(
                         painter = painterResource(R.drawable.checkout_ic_receipt_payment),
                         contentDescription = null,
@@ -303,6 +337,8 @@ internal data class PaymentStatusScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(vertical = Dimens.spacingDefault)
                     )
+
+                    buttonReloadAttempt = true
                 }
 
                 // check payment status request in flight
@@ -312,7 +348,8 @@ internal data class PaymentStatusScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.padding(bottom = Dimens.paddingLarge)
+                            modifier = Modifier.padding(bottom = Dimens.paddingLarge),
+                            color = CheckoutTheme.colors.colorPrimary
                         )
 
                         Text(
@@ -321,42 +358,6 @@ internal data class PaymentStatusScreen(
                         )
                     }
                 }
-
-                /*                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
-                                    Image(
-                                        painter = painterResource(R.drawable.checkout_ic_pending),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .padding(bottom = Dimens.paddingLarge)
-                                            .size(90.dp)
-                                            .align(Alignment.CenterHorizontally)
-                                    )
-
-                                    Text(
-                                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
-                                        style = HubtelTheme.typography.body2,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
-                                    )
-                                }
-
-                                if (paymentStatus == PaymentStatus.PENDING && checkoutType == CheckoutType.DIRECT_DEBIT) {
-                                    Image(
-                                        painter = painterResource(R.drawable.checkout_ic_pending),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .padding(bottom = Dimens.paddingLarge)
-                                            .size(90.dp)
-                                            .align(Alignment.CenterHorizontally)
-                                    )
-
-                                    Text(
-                                        text = stringResource(R.string.checkout_other_bill_prompt_msg),
-                                        style = HubtelTheme.typography.body2,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
-                                    )
-                                }*/
 
                 if (paymentStatus == PaymentStatus.PENDING && (checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT || checkoutType == CheckoutType.DIRECT_DEBIT || checkoutType == null)) {
                     Image(

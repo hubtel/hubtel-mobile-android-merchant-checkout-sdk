@@ -68,6 +68,7 @@
     <string name="checkout_mtn_code">*170#, </string>
     <string name="checkout_select_approvals">go to My Account and select Approvals.</string>
 
+    <string name="checkout_hubtel_balance_debit_msg">Your balance on Hubtel will be debited immediately you confirm payment.\n\nNo authorisation prompt will be sent to you.</string>
 
     <string name="checkout_processing_payment">Processing Payment</string>
     <string name="checkout_confirm_order">Confirm Order</string>

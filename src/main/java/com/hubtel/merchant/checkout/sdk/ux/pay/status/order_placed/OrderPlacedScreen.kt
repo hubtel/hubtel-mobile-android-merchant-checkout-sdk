@@ -51,7 +51,7 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
     private fun ScreenContent() {
         val screenHeight = LocalConfiguration.current.screenHeightDp
         val density = LocalDensity.current.density
-        val maxHeight = (screenHeight / density).dp
+        val maxHeight = ((screenHeight / density) + (screenHeight / density) * 0.1).dp
 
         val context = LocalContext.current
         val activity = LocalActivity.current
@@ -125,9 +125,10 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
                         )
 
                         Text(
-                            text = "Your $walletName will be debited with GHS $amount after your order is confirmed  ",
+                            text = "Your $walletName will be debited with GHS $amount after your order is confirmed",
                             style = HubtelTheme.typography.h3,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = Dimens.paddingDefault)
                         )
                     }
                 }

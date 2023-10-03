@@ -80,6 +80,10 @@ internal class PayOrderViewModel constructor(
     var momoChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
 
+    var otherChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
+        private set
+
+
     var paymentInfo by mutableStateOf<PaymentInfo?>(null)
         private set
 
@@ -143,9 +147,23 @@ internal class PayOrderViewModel constructor(
     fun updatePaymentInfo(
         payOrderWalletType: PayOrderWalletType,
         momoWalletUiState: MomoWalletUiState,
+        otherPaymentUiState: OtherPaymentUiState,
         bankCardUiState: BankCardUiState,
     ) {
         paymentInfo = when (payOrderWalletType) {
+            PayOrderWalletType.OTHER_PAYMENT -> {
+
+
+                PaymentInfo(
+                    walletId = "0",
+                    accountName = "",
+                    accountNumber = momoWalletUiState.mobileNumber,
+                    paymentType = payOrderWalletType.paymentTypeName,
+                    providerName = "Hubtel",
+                    channel = "hubtel-gh"
+                )
+            }
+
             PayOrderWalletType.MOBILE_MONEY -> {
                 val walletProvider = momoWalletUiState.walletProvider
 
@@ -342,8 +360,16 @@ internal class PayOrderViewModel constructor(
                 PayOrderWalletType.MOBILE_MONEY -> {
                     payOrderWithMomo(config)
                 }
+
+                PayOrderWalletType.OTHER_PAYMENT -> {
+                    payOrderWithOthers(config)
+                }
             }
         }
+    }
+
+    private suspend fun payOrderWithOthers(config: CheckoutConfig) {
+        // TODO: Implement other payment methods
     }
 
     private suspend fun payOrderWithCard(config: CheckoutConfig) {
@@ -574,6 +600,7 @@ internal class PayOrderViewModel constructor(
 
                     bankChannels = resultChannels.getBankChannels()
                     momoChannels = resultChannels.getMomoChannels()
+                    otherChannels = resultChannels.getOtherChannels()
 
                     unifiedCheckoutRepository.savePaymentChannels(resultChannels)
                 }
@@ -591,6 +618,10 @@ internal class PayOrderViewModel constructor(
 
     private fun List<PaymentChannel>.getMomoChannels(): List<PaymentChannel> = filter { channel ->
         channel == PaymentChannel.MTN || channel == PaymentChannel.VODAFONE || channel == PaymentChannel.AIRTEL_TIGO
+    }
+
+    private fun List<PaymentChannel>.getOtherChannels(): List<PaymentChannel> = filter { channel ->
+        channel == PaymentChannel.HUBTEL || channel == PaymentChannel.ZEE_PAY || channel == PaymentChannel.G_MONEY
     }
 
     private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =

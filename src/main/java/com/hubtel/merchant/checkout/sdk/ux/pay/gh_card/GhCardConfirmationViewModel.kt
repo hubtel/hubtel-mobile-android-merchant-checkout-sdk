@@ -9,11 +9,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.hubtel.core_ui.extensions.update
+import com.hubtel.core_ui.model.UiState
 import com.hubtel.core_ui.model.UiState2
 import com.hubtel.core_ui.model.UiText
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.CardReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
@@ -27,12 +29,14 @@ internal class GhCardConfirmationViewModel constructor(private val unifiedChecko
     private val _ghanaCardUiState = mutableStateOf(UiState2<GhanaCardResponse>())
     val ghanaCardUiState: State<UiState2<GhanaCardResponse>> = _ghanaCardUiState
 
+    private val _confirmUiState = mutableStateOf(UiState<Any>())
+    val confirmUiState: State<UiState<Any>> = _confirmUiState
+
     fun getGhanaCardDetails(config: CheckoutConfig, phoneNumber: String) {
         viewModelScope.launch {
 
             val result = unifiedCheckoutRepository.getGhanaCardDetails(
-                config.posSalesId ?: "",
-                phoneNumber
+                config.posSalesId ?: "", phoneNumber
             )
             _ghanaCardUiState.update {
                 UiState2(isLoading = true)
@@ -48,8 +52,7 @@ internal class GhCardConfirmationViewModel constructor(private val unifiedChecko
                 is ApiResult.HttpError -> {
                     _ghanaCardUiState.update {
                         UiState2(
-                            success = false,
-                            error = UiText.DynamicString(result.message ?: "")
+                            success = false, error = UiText.DynamicString(result.message ?: "")
                         )
                     }
                 }
@@ -79,9 +82,7 @@ internal class GhCardConfirmationViewModel constructor(private val unifiedChecko
                 is ApiResult.Success -> {
                     _ghanaCardUiState.update {
                         UiState2(
-                            isLoading = false,
-                            data = result.response.data,
-                            success = true
+                            isLoading = false, data = result.response.data, success = true
                         )
                     }
                 }
@@ -89,8 +90,7 @@ internal class GhCardConfirmationViewModel constructor(private val unifiedChecko
                 is ApiResult.HttpError -> {
                     _ghanaCardUiState.update {
                         UiState2(
-                            isLoading = false,
-                            error = UiText.DynamicString(result.message ?: "")
+                            isLoading = false, error = UiText.DynamicString(result.message ?: "")
                         )
                     }
                 }
@@ -103,9 +103,34 @@ internal class GhCardConfirmationViewModel constructor(private val unifiedChecko
     fun confirmGhanaCard(config: CheckoutConfig, phoneNumber: String) {
         viewModelScope.launch {
             val result = unifiedCheckoutRepository.ghanaCardConfirm(
-                config.posSalesId ?: "",
-                phoneNumber = phoneNumber ?: ""
+                config.posSalesId ?: "", phoneNumber = phoneNumber ?: ""
             )
+        }
+    }
+
+    fun confirmGhanaCard2(config: CheckoutConfig, req: CardReq?) {
+        viewModelScope.launch {
+            val result = unifiedCheckoutRepository.ghanaCardConfirm2(
+                config.posSalesId ?: "", req ?: CardReq()
+            )
+
+            when (result) {
+                is ApiResult.Success -> {
+                    _confirmUiState.update {
+                        UiState(isLoading = false, success = true)
+                    }
+                }
+
+                is ApiResult.HttpError -> {
+                    _confirmUiState.update {
+                        UiState(
+                            isLoading = false, error = result.message ?: ""
+                        )
+                    }
+                }
+
+                else -> {}
+            }
         }
     }
 

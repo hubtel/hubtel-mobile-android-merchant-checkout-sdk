@@ -115,6 +115,8 @@ internal fun ExpandableBankCardOption(
                             },
                         )
                     }
+                } else {
+                    state.useSavedBankCard = false
                 }
             }
 
@@ -161,22 +163,24 @@ private fun NewCardInputContent(
         modifier = modifier.bringIntoViewRequester(bringIntoViewRequester),
     ) {
 
-        HBTextField(
-            value = state.cardHolderName,
-            onValueChange = { value ->
-                state.cardHolderName = value
-            },
-            placeholder = {
-                Text(text = "Card Holder Name")
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Ascii,
-                capitalization = KeyboardCapitalization.Words,
-            ),
-            modifier = Modifier
-                .focusRequester(cardHolderNameFocusRequester)
-                .fillMaxWidth()
-        )
+        if (!isInternalMerchant) {
+            HBTextField(
+                value = state.cardHolderName,
+                onValueChange = { value ->
+                    state.cardHolderName = value
+                },
+                placeholder = {
+                    Text(text = "Card Holder Name")
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Ascii,
+                    capitalization = KeyboardCapitalization.Words,
+                ),
+                modifier = Modifier
+                    .focusRequester(cardHolderNameFocusRequester)
+                    .fillMaxWidth()
+            )
+        }
 
         HBTextField(
             value = state.cardNumber,
@@ -245,6 +249,7 @@ private fun NewCardInputContent(
                     val inputText = value.filter { it.isDigit() }
                     if (inputText.length <= 3) {
                         state.cvv = inputText
+                        state.isInternalMerchant = isInternalMerchant
                     }
                 },
                 placeholder = {
@@ -289,7 +294,9 @@ private fun NewCardInputContent(
 
     LaunchedEffect(Unit) {
         delay(500)
-        cardHolderNameFocusRequester.requestFocus()
+        if (!isInternalMerchant) {
+            cardHolderNameFocusRequester.requestFocus()
+        }
         bringIntoViewRequester.bringIntoView()
     }
 }
