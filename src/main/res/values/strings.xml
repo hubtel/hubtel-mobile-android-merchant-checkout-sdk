@@ -64,11 +64,15 @@
     <string name="checkout_airtel_tigo_money">AirtelTigo Money</string>
     <string name="checkout_mobile_money_payment_info_msg">You will be required to enter your %1$s PIN to authorise payment.</string>
 
+
     <string name="checkout_receive_mtn_prompt">If you don\'t receive any authorisation prompt, dial</string>
     <string name="checkout_mtn_code">*170#, </string>
     <string name="checkout_select_approvals">go to My Account and select Approvals.</string>
 
     <string name="checkout_hubtel_balance_debit_msg">Your balance on Hubtel will be debited immediately you confirm payment.\n\nNo authorisation prompt will be sent to you.</string>
+    <string name="checkout_gmoney_balance_debit_msg">You will be required to enter your Mandate ID to confirm your transaction.</string>
+    <string name="checkout_zeepay_authorize">Steps to authorize the payment process</string>
+    <string name="checkout_zeepay_steps">\n1. Dial *270#\n2. Select Option 8 (Account)\n3. Select Option 4 (Approve Payment)\n4. Enter PIN to make payment</string>
 
     <string name="checkout_processing_payment">Processing Payment</string>
     <string name="checkout_confirm_order">Confirm Order</string>

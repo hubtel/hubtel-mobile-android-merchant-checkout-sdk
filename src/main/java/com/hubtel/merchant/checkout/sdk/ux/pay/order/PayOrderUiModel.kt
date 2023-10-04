@@ -40,7 +40,7 @@ internal class PaymentWalletUiState(
     }
 
     val isOtherPaymentWallet by derivedStateOf {
-        payOrderWalletType == PayOrderWalletType.MOBILE_MONEY
+        payOrderWalletType == PayOrderWalletType.OTHER_PAYMENT
     }
 
     fun setWalletType(type: PayOrderWalletType?) {
@@ -198,6 +198,18 @@ internal val WalletProvider.channelName: String
 
             provider.contains("airtel", ignoreCase = true) -> {
                 "tigo-gh"
+            }
+
+            provider.contains("hubtel", ignoreCase = true) -> {
+                "hubtel-gh"
+            }
+
+            provider.contains("g-money", ignoreCase = true) -> {
+                "g-money"
+            }
+
+            provider.contains("zeepay", ignoreCase = true) -> {
+                "zeepay"
             }
 
             else -> "${provider.lowercase()}-gh-direct-debit"

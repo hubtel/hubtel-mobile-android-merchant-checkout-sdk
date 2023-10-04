@@ -568,7 +568,7 @@ internal class PayOrderViewModel constructor(
         paymentInfo = null
     }
 
-    fun getPaymentChannels(salesId: String?) {
+    /*fun getPaymentChannels(salesId: String?) {
         viewModelScope.launch {
             salesId ?: return@launch
 
@@ -610,7 +610,7 @@ internal class PayOrderViewModel constructor(
             }
 
         }
-    }
+    }*/
 
     private fun List<PaymentChannel>.getBankChannels(): List<PaymentChannel> = filter { channel ->
         channel == PaymentChannel.MASTERCARD || channel == PaymentChannel.VISA
@@ -639,6 +639,7 @@ internal class PayOrderViewModel constructor(
                 val savedChannels = unifiedCheckoutRepository.getPaymentChannels().apply {
                     bankChannels = this.getBankChannels()
                     momoChannels = this.getMomoChannels()
+                    otherChannels = this.getOtherChannels()
                 }
 
                 _paymentChannelsUiState.update {

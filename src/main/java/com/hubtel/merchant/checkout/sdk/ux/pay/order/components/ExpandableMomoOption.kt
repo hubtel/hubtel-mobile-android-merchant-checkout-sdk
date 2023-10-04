@@ -141,7 +141,7 @@ internal fun ExpandableMomoOption(
                 )
             }
 
-            MobileWalletProviderDownMenu(
+            OtherWalletProviderDownMenu(
                 value = state.walletProvider,
                 onValueChange = { state.walletProvider = it },
                 providers = momoProviders,
@@ -170,7 +170,6 @@ internal fun ExpandableMomoOption(
                     },
                     style = HubtelTheme.typography.body2,
                 )
-
             }
         }
     }
@@ -317,7 +316,7 @@ private fun WalletDropdownMenu(
 }
 
 @Composable
-private fun MobileWalletProviderDownMenu(
+private fun OtherWalletProviderDownMenu(
     value: WalletProvider?,
     onValueChange: (WalletProvider) -> Unit,
     modifier: Modifier = Modifier,

@@ -1,6 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.order
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -43,6 +46,7 @@ import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPur
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BankCardStatus
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BusinessInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CardStatus
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
@@ -67,7 +71,9 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.VERIFY_CARD
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_CARD
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.OTHER_PAYMENT
-import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption2
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableOtherPayments
 import com.hubtel.merchant.checkout.sdk.ux.pay.otp.OtpVerifyScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
@@ -106,7 +112,7 @@ internal data class PayOrderScreen(
         val paymentChannelsUiState by viewModel.paymentChannelsUiState
         val bankChannels = viewModel.bankChannels
         val momoChannels = viewModel.momoChannels
-        val othersChannels = viewModel.otherChannels
+        val otherChannels = viewModel.otherChannels
 
         val businessInfoUiState by viewModel.businessInfoUiState
 
@@ -204,7 +210,7 @@ internal data class PayOrderScreen(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                /*CheckoutReceiptCard(
+                CheckoutReceiptCard(
                     fees = listOf(feeItem),
                     amount = config.amount,
                     total = orderTotal,
@@ -295,31 +301,39 @@ internal data class PayOrderScreen(
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                         isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
                     )
-                } */
-                // HERE
+                }
 
                 Divider(
                     color = HubtelTheme.colors.outline,
                     modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
                 )
 
-                ExpandableMomoOption2(
-                    state = otherPaymentUiState,
-                    channels = othersChannels,
-                    expanded = walletUiState.isOtherPaymentWallet,
-                    onExpand = {
-                        walletUiState.setWalletType(OTHER_PAYMENT)
-                        recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
-                    },
+                if (otherChannels.isNotEmpty()) {
+                    Divider(
+                        color = HubtelTheme.colors.outline,
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                    )
+                }
+
+                AnimatedVisibility(otherChannels.isNotEmpty()) {
+                    ExpandableOtherPayments(
+                        state = otherPaymentUiState,
+                        channels = otherChannels,
+                        expanded = walletUiState.isOtherPaymentWallet,
+                        onExpand = {
+                            walletUiState.setWalletType(OTHER_PAYMENT)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
 //                        isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true,
-                    modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                    wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
-                        ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
+                            ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
 //                        wallets = cachedMomoWalletsUiState.data ?: emptyList()
-                    onAddNewTapped = {
-                        navigator?.push(AddWalletScreen(config))
-                    }
-                )
+                        onAddNewTapped = {
+                            navigator?.push(AddWalletScreen(config))
+                        }
+                    )
+                }
 
                 Box(
                     modifier = Modifier
@@ -568,6 +582,10 @@ internal data class PayOrderScreen(
             bankCardUiState.saveForLater,
             bankCardUiState.selectedWallet,
             bankCardUiState.cardHolderName,
+//            if (businessInfoUiState.data?.isHubtelInternalMerchant == false) {
+//                bankCardUiState.cardHolderName
+//            } else {
+//            },
             bankCardUiState.cardNumber,
             bankCardUiState.monthYear,
             bankCardUiState.cvv,
@@ -581,7 +599,8 @@ internal data class PayOrderScreen(
             if (attempt != null) {
                 walletUiState.setWalletType(attempt.walletType)
             }
-            val walletType: PayOrderWalletType = walletUiState.payOrderWalletType ?: return@LaunchedEffect
+            val walletType: PayOrderWalletType =
+                walletUiState.payOrderWalletType ?: return@LaunchedEffect
 
             isPayButtonEnabled = when (walletType) {
                 MOBILE_MONEY -> momoWalletUiState.isValid
@@ -603,7 +622,8 @@ internal data class PayOrderScreen(
 //            if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
             if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
 
-            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)) return@LaunchedEffect
+//            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)) return@LaunchedEffect
+            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid) || (walletUiState.isOtherPaymentWallet && !otherPaymentUiState.isValid)) return@LaunchedEffect
 
             viewModel.getCheckoutFees(config)
         }

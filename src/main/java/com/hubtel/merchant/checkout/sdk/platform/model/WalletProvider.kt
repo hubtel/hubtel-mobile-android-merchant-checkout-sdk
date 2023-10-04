@@ -14,6 +14,9 @@ internal enum class WalletImages(
     Tigo(R.drawable.checkout_logo_airtel_money),
     Visa(R.drawable.checkout_visa_colored),
     Mastercard(R.drawable.checkout_mastercard_colored),
+    Hubtel(R.drawable.checkout_ic_hubtel),
+    ZeePay(R.drawable.checkout_ic_zeepay),
+    GMoney(R.drawable.checkout_ic_gmoney)
 }
 
 
@@ -21,6 +24,7 @@ internal enum class WalletProvider(
     val provider: String,
     @StringRes val providerNameResId: Int,
     val walletImages: WalletImages,
+    @StringRes val description: Int? = null
 ) {
     MTN("mtn", R.string.checkout_mtn_mobile_money, WalletImages.MTN),
     Vodafone(
@@ -40,9 +44,14 @@ internal enum class WalletProvider(
     Mastercard(
         "mastercard", R.string.checkout_mastercard, WalletImages.Mastercard
     ),
-    Hubtel("hubtel-gh", R.string.checkout_hubtel, WalletImages.Airtel), // TODO: replace images
-    GMoney("g-money", R.string.checkout_g_money, WalletImages.Visa), // TODO: replace images
-    ZeePay("zeepay", R.string.checkout_zeepay, WalletImages.Mastercard), // TODO: replace images
+    Hubtel(
+        "hubtel-gh",
+        R.string.checkout_hubtel,
+        WalletImages.Hubtel,
+        R.string.checkout_hubtel_balance_debit_msg
+    ),
+    GMoney("g-money", R.string.checkout_g_money, WalletImages.GMoney),
+    ZeePay("zeepay", R.string.checkout_zeepay, WalletImages.ZeePay, R.string.checkout_zeepay_steps),
 }
 
 internal fun String.toWalletProvider(): WalletProvider? {

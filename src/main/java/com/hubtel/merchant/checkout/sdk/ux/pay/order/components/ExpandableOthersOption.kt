@@ -46,7 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
-import com.hubtel.core_ui.components.custom.HBDivider
 import com.hubtel.core_ui.components.custom.HBTextField
 import com.hubtel.core_ui.theme.Dimens
 import com.hubtel.core_ui.theme.HubtelTheme
@@ -61,7 +60,7 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun ExpandableMomoOption2(
+internal fun ExpandableOtherPayments(
     state: OtherPaymentUiState,
     channels: List<PaymentChannel>,
     expanded: Boolean,
@@ -102,7 +101,7 @@ internal fun ExpandableMomoOption2(
                     Image(
                         painter = painterResource(provider.walletImages.logo),
                         contentDescription = stringResource(provider.providerNameResId),
-                        modifier = Modifier.height(20.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -113,66 +112,65 @@ internal fun ExpandableMomoOption2(
             modifier = Modifier.padding(Dimens.paddingDefault),
             verticalArrangement = Arrangement.spacedBy(Dimens.paddingDefault),
         ) {
-            if (wallets.isEmpty()) {
-                HBTextField(
-                    value = state.mobileNumber ?: "",
-                    onValueChange = { value ->
-                        if (value.isDigitsOnly()) state.mobileNumber = value
-                    },
-                    placeholder = {
-                        Text(stringResource(R.string.checkout_wallet_phone_number))
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(phoneNumberFocusRequester)
-                        .bringIntoViewRequester(bringIntoViewRequester)
-                )
-            } else {
-                WalletDropdownMenu(
-                    wallet = walletState,
-                    onValueChange = {
-                        walletState = it
 
-                        if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber =
-                            it.accountNo
-                    },
-                    wallets = wallets,
-                    onAddNewTapped = onAddNewTapped
-                )
-            }
-
-            MobileWalletProviderDownMenu(
+            OtherWalletProviderDownMenu(
                 value = state.walletProvider,
                 onValueChange = { state.walletProvider = it },
                 providers = otherChannelProviders,
             )
 
-            Text(
-                text = stringResource(
-                    R.string.checkout_mobile_money_payment_info_msg,
-                    state.walletProvider?.let {
-                        context.getString(it.providerNameResId)
-                    } ?: "",
-                ),
-                style = HubtelTheme.typography.body2,
-            )
+            if (state.walletProvider?.provider != WalletProvider.Hubtel.provider) {
+                if (wallets.isEmpty()) {
+                    HBTextField(
+                        value = state.mobileNumber ?: "",
+                        onValueChange = { value ->
+                            if (value.isDigitsOnly()) state.mobileNumber = value
+                        },
+                        placeholder = {
+                            Text(stringResource(R.string.checkout_wallet_phone_number))
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(phoneNumberFocusRequester)
+                            .bringIntoViewRequester(bringIntoViewRequester)
+                    )
+                } else {
+                    WalletDropdownMenu(
+                        wallet = walletState,
+                        onValueChange = {
+                            walletState = it
 
-            if (state.walletProvider?.provider == WalletProvider.MTN.provider) {
-                Text(
-                    buildAnnotatedString {
-                        append(stringResource(R.string.checkout_receive_mtn_prompt))
-
-                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                        append(" ${stringResource(R.string.checkout_mtn_code)} ")
-                        pop()
-
-                        append(stringResource(R.string.checkout_select_approvals))
-                    },
-                    style = HubtelTheme.typography.body2,
-                )
-
+                            if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber =
+                                it.accountNo
+                        },
+                        wallets = wallets,
+                        onAddNewTapped = onAddNewTapped
+                    )
+                }
             }
+
+            when (state.walletProvider?.provider) {
+                WalletProvider.Hubtel.provider -> {
+                    Text(text = stringResource(id = R.string.checkout_hubtel_balance_debit_msg))
+                }
+                WalletProvider.GMoney.provider -> {
+                    Text(text = stringResource(id = R.string.checkout_gmoney_balance_debit_msg))
+                }
+                WalletProvider.ZeePay.provider -> {
+                    Text(
+                        buildAnnotatedString {
+                            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                            append(" ${stringResource(R.string.checkout_zeepay_authorize)} ")
+                            pop()
+
+                            append(stringResource(R.string.checkout_zeepay_steps))
+                        },
+                        style = HubtelTheme.typography.body2,
+                    )
+                }
+            }
+
         }
     }
 
@@ -182,9 +180,11 @@ internal fun ExpandableMomoOption2(
 
         delay(500)
 
-        if (wallets.isEmpty()) {
-            phoneNumberFocusRequester.requestFocus()
-            bringIntoViewRequester.bringIntoView()
+        if (state.walletProvider?.provider != WalletProvider.Hubtel.provider) {
+            if (wallets.isEmpty()) {
+                phoneNumberFocusRequester.requestFocus()
+                bringIntoViewRequester.bringIntoView()
+            }
         }
     }
 }
@@ -318,7 +318,7 @@ private fun WalletDropdownMenu(
 }
 
 @Composable
-private fun MobileWalletProviderDownMenu(
+private fun OtherWalletProviderDownMenu(
     value: WalletProvider?,
     onValueChange: (WalletProvider) -> Unit,
     modifier: Modifier = Modifier,
@@ -387,18 +387,12 @@ private fun MobileWalletProviderDownMenu(
                                 color = HubtelTheme.colors.textPrimary,
                                 modifier = Modifier.weight(1f)
                             )
-
-                            Icon(
-                                painter = painterResource(com.hubtel.core_ui.R.drawable.core_ic_caret_right_deep),
-                                contentDescription = null,
-                                modifier = Modifier.size(30.dp),
-                            )
                         }
                     }
 
-                    if (selectionOption != providers.lastOrNull()) {
-                        HBDivider(Modifier.padding(horizontal = Dimens.paddingDefault))
-                    }
+//                    if (selectionOption != providers.lastOrNull()) {
+//                        HBDivider(Modifier.padding(horizontal = Dimens.paddingDefault))
+//                    }
                 }
             }
         }
