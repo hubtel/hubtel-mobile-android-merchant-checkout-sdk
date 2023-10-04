@@ -74,6 +74,16 @@
     <string name="checkout_zeepay_authorize">Steps to authorize the payment process</string>
     <string name="checkout_zeepay_steps">\n1. Dial *270#\n2. Select Option 8 (Account)\n3. Select Option 4 (Approve Payment)\n4. Enter PIN to make payment</string>
 
+    <string name="checkout_gmoney_mandate_id_msg">Steps to generate a mandate ID on G-Money\n\n</string>
+    <string name="checkout_gmoney_mandate_id_steps">
+        1 Dial *422#\n\n
+        2 Select Option 2 (G-Money)\n\n
+        3 Select Option 4 (Payment Services)\n\n
+        4 Select Option 6 (Mandate)\n\n
+        5 Select Option 1 (Create Mandate)\n\n
+    </string>
+    <string name="checkout_enter_new_mandate_id">Enter new Mandate ID</string>
+
     <string name="checkout_processing_payment">Processing Payment</string>
     <string name="checkout_confirm_order">Confirm Order</string>
     <string name="checkout_orders_and_delivery">Orders and Delivery</string>

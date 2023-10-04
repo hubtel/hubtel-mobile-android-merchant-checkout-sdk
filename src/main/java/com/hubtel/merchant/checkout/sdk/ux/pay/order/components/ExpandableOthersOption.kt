@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -154,9 +156,35 @@ internal fun ExpandableOtherPayments(
                 WalletProvider.Hubtel.provider -> {
                     Text(text = stringResource(id = R.string.checkout_hubtel_balance_debit_msg))
                 }
+
                 WalletProvider.GMoney.provider -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            state.newMandate = state.newMandate.not()
+                        },
+                    ) {
+                        Checkbox(
+                            checked = state.newMandate,
+                            onCheckedChange = null,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = CheckoutTheme.colors.colorPrimary,
+                                uncheckedColor = CheckoutTheme.colors.colorPrimary,
+                                checkmarkColor = HubtelTheme.colors.colorOnPrimary,
+                                disabledColor = HubtelTheme.colors.outline,
+                            )
+                        )
+
+                        Text(
+                            text = stringResource(R.string.checkout_enter_new_mandate_id),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = Dimens.spacingDefault),
+                        )
+                    }
                     Text(text = stringResource(id = R.string.checkout_gmoney_balance_debit_msg))
                 }
+
                 WalletProvider.ZeePay.provider -> {
                     Text(
                         buildAnnotatedString {

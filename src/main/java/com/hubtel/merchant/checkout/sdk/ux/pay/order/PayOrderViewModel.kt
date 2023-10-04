@@ -57,7 +57,8 @@ internal class PayOrderViewModel constructor(
     val customerWalletsUiState: State<UiState2<List<WalletResponse>>> = _customerWalletsUiState
 
     private var _cachedCustomerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
-    val cachedCustomerWalletsUiState: State<UiState2<List<WalletResponse>>> = _cachedCustomerWalletsUiState
+    val cachedCustomerWalletsUiState: State<UiState2<List<WalletResponse>>> =
+        _cachedCustomerWalletsUiState
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
@@ -153,14 +154,15 @@ internal class PayOrderViewModel constructor(
         paymentInfo = when (payOrderWalletType) {
             PayOrderWalletType.OTHER_PAYMENT -> {
 
+                val walletProvider = otherPaymentUiState.walletProvider
 
                 PaymentInfo(
                     walletId = "0",
-                    accountName = "",
-                    accountNumber = momoWalletUiState.mobileNumber,
+                    accountName = otherPaymentUiState.accountName ?: "",
+                    accountNumber = otherPaymentUiState.mobileNumber,
                     paymentType = payOrderWalletType.paymentTypeName,
-                    providerName = "Hubtel",
-                    channel = "hubtel-gh"
+                    providerName = walletProvider?.provider,
+                    channel = walletProvider?.channelName
                 )
             }
 
@@ -211,19 +213,6 @@ internal class PayOrderViewModel constructor(
                     saveForLater = bankCardUiState.saveForLater
                 )
             }
-
-//            PayOrderWalletType.OTHERS -> {
-//                val provider = otherPaymentUiState.paymentProvider
-//
-//                PaymentInfo(
-//                    walletId = "",
-//                    accountName = "",
-//                    accountNumber = otherPaymentUiState.number,
-//                    paymentType = payOrderWalletType.paymentTypeName,
-//                    providerName = provider?.provider,
-//                    channel = provider?.name // TODO: replace
-//                )
-//            }
         }.also {
             Timber.i("PaymentInfo: $it")
         }
@@ -369,7 +358,49 @@ internal class PayOrderViewModel constructor(
     }
 
     private suspend fun payOrderWithOthers(config: CheckoutConfig) {
-        // TODO: Implement other payment methods
+        _checkoutUiState.update { UiState2(isLoading = true) }
+
+        val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
+            salesId = config.posSalesId ?: "",
+            req = MobileMoneyCheckoutReq(
+                amount = config.amount,
+                channel = paymentInfo?.channel,
+                clientReference = config.clientReference,
+                customerMsisdn = paymentInfo?.accountNumber,
+                customerName = "",
+                description = config.description,
+                primaryCallbackUrl = config.callbackUrl
+            )
+        )
+
+        when (result) {
+            is ApiResult.Success -> {
+                _checkoutUiState.update { UiState2(success = true, data = result.response.data) }
+            }
+
+            is ApiResult.HttpError -> {
+                _checkoutUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.DynamicString(result.message ?: "")
+                    )
+                }
+            }
+
+            else -> {
+                _checkoutUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
+                }
+            }
+        }
+
+        paymentInfo?.let {
+            if (it.saveForLater) saveCard(it)
+        }
+
     }
 
     private suspend fun payOrderWithCard(config: CheckoutConfig) {
@@ -626,7 +657,8 @@ internal class PayOrderViewModel constructor(
 
     private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
         coroutineScope {
-            val savedMomoWallets = unifiedCheckoutRepository.savedMomoWallets().map { it.toWalletResponse() }
+            val savedMomoWallets =
+                unifiedCheckoutRepository.savedMomoWallets().map { it.toWalletResponse() }
             _cachedCustomerWalletsUiState.update {
                 UiState2(data = savedMomoWallets)
             }

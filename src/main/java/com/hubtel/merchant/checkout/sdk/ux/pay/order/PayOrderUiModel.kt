@@ -61,7 +61,10 @@ internal class MomoWalletUiState() {
 
 internal class OtherPaymentUiState() {
     var mobileNumber by mutableStateOf<String?>(null)
+    var accountName by mutableStateOf<String?>(null)
     var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.Hubtel)
+
+    var newMandate by mutableStateOf(false)
 
     val isValid
         get() = (mobileNumber?.length ?: 0) >= 9 && walletProvider != null

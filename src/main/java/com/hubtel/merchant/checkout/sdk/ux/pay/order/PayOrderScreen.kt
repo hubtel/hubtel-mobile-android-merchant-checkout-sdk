@@ -275,6 +275,7 @@ internal data class PayOrderScreen(
 //                        wallets = cachedMomoWalletsUiState.data ?: emptyList()
                         onAddNewTapped = {
                             navigator?.push(AddWalletScreen(config))
+//                            navigator?.push(AddMandateScreen(config))
                         }
                     )
                 }
@@ -315,7 +316,7 @@ internal data class PayOrderScreen(
                     )
                 }
 
-                AnimatedVisibility(otherChannels.isNotEmpty()) {
+                AnimatedVisibility(otherChannels.isNotEmpty()  && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
                     ExpandableOtherPayments(
                         state = otherPaymentUiState,
                         channels = otherChannels,
@@ -324,11 +325,9 @@ internal data class PayOrderScreen(
                             walletUiState.setWalletType(OTHER_PAYMENT)
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
                         },
-//                        isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true,
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                         wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
-                            ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
-//                        wallets = cachedMomoWalletsUiState.data ?: emptyList()
+                            ?: emptyList() else emptyList(),
                         onAddNewTapped = {
                             navigator?.push(AddWalletScreen(config))
                         }
@@ -513,7 +512,7 @@ internal data class PayOrderScreen(
 
         Timber.d("TAP [BEFORE]: $currentCheckoutStep")
         if (businessInfoUiState.data?.requireNationalID == true && currentCheckoutStep == PAY_ORDER && attempt == null) {
-            currentCheckoutStep = if (walletUiState.isBankCard) {
+            currentCheckoutStep = if (walletUiState.isBankCard || walletUiState.isOtherPaymentWallet) {
                 PAY_ORDER
             } else {
                 GHANA_CARD_VERIFICATION
@@ -578,14 +577,9 @@ internal data class PayOrderScreen(
         LaunchedEffect(
             walletUiState.payOrderWalletType,
             bankCardUiState.useSavedBankCard,
-//            bankCardUiState.isHubtelInternalMerchant,
             bankCardUiState.saveForLater,
             bankCardUiState.selectedWallet,
             bankCardUiState.cardHolderName,
-//            if (businessInfoUiState.data?.isHubtelInternalMerchant == false) {
-//                bankCardUiState.cardHolderName
-//            } else {
-//            },
             bankCardUiState.cardNumber,
             bankCardUiState.monthYear,
             bankCardUiState.cvv,
@@ -601,6 +595,9 @@ internal data class PayOrderScreen(
             }
             val walletType: PayOrderWalletType =
                 walletUiState.payOrderWalletType ?: return@LaunchedEffect
+
+            Timber.d("WalletType: $walletType")
+            Timber.d("Channel: ${otherPaymentUiState.walletProvider?.channelName}")
 
             isPayButtonEnabled = when (walletType) {
                 MOBILE_MONEY -> momoWalletUiState.isValid
@@ -664,8 +661,16 @@ internal data class PayOrderScreen(
 
                 CHECKOUT -> {
                     Timber.d("TAP [INSIDE]: $currentCheckoutStep")
-                    if (attempt != null) {
-                        Timber.d("National ID Required", "sending prompt after confirmation")
+
+                    if (attempt == null) {
+                        walletUiState.payOrderWalletType?.let { walletType ->
+                            viewModel.payOrder(config, walletType)
+                        }
+
+                        if (checkoutUiState.data?.getBankCardStatus == BankCardStatus.AUTHENTICATION_SUCCESSFUL) {
+                            currentCheckoutStep = PAYMENT_COMPLETED
+                        }
+                    } else {
                         walletUiState.setWalletType(attempt.walletType)
                         walletUiState.payOrderWalletType?.let { walletType ->
                             viewModel.payOrder(config, walletType)
@@ -673,40 +678,6 @@ internal data class PayOrderScreen(
                         currentCheckoutStep = PAYMENT_COMPLETED
                     }
 
-                    if ((businessInfoUiState.data?.requireNationalID != true && !walletUiState.isMomoWallet) || walletUiState.isBankCard) {
-                        Timber.d("No National ID", "sending prompt immediately")
-
-                        walletUiState.payOrderWalletType?.let { walletType ->
-                            viewModel.payOrder(config, walletType)
-                        }
-                    }
-//
-//                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
-//                        walletUiState.payOrderWalletType?.let { walletType ->
-//                            viewModel.payOrder(config, walletType)
-//                        }
-//                    }
-//
-//                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
-//                        Timber.d("RECEIVE_MONEY_PROMPT", "Running here ...")
-//                        walletUiState.payOrderWalletType?.let { walletType ->
-//                            viewModel.payOrder(config, walletType)
-//                        }
-//                    }
-//
-//                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM) {
-//                        walletUiState.payOrderWalletType?.let { walletType ->
-//                            viewModel.payOrder(config, walletType)
-//                        }
-//                    }
-
-                    walletUiState.payOrderWalletType?.let { walletType ->
-                        viewModel.payOrder(config, walletType)
-                    }
-
-                    if (checkoutUiState.data?.getBankCardStatus == BankCardStatus.AUTHENTICATION_SUCCESSFUL) {
-                        currentCheckoutStep = PAYMENT_COMPLETED
-                    }
                 }
 
                 PAYMENT_COMPLETED -> {

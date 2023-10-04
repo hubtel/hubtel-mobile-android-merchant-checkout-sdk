@@ -29,7 +29,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,6 +47,7 @@ import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import timber.log.Timber
 import java.util.Locale
 
@@ -91,7 +91,7 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
         val activity = LocalActivity.current
         val navigator = LocalNavigator.current
 
-        HBScaffold(topBar = {
+        HBScaffold(backgroundColor = Color.White, topBar = {
             HBTopAppBar(title = {
                 Text(text = "Add Mobile Wallet")
             }, onNavigateUp = {
@@ -133,7 +133,8 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
                 Text(text = "Select Mobile Network")
                 Box(modifier = Modifier.padding(bottom = Dimens.paddingDefault))
 
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(space = Dimens.paddingDefault)) {
+//                LazyRow(horizontalArrangement = Arrangement.spacedBy(space = Dimens.paddingDefault)) {
+                LazyRow(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                     itemsIndexed(providers) { index, res ->
 
                         Column(
@@ -142,7 +143,7 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
                         ) {
 
                             val borderColor =
-                                if (selectedItem == index) colorResource(id = com.hubtel.core_ui.R.color.teal_primary) else Color.LightGray
+                                if (selectedItem == index) CheckoutTheme.colors.colorPrimary else CheckoutTheme.colors.colorAccent
 
                             Surface(
                                 color = Color.Transparent,
@@ -165,7 +166,7 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .padding(Dimens.paddingMicro)
-                                        .size(64.dp)
+                                        .size(40.dp)
                                         .clip(CircleShape)
                                         .border(Dimens.paddingMicro, Color.White, CircleShape),
                                 )
