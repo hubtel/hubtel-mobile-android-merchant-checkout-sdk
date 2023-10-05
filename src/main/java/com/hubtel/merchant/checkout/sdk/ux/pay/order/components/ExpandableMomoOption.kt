@@ -117,7 +117,9 @@ internal fun ExpandableMomoOption(
                 HBTextField(
                     value = state.mobileNumber ?: "",
                     onValueChange = { value ->
-                        if (value.isDigitsOnly()) state.mobileNumber = value
+                        if (value.isDigitsOnly()) {
+                            state.mobileNumber = value
+                        }
                     },
                     placeholder = {
                         Text(stringResource(R.string.checkout_wallet_phone_number))
@@ -129,6 +131,9 @@ internal fun ExpandableMomoOption(
                         .bringIntoViewRequester(bringIntoViewRequester)
                 )
             } else {
+                if (state.isWalletSelected) {
+                    state.mobileNumber = walletState.accountNo
+                }
                 WalletDropdownMenu(
                     wallet = walletState,
                     onValueChange = {

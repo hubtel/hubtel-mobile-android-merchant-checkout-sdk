@@ -74,7 +74,6 @@ import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.channelName
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPurchaseOrderItem
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.failed_transaction.FailedPaymentScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
@@ -283,7 +282,7 @@ internal data class PaymentStatusScreen(
 
                     paymentStatus == PaymentStatus.FAILED -> {
                         LoadingTextButton(
-                            text = stringResource(R.string.checkout_cancel_transaction_title),
+                            text = stringResource(R.string.checkout_cancel_transaction),
                             onClick = {
                                 checkoutActivity?.finishWithResult()
 //                                    onPaymentComplete(false)
@@ -316,7 +315,7 @@ internal data class PaymentStatusScreen(
                     .padding(paddingValues)
                     .fillMaxSize(),
 //                    .padding(Dimens.paddingDefault),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
 
                 // first time before user attempts to verify order status
@@ -434,12 +433,27 @@ internal data class PaymentStatusScreen(
                 }
 
                 if (paymentStatus == PaymentStatus.EXPIRED || paymentStatus == PaymentStatus.FAILED) {
-                    navigator?.push(
-                        FailedPaymentScreen(
-                            providerName = providerName,
-                            orderStatus?.mobileNumber,
-                            config = config
-                        )
+//                    navigator?.push(
+//                        FailedPaymentScreen(
+//                            providerName = providerName,
+//                            orderStatus?.mobileNumber,
+//                            config = config
+//                        )
+//                    )
+                    Image(
+                        painter = painterResource(R.drawable.checkout_ic_alert_red),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(bottom = Dimens.paddingLarge)
+                            .size(90.dp)
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    Text(
+                        text = stringResource(R.string.checkout_failed),
+                        style = HubtelTheme.typography.body2,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = Dimens.spacingDefault).fillMaxWidth()
                     )
                 }
 

@@ -144,6 +144,9 @@ internal fun ExpandableOtherPayments(
                             .bringIntoViewRequester(bringIntoViewRequester)
                     )
                 } else {
+                    if (state.isWalletSelected) {
+                        state.mobileNumber = walletState.accountNo
+                    }
                     WalletDropdownMenu(
                         wallet = walletState,
                         onValueChange = {

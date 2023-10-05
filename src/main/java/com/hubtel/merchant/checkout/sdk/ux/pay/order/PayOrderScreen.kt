@@ -200,8 +200,12 @@ internal data class PayOrderScreen(
                                 ) {
                                     navigator?.push(
                                         AddMandateScreen(
-                                            config = config, walletUiState.payOrderWalletType, UiStates(
-                                                momoWalletUiState, otherPaymentUiState, bankCardUiState
+                                            config = config,
+                                            walletUiState.payOrderWalletType,
+                                            UiStates(
+                                                momoWalletUiState,
+                                                otherPaymentUiState,
+                                                bankCardUiState
                                             )
                                         )
                                     )
@@ -282,7 +286,8 @@ internal data class PayOrderScreen(
                     momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
                 ) {
                     // Mobile Money
-                    ExpandableMomoOption(state = momoWalletUiState,
+                    ExpandableMomoOption(
+                        state = momoWalletUiState,
                         channels = momoChannels,
                         expanded = walletUiState.isMomoWallet,
                         onExpand = {
@@ -336,7 +341,7 @@ internal data class PayOrderScreen(
                     )
                 }
 
-                AnimatedVisibility(otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
+                AnimatedVisibility(businessInfoUiState.data?.isHubtelInternalMerchant == true && otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
                     val filteredChannels =
                         if (businessInfoUiState.data?.isHubtelInternalMerchant == true) otherChannels else otherChannels.filter { it != PaymentChannel.HUBTEL }
                     ExpandableOtherPayments(state = otherPaymentUiState,
@@ -496,7 +501,7 @@ internal data class PayOrderScreen(
             )
         }
 
-        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.RECEIVE_MONEY_PROMPT) {
+        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.RECEIVE_MONEY_PROMPT && !walletUiState.isOtherPaymentWallet) {
             CheckoutMessageDialog(
                 onDismissRequest = {},
                 titleText = stringResource(R.string.checkout_success),
@@ -521,6 +526,17 @@ internal data class PayOrderScreen(
             )
         }
 
+        if (currentCheckoutStep == CHECKOUT_SUCCESS_DIALOG && checkoutFeesUiState.data?.getCheckoutType == CheckoutType.RECEIVE_MONEY_PROMPT && walletUiState.isOtherPaymentWallet) {
+            currentCheckoutStep = PAYMENT_COMPLETED
+            navigator?.push(
+                PaymentStatusScreen(
+                    providerName = paymentInfo?.providerName,
+                    config = config,
+                    checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                )
+            )
+        }
+
         if (currentCheckoutStep == CARD_SETUP && cardSetupUiState.hasError) {
             CheckoutMessageDialog(
                 onDismissRequest = { currentCheckoutStep = GET_FEES },
@@ -532,7 +548,6 @@ internal data class PayOrderScreen(
             )
         }
 
-        Timber.d("TAP [BEFORE]: $currentCheckoutStep")
         if (businessInfoUiState.data?.requireNationalID == true && currentCheckoutStep == PAY_ORDER && attempt == null) {
             currentCheckoutStep =
                 if (walletUiState.isBankCard || walletUiState.isOtherPaymentWallet) {
@@ -541,7 +556,6 @@ internal data class PayOrderScreen(
                     GHANA_CARD_VERIFICATION
                 }
         }
-        Timber.d("TAP [AFTER]: $currentCheckoutStep")
 
         if (currentCheckoutStep == GHANA_CARD_VERIFICATION && ghanaCardUiState.data?.getCardStatus == CardStatus.VERIFIED) {
             viewModel.resetGhanaCardState()
@@ -650,16 +664,6 @@ internal data class PayOrderScreen(
             viewModel.getCheckoutFees(config)
         }
 
-//        LaunchedEffect(momoWalletUiState.isWalletSelected) {
-//            isPayButtonEnabled = momoWalletUiState.isWalletSelected
-//            viewModel.getCheckoutFees(config)
-//        }
-//
-//        LaunchedEffect(otherPaymentUiState.isWalletSelected) {
-//            isPayButtonEnabled = otherPaymentUiState.isWalletSelected
-//            viewModel.getCheckoutFees(config)
-//        }
-
         LaunchedEffect(
             cardSetupUiState,
             checkoutUiState,
@@ -683,7 +687,7 @@ internal data class PayOrderScreen(
         LaunchedEffect(currentCheckoutStep) {
             when (currentCheckoutStep) {
                 PAY_ORDER -> {
-                    Timber.d("TAP [INSIDE]: $currentCheckoutStep")
+
                     walletUiState.payOrderWalletType?.let { walletType ->
                         currentCheckoutStep =
                             getNextStepAfterPayOrder(walletType, checkoutFeesUiState)
@@ -695,8 +699,6 @@ internal data class PayOrderScreen(
                 }
 
                 CHECKOUT -> {
-                    Timber.d("TAP [INSIDE]: $currentCheckoutStep")
-
                     if (attempt == null) {
                         walletUiState.payOrderWalletType?.let { walletType ->
                             viewModel.payOrder(config, walletType)
@@ -716,7 +718,6 @@ internal data class PayOrderScreen(
                 }
 
                 PAYMENT_COMPLETED -> {
-                    Timber.d("TAP [INSIDE]: $currentCheckoutStep")
                     if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.PRE_APPROVAL_CONFIRM && walletUiState.isMomoWallet) {
                         navigator?.push(
                             OrderPlacedScreen(
