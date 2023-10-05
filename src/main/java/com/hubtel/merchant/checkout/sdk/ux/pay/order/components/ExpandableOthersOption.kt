@@ -69,7 +69,7 @@ internal fun ExpandableOtherPayments(
     onExpand: () -> Unit,
     modifier: Modifier = Modifier,
     onAddNewTapped: () -> Unit,
-//    isInternalMerchant: Boolean = false,
+    isInternalMerchant: Boolean = false,
     wallets: List<WalletResponse> = emptyList(),
 ) {
     val context = LocalContext.current
@@ -117,7 +117,13 @@ internal fun ExpandableOtherPayments(
 
             OtherWalletProviderDownMenu(
                 value = state.walletProvider,
-                onValueChange = { state.walletProvider = it },
+                onValueChange = { it ->
+                    state.walletProvider = it
+
+                    if (isInternalMerchant) {
+                        state.mobileNumber = wallets.first { it.provider == "Hubtel" }.accountNo
+                    }
+                },
                 providers = otherChannelProviders,
             )
 
@@ -272,7 +278,8 @@ private fun WalletDropdownMenu(
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.width(dropDownWidth)
             ) {
-                wallets.forEach { selectionOption ->
+                val filteredWallets = wallets.filter { it?.provider != "Hubtel" }
+                filteredWallets.forEach { selectionOption ->
                     DropdownMenuItem(onClick = {
                         onValueChange(selectionOption!!)
                         expanded = false

@@ -148,6 +148,14 @@ internal class UnifiedCheckoutRepository(
         checkoutPrefManager.allowedPaymentChannels = channels
     }
 
+    fun saveMandateId(id: String?) {
+        checkoutPrefManager.mandateId  = id
+    }
+
+    fun getMandateId(): String? {
+        return checkoutPrefManager.mandateId
+    }
+
     suspend fun getWallets(): List<DbWallet> {
         return withContext(Dispatchers.IO) {
             database.walletDao().getAllWallets()

@@ -48,29 +48,36 @@ internal class PaymentWalletUiState(
     }
 }
 
-internal class MomoWalletUiState() {
+class MomoWalletUiState() {
 
     var mobileNumber by mutableStateOf<String?>(null)
 
     var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.MTN)
 
+    var isWalletSelected by mutableStateOf(false)
+
     val isValid
-        get() = (mobileNumber?.length ?: 0) >= 9
-                    && walletProvider != null
+        get() = ((mobileNumber?.length ?: 0) >= 9
+                && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
 }
 
-internal class OtherPaymentUiState() {
+class OtherPaymentUiState(isHubtelInternalMerchant: Boolean? = true) {
     var mobileNumber by mutableStateOf<String?>(null)
     var accountName by mutableStateOf<String?>(null)
-    var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.Hubtel)
+    var walletProvider by mutableStateOf<WalletProvider?>(if (isHubtelInternalMerchant == true) WalletProvider.Hubtel else WalletProvider.GMoney)
 
     var newMandate by mutableStateOf(false)
 
+    var isWalletSelected by mutableStateOf(false)
+
+    var saveForLater by mutableStateOf(false)
+
     val isValid
-        get() = (mobileNumber?.length ?: 0) >= 9 && walletProvider != null
+        get() = ((mobileNumber?.length ?: 0) >= 9
+                && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
 }
 
-internal class BankCardUiState(
+class BankCardUiState constructor(
     wallet: Wallet? = null,
     useSavedBankCard: Boolean = false,
 ) {
@@ -137,7 +144,8 @@ internal data class PaymentInfo(
     val cvv: String? = null,
     val providerName: String? = null,
     val channel: String? = null,
-    val saveForLater: Boolean = false
+    val saveForLater: Boolean = false,
+    val mandateId: String? = null
 ) {
 
     val middle: String?

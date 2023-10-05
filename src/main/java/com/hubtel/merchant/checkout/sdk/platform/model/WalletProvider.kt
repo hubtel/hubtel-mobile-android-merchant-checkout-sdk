@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import com.hubtel.merchant.checkout.sdk.R
 
 
-internal enum class WalletImages(
+enum class WalletImages(
     @DrawableRes val logo: Int,
 ) {
     Airtel(R.drawable.checkout_logo_airtel_money),
@@ -20,7 +20,7 @@ internal enum class WalletImages(
 }
 
 
-internal enum class WalletProvider(
+enum class WalletProvider(
     val provider: String,
     @StringRes val providerNameResId: Int,
     val walletImages: WalletImages,

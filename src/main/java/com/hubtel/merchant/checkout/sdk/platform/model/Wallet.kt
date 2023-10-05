@@ -4,7 +4,7 @@ import androidx.core.text.isDigitsOnly
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
-internal data class Wallet(
+data class Wallet(
     val id: Long,
     val accountNumber: String?,
     val accountName: String?,

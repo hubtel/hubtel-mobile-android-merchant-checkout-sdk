@@ -15,4 +15,8 @@ internal class CheckoutPrefManager(context: Context) : BasePrefManager(
     var customerPhoneNumber: String?
         set(value) = saveToSharedPref("customer.phone.number", value)
         get() = getSharedPrefString("customer.phone.number")
+
+    var mandateId: String?
+        set(value) = saveToSharedPref("gmoney.mandate.id", value)
+        get() = getSharedPrefString("gmoney.mandate.id")
 }

@@ -47,6 +47,10 @@ internal class PayOrderViewModel constructor(
     private val unifiedCheckoutRepository: UnifiedCheckoutRepository,
 ) : ViewModel() {
 
+//    init {
+//        getMandateId()
+//    }
+
     private val _ghanaCardUiState = mutableStateOf(UiState2<GhanaCardResponse>())
     val ghanaCardUiState: State<UiState2<GhanaCardResponse>> = _ghanaCardUiState
 
@@ -95,6 +99,8 @@ internal class PayOrderViewModel constructor(
         get() = _threeDSSetupUiState.value.data?.transactionId
 
     private var loadServiceFeesJob: Job? = null
+
+    var mandateIdNumber by mutableStateOf("")
 
     fun initData(amount: Double) {
         getUserWallets()
@@ -162,7 +168,8 @@ internal class PayOrderViewModel constructor(
                     accountNumber = otherPaymentUiState.mobileNumber,
                     paymentType = payOrderWalletType.paymentTypeName,
                     providerName = walletProvider?.provider,
-                    channel = walletProvider?.channelName
+                    channel = walletProvider?.channelName,
+                    saveForLater = otherPaymentUiState.saveForLater,
                 )
             }
 
@@ -223,7 +230,7 @@ internal class PayOrderViewModel constructor(
     }
 
     private fun updateOrderTotal(amount: Double, fees: List<CheckoutFee>) {
-        orderTotal = /*amount*/ +(fees.sumOf { it.amountPayable ?: 0.0 })
+        orderTotal = /*amount*/ +(fees.sumOf { it.amountPayable })
     }
 
     private fun saveCard(paymentInfo: PaymentInfo) {
@@ -233,6 +240,13 @@ internal class PayOrderViewModel constructor(
     private fun saveWallet(vararg wallet: WalletResponse) {
         unifiedCheckoutRepository.saveWallet(*wallet.map { it.toHubtelWallet() }.toTypedArray())
     }
+
+
+    private fun saveMandateId(id: String?) {
+        unifiedCheckoutRepository.saveMandateId(id)
+    }
+
+    fun getMandateId(): String? = unifiedCheckoutRepository.getMandateId()
 
     fun getCheckoutFees(config: CheckoutConfig) {
         loadServiceFeesJob?.cancel()
@@ -369,12 +383,15 @@ internal class PayOrderViewModel constructor(
                 customerMsisdn = paymentInfo?.accountNumber,
                 customerName = "",
                 description = config.description,
-                primaryCallbackUrl = config.callbackUrl
+                primaryCallbackUrl = config.callbackUrl,
+//                mandateId = getMandateId().isNullOrEmpty() ?: mandateIdNumber
+                mandateId = if (getMandateId().isNullOrEmpty()) mandateIdNumber else getMandateId()
             )
         )
 
         when (result) {
             is ApiResult.Success -> {
+                if (paymentInfo?.channel == "g-money") saveMandateId(mandateIdNumber)
                 _checkoutUiState.update { UiState2(success = true, data = result.response.data) }
             }
 
@@ -399,7 +416,10 @@ internal class PayOrderViewModel constructor(
 
         paymentInfo?.let {
             if (it.saveForLater) saveCard(it)
+
         }
+
+
 
     }
 

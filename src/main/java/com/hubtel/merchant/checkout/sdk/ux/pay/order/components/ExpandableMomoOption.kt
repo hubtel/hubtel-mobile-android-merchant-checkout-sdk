@@ -90,7 +90,8 @@ internal fun ExpandableMomoOption(
     ExpandablePaymentOption(
         title = stringResource(R.string.checkout_mobile_money),
         expanded = expanded,
-        onExpand = onExpand,
+        onExpand =
+        onExpand,
         decoration = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spacingDefault),
@@ -133,8 +134,10 @@ internal fun ExpandableMomoOption(
                     onValueChange = {
                         walletState = it
 
-                        if (walletState.accountNo!!.isDigitsOnly()) state.mobileNumber =
-                            it.accountNo
+                        if (walletState.accountNo!!.isDigitsOnly()) {
+                            state.mobileNumber =
+                                it.accountNo
+                        }
                     },
                     wallets = wallets,
                     onAddNewTapped = onAddNewTapped
@@ -242,7 +245,8 @@ private fun WalletDropdownMenu(
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.width(dropDownWidth)
             ) {
-                wallets.forEach { selectionOption ->
+                val filteredWallets = wallets.filter { it?.provider != "Hubtel" }
+                filteredWallets.forEach { selectionOption ->
                     DropdownMenuItem(onClick = {
                         onValueChange(selectionOption!!)
                         expanded = false
