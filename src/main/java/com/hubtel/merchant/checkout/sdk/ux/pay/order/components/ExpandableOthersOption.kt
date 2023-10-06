@@ -59,6 +59,7 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toOthersWalletProviders
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
+import timber.log.Timber
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -146,6 +147,7 @@ internal fun ExpandableOtherPayments(
                 } else {
                     if (state.isWalletSelected) {
                         state.mobileNumber = walletState.accountNo
+                        Timber.d("Wallet Selected: ${state.mobileNumber}")
                     }
                     WalletDropdownMenu(
                         wallet = walletState,
@@ -163,6 +165,7 @@ internal fun ExpandableOtherPayments(
 
             when (state.walletProvider?.provider) {
                 WalletProvider.Hubtel.provider -> {
+                    state.mobileNumber = walletState.accountNo
                     Text(text = stringResource(id = R.string.checkout_hubtel_balance_debit_msg))
                 }
 
