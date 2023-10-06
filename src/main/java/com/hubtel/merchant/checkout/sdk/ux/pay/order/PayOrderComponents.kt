@@ -285,7 +285,7 @@ internal fun ExpandableFeesCard(fees: List<CheckoutFee>) {
                     id = R.string.checkout_view_fees
                 ),
                 style = HubtelTheme.typography.h3,
-                color = CheckoutTheme.colors.colorAccent.copy(alpha = 0.5f),
+                color = CheckoutTheme.colors.colorPrimary/*.copy(alpha = 0.5f)*/,
             )
         }
     }

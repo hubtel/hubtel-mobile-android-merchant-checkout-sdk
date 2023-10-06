@@ -132,7 +132,7 @@ internal data class PayOrderScreen(
 
         val otherPaymentUiState = remember {
             OtherPaymentUiState(
-                isHubtelInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
+//                isHubtelInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
             )
         }
 
@@ -344,6 +344,7 @@ internal data class PayOrderScreen(
                 AnimatedVisibility(businessInfoUiState.data?.isHubtelInternalMerchant == true && otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
                     val filteredChannels =
                         if (businessInfoUiState.data?.isHubtelInternalMerchant == true) otherChannels else otherChannels.filter { it != PaymentChannel.HUBTEL }
+                    otherPaymentUiState.isHubtelInternalMerchant = true
                     ExpandableOtherPayments(state = otherPaymentUiState,
                         channels = filteredChannels,
                         expanded = walletUiState.isOtherPaymentWallet,
@@ -625,7 +626,8 @@ internal data class PayOrderScreen(
             momoWalletUiState.isWalletSelected, // added
             otherPaymentUiState.walletProvider,
             otherPaymentUiState.mobileNumber,
-            otherPaymentUiState.isWalletSelected // added
+            otherPaymentUiState.isWalletSelected, // added
+            otherPaymentUiState.isHubtelInternalMerchant, // added
         ) {
             // update payment info object when user checkout input
             // changes
@@ -634,9 +636,6 @@ internal data class PayOrderScreen(
             }
             val walletType: PayOrderWalletType =
                 walletUiState.payOrderWalletType ?: return@LaunchedEffect
-
-            Timber.d("WalletType: $walletType")
-            Timber.d("Channel: ${otherPaymentUiState.walletProvider?.channelName}")
 
             isPayButtonEnabled = when (walletType) {
                 MOBILE_MONEY -> momoWalletUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && momoWalletUiState.isWalletSelected) // modified

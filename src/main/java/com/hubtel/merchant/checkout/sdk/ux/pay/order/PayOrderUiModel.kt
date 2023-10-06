@@ -61,9 +61,10 @@ class MomoWalletUiState() {
                 && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
 }
 
-class OtherPaymentUiState(isHubtelInternalMerchant: Boolean? = true) {
+class OtherPaymentUiState {
     var mobileNumber by mutableStateOf<String?>(null)
     var accountName by mutableStateOf<String?>(null)
+    var isHubtelInternalMerchant by mutableStateOf<Boolean?>(true)
     var walletProvider by mutableStateOf<WalletProvider?>(if (isHubtelInternalMerchant == true) WalletProvider.Hubtel else WalletProvider.GMoney)
 
     var newMandate by mutableStateOf(false)
