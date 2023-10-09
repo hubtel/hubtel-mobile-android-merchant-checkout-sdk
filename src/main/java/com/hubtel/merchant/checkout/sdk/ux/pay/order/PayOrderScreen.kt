@@ -72,8 +72,10 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.PAYMENT_COMPLE
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.PAY_ORDER
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.VERIFY_CARD
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_CARD
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_PAY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.OTHER_PAYMENT
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.PAY_IN_FOUR
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableOtherPayments
@@ -136,6 +138,8 @@ internal data class PayOrderScreen(
             )
         }
 
+        val bankPayUiState = remember { BankPayUiState() }
+
         var currentCheckoutStep: CheckoutStep by rememberSaveable {
             if (attempt == null) mutableStateOf(GET_FEES) else {
                 momoWalletUiState.mobileNumber = attempt.number
@@ -164,12 +168,6 @@ internal data class PayOrderScreen(
         val isLoading by remember { // TODO
             derivedStateOf {
                 (cardSetupUiState.isLoading || checkoutUiState.isLoading || currentCheckoutStep == COLLECT_DEVICE_INFO) && currentCheckoutStep in CARD_SETUP..CHECKOUT
-            }
-        }
-
-        val isLoadingChannel by remember {
-            derivedStateOf {
-                customerWalletsUiState.isLoading || businessInfoUiState.isLoading
             }
         }
 
@@ -647,6 +645,8 @@ internal data class PayOrderScreen(
                 MOBILE_MONEY -> momoWalletUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && momoWalletUiState.isWalletSelected) // modified
                 BANK_CARD -> bankCardUiState.isValid
                 OTHER_PAYMENT -> otherPaymentUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && otherPaymentUiState.isWalletSelected) // modified
+                BANK_PAY -> bankPayUiState.isValid
+                else -> false
             }
 
             viewModel.getGhanaCardDetails(config, momoWalletUiState.mobileNumber ?: "")
@@ -791,6 +791,8 @@ internal data class PayOrderScreen(
             MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             BANK_CARD -> if (hasFees) CARD_SETUP else null
             OTHER_PAYMENT -> if (hasFees) CHECKOUT else null // TODO: implement correct
+            BANK_PAY -> if (hasFees) CHECKOUT else null
+            PAY_IN_FOUR -> if (hasFees) CHECKOUT else null
         }
 
         // if next is null go back down to get fees
@@ -813,6 +815,8 @@ internal data class PayOrderScreen(
                 BANK_CARD -> VERIFY_CARD
                 MOBILE_MONEY -> CHECKOUT_SUCCESS_DIALOG
                 OTHER_PAYMENT -> CHECKOUT_SUCCESS_DIALOG // TODO: might need further looking into
+                BANK_PAY -> CHECKOUT_SUCCESS_DIALOG
+                PAY_IN_FOUR -> CHECKOUT_SUCCESS_DIALOG
             }
         } else CHECKOUT
     }

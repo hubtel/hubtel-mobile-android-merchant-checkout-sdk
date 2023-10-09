@@ -43,12 +43,16 @@ internal class PaymentWalletUiState(
         payOrderWalletType == PayOrderWalletType.OTHER_PAYMENT
     }
 
+    val isBankPay by derivedStateOf {
+        payOrderWalletType == PayOrderWalletType.BANK_PAY
+    }
+
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
     }
 }
 
-class MomoWalletUiState () {
+class MomoWalletUiState {
 
     var mobileNumber by mutableStateOf<String?>(null)
 
@@ -76,6 +80,17 @@ class OtherPaymentUiState {
     val isValid
         get() = ((mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
+}
+
+class BankPayUiState {
+    var isWalletSelected by mutableStateOf(false)
+
+    val isValid
+        get() = isWalletSelected
+}
+
+class PayInFourUiState {
+
 }
 
 class BankCardUiState constructor(
@@ -188,7 +203,9 @@ internal data class PaymentInfo(
 internal enum class PayOrderWalletType {
     MOBILE_MONEY,
     BANK_CARD,
-    OTHER_PAYMENT
+    OTHER_PAYMENT,
+    BANK_PAY,
+    PAY_IN_FOUR
 }
 
 internal val PayOrderWalletType.paymentTypeName: String
@@ -197,6 +214,8 @@ internal val PayOrderWalletType.paymentTypeName: String
             PayOrderWalletType.MOBILE_MONEY -> "mobilemoney"
             PayOrderWalletType.BANK_CARD -> "card"
             PayOrderWalletType.OTHER_PAYMENT -> "others"
+            PayOrderWalletType.BANK_PAY -> "bankpay"
+            PayOrderWalletType.PAY_IN_FOUR -> "payin4"
         }
     }
 
