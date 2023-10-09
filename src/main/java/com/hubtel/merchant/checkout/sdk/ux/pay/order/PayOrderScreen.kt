@@ -820,7 +820,7 @@ internal data class PayOrderScreen(
 
 internal data class VerificationAttempt(
     val attempt: Boolean = false,
-    val number: String = "",
+    val number: String? = "",
     val step: CheckoutStep? = null,
     val checkoutType: CheckoutType? = null,
     val walletType: PayOrderWalletType? = null
