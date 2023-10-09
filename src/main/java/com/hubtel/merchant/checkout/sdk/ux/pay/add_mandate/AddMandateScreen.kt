@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,7 +112,11 @@ internal data class AddMandateScreen(
                 loading = isLoading
             )
         }) {
-            Column(modifier = Modifier.padding(Dimens.paddingDefault)) {
+            Column(modifier = Modifier
+                .padding(Dimens.paddingDefault)
+                .verticalScroll(
+                    rememberScrollState()
+                )) {
                 Text(text = "Mandate ID")
                 Box(modifier = Modifier.padding(bottom = Dimens.paddingDefault))
                 HBTextField(

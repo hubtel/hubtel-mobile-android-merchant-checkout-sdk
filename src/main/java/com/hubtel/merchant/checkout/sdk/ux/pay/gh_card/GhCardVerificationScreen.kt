@@ -5,9 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -15,13 +18,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -46,6 +51,7 @@ import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.text.input.GhanaCardVisualTransformation2
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 //internal data class CardInfo(val firstName: String)
@@ -68,7 +74,10 @@ internal class GhCardVerificationScreen(
     @Composable
     private fun ScreenContent(viewModel: GhCardVerificationViewModel) {
 
-        val context = LocalContext.current
+        val screenHeight = LocalConfiguration.current.screenHeightDp
+        val scrollState = rememberScrollState()
+        val coroutineScope = rememberCoroutineScope()
+
         val activity = LocalActivity.current
         val navigator = LocalNavigator.current
         val checkoutActivity = remember(activity) { activity as? CheckoutActivity }
@@ -89,9 +98,6 @@ internal class GhCardVerificationScreen(
         var isButtonLoading by remember { mutableStateOf(false) }
 
         HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2,
-//            modifier = Modifier.verticalScroll(
-//                rememberScrollState()
-//            ),
             topBar = {
                 HBTopAppBar(title = {
                     Text(text = "Verification")
@@ -126,6 +132,7 @@ internal class GhCardVerificationScreen(
                     .fillMaxWidth()
                     .animateContentSize()
                     .padding(Dimens.paddingDefault)
+                    .verticalScroll(scrollState)
             ) {
                 Box(modifier = Modifier.padding(Dimens.paddingDefault))
                 Image(
@@ -180,6 +187,13 @@ internal class GhCardVerificationScreen(
                     },
                     modifier = Modifier
                         .focusRequester(cardNumberFocusRequester)
+                        .onFocusChanged {
+                            if (it.hasFocus) {
+                                coroutineScope.launch {
+                                    scrollState.scrollTo(scrollState.maxValue)
+                                }
+                            }
+                        }
                         .fillMaxWidth(),
                     placeholder = {
                         Text(text = "ABC-XXXXXXXXXX-X")
@@ -203,7 +217,16 @@ internal class GhCardVerificationScreen(
                     )
                 }
 
+                // adds extra height to content to allow for scrolling
+                // to avoid keyboard covering text input field
+                Box(modifier = Modifier.height((screenHeight / 4).dp))
+
             }
+        }
+
+        LaunchedEffect(Unit) {
+            cardNumberFocusRequester.requestFocus()
+            scrollState.scrollTo(scrollState.maxValue)
         }
 
         LaunchedEffect(cardState) {

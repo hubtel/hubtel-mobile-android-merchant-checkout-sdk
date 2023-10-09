@@ -161,9 +161,15 @@ internal data class PayOrderScreen(
 
         var isPayButtonEnabled by remember { mutableStateOf(false) }
 
-        val isLoading by remember {
+        val isLoading by remember { // TODO
             derivedStateOf {
-                (cardSetupUiState.isLoading || checkoutUiState.isLoading || customerWalletsUiState.isLoading || currentCheckoutStep == COLLECT_DEVICE_INFO) && currentCheckoutStep in CARD_SETUP..CHECKOUT
+                (cardSetupUiState.isLoading || checkoutUiState.isLoading || currentCheckoutStep == COLLECT_DEVICE_INFO) && currentCheckoutStep in CARD_SETUP..CHECKOUT
+            }
+        }
+
+        val isLoadingChannel by remember {
+            derivedStateOf {
+                customerWalletsUiState.isLoading || businessInfoUiState.isLoading
             }
         }
 
@@ -266,7 +272,7 @@ internal data class PayOrderScreen(
                         .padding(Dimens.paddingDefault),
                 )
 
-                if (paymentChannelsUiState.isLoading) {
+                if (paymentChannelsUiState.isLoading || customerWalletsUiState.isLoading || businessInfoUiState.isLoading) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -313,7 +319,7 @@ internal data class PayOrderScreen(
                     )
                 }
 
-                AnimatedVisibility(bankChannels.isNotEmpty()) {
+                AnimatedVisibility(bankChannels.isNotEmpty() && customerWalletsUiState.data?.isNotEmpty() == true) {
                     // Bank Card
                     ExpandableBankCardOption(
                         state = bankCardUiState,

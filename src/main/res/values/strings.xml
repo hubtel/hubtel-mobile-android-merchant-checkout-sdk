@@ -61,7 +61,7 @@
 
     <string name="checkout_mtn_mobile_money">MTN Mobile Money</string>
     <string name="checkout_vodafone_cash">Vodafone Cash</string>
-    <string name="checkout_airtel_tigo_money">AirtelTigo Money</string>
+    <string name="checkout_airtel_tigo_money">AT Money</string>
     <string name="checkout_mobile_money_payment_info_msg">You will be required to enter your %1$s PIN to authorise payment.</string>
 
 

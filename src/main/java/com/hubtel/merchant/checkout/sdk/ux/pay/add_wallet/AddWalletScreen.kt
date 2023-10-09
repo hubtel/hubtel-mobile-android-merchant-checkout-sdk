@@ -189,6 +189,7 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
                     positiveText = stringResource(R.string.checkout_okay),
                     onPositiveClick = {
                         showPendingDialog = false
+                        viewModel.resetUserWalletUiState()
                         navigator?.pop()
                     },
                     properties = DialogProperties(

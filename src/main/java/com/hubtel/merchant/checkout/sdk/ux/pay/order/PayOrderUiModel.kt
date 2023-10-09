@@ -48,7 +48,7 @@ internal class PaymentWalletUiState(
     }
 }
 
-class MomoWalletUiState() {
+class MomoWalletUiState () {
 
     var mobileNumber by mutableStateOf<String?>(null)
 
@@ -205,7 +205,8 @@ internal val WalletProvider.channelName: String
     get() {
         return when {
             provider.contains("vodafone", ignoreCase = true) -> {
-                "${provider.lowercase()}-gh-ussd"
+//                "${provider.lowercase()}-gh-ussd"
+                "${provider.lowercase()}-gh-direct-debit"
             }
 
             provider.contains("airtel", ignoreCase = true) -> {

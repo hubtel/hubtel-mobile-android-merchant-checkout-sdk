@@ -60,6 +60,7 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.toOthersWalletProviders
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
 import timber.log.Timber
+import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -165,7 +166,9 @@ internal fun ExpandableOtherPayments(
 
             when (state.walletProvider?.provider) {
                 WalletProvider.Hubtel.provider -> {
-                    state.mobileNumber = walletState.accountNo
+                    val selectedWallet = wallets.first { it.provider?.lowercase(Locale.ROOT) == "hubtel" }
+//                    state.mobileNumber = walletState.accountNo
+                    state.mobileNumber = selectedWallet.accountNo
                     Text(text = stringResource(id = R.string.checkout_hubtel_balance_debit_msg))
                 }
 
