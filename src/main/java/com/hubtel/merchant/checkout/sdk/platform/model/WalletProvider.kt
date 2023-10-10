@@ -44,6 +44,8 @@ enum class WalletProvider(
     Mastercard(
         "mastercard", R.string.checkout_mastercard, WalletImages.Mastercard
     ),
+
+    //
     Hubtel(
         "hubtel-gh",
         R.string.checkout_hubtel,
@@ -52,6 +54,7 @@ enum class WalletProvider(
     ),
     GMoney("g-money", R.string.checkout_g_money, WalletImages.GMoney),
     ZeePay("zeepay", R.string.checkout_zeepay, WalletImages.ZeePay, R.string.checkout_zeepay_steps),
+    BankCard("", R.string.checkout_bank_card, WalletImages.Visa)
 }
 
 internal fun String.toWalletProvider(): WalletProvider? {

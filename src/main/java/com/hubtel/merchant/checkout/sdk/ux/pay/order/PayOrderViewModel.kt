@@ -214,6 +214,9 @@ internal class PayOrderViewModel constructor(
                     else -> "cardnotpresent"
                 }
 
+                // ["mtn-gh", "vodafone-gh", "tigo-gh", "hubtel-gh", "cardnotpresent-visa", "cardnotpresent-mastercard", "g-money", "zeepay", "bankpay", "ghqr"]
+                // ["mtn-gh", "vodafone-gh", "tigo-gh", "hubtel-gh", "cardpresent-visa", "cardpresent-mastercard", "cardnotpresent-visa", "g-money", "zeepay", "bankpay", "ghqr"]
+
                 PaymentInfo(
                     walletId = bankWallet?.id?.toString(),
                     accountNumber = accountNumber,

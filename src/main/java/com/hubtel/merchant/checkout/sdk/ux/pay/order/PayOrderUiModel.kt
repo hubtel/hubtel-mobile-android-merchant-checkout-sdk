@@ -22,7 +22,8 @@ internal enum class CheckoutStep {
     VERIFY_CARD,
     CHECKOUT_SUCCESS_DIALOG,
     PAYMENT_COMPLETED,
-    GHANA_CARD_VERIFICATION;
+    GHANA_CARD_VERIFICATION,
+    CONFIRM_PAY_IN_4_TRANSACTION;
 }
 
 internal class PaymentWalletUiState(
@@ -52,7 +53,7 @@ internal class PaymentWalletUiState(
     }
 }
 
-class MomoWalletUiState() {
+class MomoWalletUiState {
 
     var mobileNumber by mutableStateOf<String?>(null)
 
@@ -86,9 +87,14 @@ class PayIn4UiState {
     var mobileNumber by mutableStateOf<String?>(null)
     var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.MTN)
 
+    var payIn4Selected by mutableStateOf(false)
+
+//    val isValid
+//        get() = ((mobileNumber?.length ?: 0) >= 9
+//                && walletProvider != null)
+
     val isValid
-        get() = ((mobileNumber?.length ?: 0) >= 9
-                && walletProvider != null)
+        get() = payIn4Selected && walletProvider != null
 }
 
 class BankCardUiState constructor(
@@ -241,24 +247,8 @@ internal val WalletProvider.channelName: String
             }
 
             else -> "${provider.lowercase()}-gh-direct-debit"
-//            else -> "mtn-gh-direct-debit"
         }
     }
-
-//internal val WalletProvider.channelName: String
-//    get() {
-//        return when {
-//            provider.contains("vodafone", ignoreCase = true) -> {
-//                "${provider.lowercase()}-gh-ussd"
-//            }
-//
-//            provider.contains("airtel", ignoreCase = true) -> {
-//                "tigo-gh"
-//            }
-//
-//            else -> "${provider.lowercase()}-gh"
-//        }
-//    }
 
 internal data class ThreeDSSetupState(
     val accessToken: String?,

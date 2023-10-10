@@ -44,6 +44,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
 import com.hubtel.core_ui.components.custom.HBTextField
@@ -52,31 +53,26 @@ import com.hubtel.core_ui.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
-import com.hubtel.merchant.checkout.sdk.ux.pay.order.OtherPaymentUiState
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayIn4UiState
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PaymentChannel
-import com.hubtel.merchant.checkout.sdk.ux.pay.order.toOthersWalletProviders
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.toPayIn4WalletProviders
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
-import timber.log.Timber
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ExpandablePayIn4Option(
-    state: OtherPaymentUiState,
+    state: PayIn4UiState,
     channels: List<PaymentChannel>,
     expanded: Boolean,
     onExpand: () -> Unit,
     modifier: Modifier = Modifier,
     onAddNewTapped: () -> Unit,
+    onViewDetailsTapped: () -> Unit = {},
     isInternalMerchant: Boolean = false,
     wallets: List<WalletResponse> = emptyList(),
 ) {
     val context = LocalContext.current
-
-    val otherChannelProviders = remember(channels) {
-        channels.toOthersWalletProviders()
-    }
 
     val payIn4ChannelProviders = remember(channels) {
         channels.toPayIn4WalletProviders()
@@ -103,7 +99,7 @@ internal fun ExpandablePayIn4Option(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
             ) {
-                otherChannelProviders.forEach { provider ->
+                payIn4ChannelProviders.forEach { provider ->
                     Image(
                         painter = painterResource(provider.walletImages.logo),
                         contentDescription = stringResource(provider.providerNameResId),
@@ -128,7 +124,7 @@ internal fun ExpandablePayIn4Option(
                         state.mobileNumber = wallets.first { it.provider == "Hubtel" }.accountNo
                     }
                 },
-                providers = payIn4ChannelProviders,
+                providers = payIn4ChannelProviders.dropLast(1)
             )
 
             if (state.walletProvider?.provider != WalletProvider.Hubtel.provider) {
@@ -148,10 +144,7 @@ internal fun ExpandablePayIn4Option(
                             .bringIntoViewRequester(bringIntoViewRequester)
                     )
                 } else {
-                    if (state.isWalletSelected) {
-                        state.mobileNumber = walletState.accountNo
-                        Timber.d("Wallet Selected: ${state.mobileNumber}")
-                    }
+
                     WalletDropdownMenu(
                         wallet = walletState,
                         onValueChange = {
@@ -167,11 +160,13 @@ internal fun ExpandablePayIn4Option(
             }
 
 
-
             // Pay-In-4 Notes
             Text(
                 text = buildAnnotatedString {
-                    append("You qualify to pay for your item of ")
+                    pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                    append("Pay-In-4\n")
+                    pop()
+                    append("\nYou qualify to pay for your item of ")
                     pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
                     append("GHS 1000")
                     pop()
@@ -196,6 +191,18 @@ internal fun ExpandablePayIn4Option(
                     append(" will be debited in three equal instalments")
                 },
             )
+
+            Text(text = buildAnnotatedString {
+                pushStyle(
+                    SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        color = CheckoutTheme.colors.colorPrimary,
+                        textDecoration = TextDecoration.Underline
+                    )
+                )
+                append("View repayment details and terms")
+                pop()
+            }, modifier = Modifier.clickable { onViewDetailsTapped() })
 
         }
     }
@@ -360,7 +367,11 @@ private fun PayIn4ProviderDownMenu(
 
     Box(modifier) {
         HBTextField(readOnly = true,
-            value = value?.let { stringResource(it.providerNameResId) } ?: "",
+            value = value?.let {
+                if (it.providerNameResId == R.string.checkout_visa) stringResource(R.string.checkout_bank_card) else stringResource(
+                    it.providerNameResId
+                )
+            } ?: "",
             onValueChange = {},
             placeholder = placeholder,
             trailingIcon = {
@@ -410,16 +421,16 @@ private fun PayIn4ProviderDownMenu(
                             modifier = Modifier.padding(vertical = Dimens.paddingNano),
                         ) {
                             Text(
-                                text = stringResource(selectionOption.providerNameResId),
+                                text = if (selectionOption.providerNameResId == R.string.checkout_visa) stringResource(
+                                    R.string.checkout_bank_card
+                                ) else stringResource(
+                                    selectionOption.providerNameResId
+                                ),
                                 color = HubtelTheme.colors.textPrimary,
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
-
-//                    if (selectionOption != providers.lastOrNull()) {
-//                        HBDivider(Modifier.padding(horizontal = Dimens.paddingDefault))
-//                    }
                 }
             }
         }
