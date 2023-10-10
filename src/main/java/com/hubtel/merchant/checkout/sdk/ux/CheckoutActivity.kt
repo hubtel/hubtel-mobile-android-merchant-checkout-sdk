@@ -6,9 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import cafe.adriel.voyager.navigator.Navigator
-import com.hubtel.merchant.checkout.sdk.platform.analytics.AnalyticsUtils
 import com.hubtel.core_ui.shared.BaseActivity
 import com.hubtel.core_ui.theme.HubtelTheme
+import com.hubtel.merchant.checkout.sdk.platform.analytics.AnalyticsUtils
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutStatus
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
@@ -19,7 +19,7 @@ import com.hubtel.merchant.checkout.sdk.ux.utils.getAppColorPrimary
 internal class CheckoutActivity : BaseActivity() {
 
     private val checkoutConfig by lazy {
-        intent.getParcelableExtra<CheckoutConfig>(CHECKOUT_CONFIG)
+        intent.getSerializableExtra(CHECKOUT_CONFIG) as CheckoutConfig
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +29,7 @@ internal class CheckoutActivity : BaseActivity() {
 
     @Composable
     override fun RootContent() {
-        val config = checkoutConfig ?: return
+        val config = checkoutConfig
 
         ProvideCheckoutColors {
             Navigator(PayOrderScreen(config))
@@ -40,7 +40,7 @@ internal class CheckoutActivity : BaseActivity() {
     private fun rememberColorConfigPair(): Pair<Color, Color> {
         val defaultPrimaryColor = HubtelTheme.colors.colorPrimary
         return remember(checkoutConfig) {
-            val primaryColor = checkoutConfig?.themeConfig
+            val primaryColor = checkoutConfig.themeConfig
                 ?.primaryColor?.let { Color(it) }
                 ?: getAppColorPrimary()
                 ?: defaultPrimaryColor

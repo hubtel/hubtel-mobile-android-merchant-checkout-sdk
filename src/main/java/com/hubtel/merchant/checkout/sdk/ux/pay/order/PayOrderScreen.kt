@@ -74,9 +74,11 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.CheckoutStep.VERIFY_CARD
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_CARD
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.OTHER_PAYMENT
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.PAY_IN_4
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableOtherPayments
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandablePayIn4Option
 import com.hubtel.merchant.checkout.sdk.ux.pay.otp.OtpVerifyScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed.OrderPlacedScreen
@@ -115,6 +117,7 @@ internal data class PayOrderScreen(
         val bankChannels = viewModel.bankChannels
         val momoChannels = viewModel.momoChannels
         val otherChannels = viewModel.otherChannels
+        val payIn4Channels = viewModel.payIn4Channels
 
         val businessInfoUiState by viewModel.businessInfoUiState
 
@@ -134,6 +137,10 @@ internal data class PayOrderScreen(
             OtherPaymentUiState(
 //                isHubtelInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
             )
+        }
+
+        val payIn4UiState = remember {
+            PayIn4UiState()
         }
 
         var currentCheckoutStep: CheckoutStep by rememberSaveable {
@@ -292,8 +299,7 @@ internal data class PayOrderScreen(
                     momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
                 ) {
                     // Mobile Money
-                    ExpandableMomoOption(
-                        state = momoWalletUiState,
+                    ExpandableMomoOption(state = momoWalletUiState,
                         channels = momoChannels,
                         expanded = walletUiState.isMomoWallet,
                         onExpand = {
@@ -357,7 +363,36 @@ internal data class PayOrderScreen(
                         onExpand = {
                             otherPaymentUiState.isWalletSelected = true
                             walletUiState.setWalletType(OTHER_PAYMENT)
-                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapOtherPayment)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true,
+                        wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
+                            ?: emptyList() else emptyList(),
+                        onAddNewTapped = {
+                            navigator?.push(AddWalletScreen(config))
+                        })
+                }
+
+                if (otherChannels.isNotEmpty()) {
+                    Divider(
+                        color = HubtelTheme.colors.outline,
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                    )
+                }
+
+                // Pay-In-4
+                AnimatedVisibility(businessInfoUiState.data?.isHubtelInternalMerchant == true && otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
+                    val filteredChannels =
+                        if (businessInfoUiState.data?.isHubtelInternalMerchant == true) otherChannels else otherChannels.filter { it != PaymentChannel.HUBTEL }
+                    otherPaymentUiState.isHubtelInternalMerchant = true
+                    ExpandablePayIn4Option(state = otherPaymentUiState,
+                        channels = filteredChannels,
+                        expanded = walletUiState.isPayIn4,
+                        onExpand = {
+//                            payIn4UiState.isWalletSelected = true
+                            walletUiState.setWalletType(PAY_IN_4)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapPayIn4)
                         },
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                         isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true,
@@ -647,6 +682,7 @@ internal data class PayOrderScreen(
                 MOBILE_MONEY -> momoWalletUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && momoWalletUiState.isWalletSelected) // modified
                 BANK_CARD -> bankCardUiState.isValid
                 OTHER_PAYMENT -> otherPaymentUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && otherPaymentUiState.isWalletSelected) // modified
+                PAY_IN_4 -> payIn4UiState.isValid
             }
 
             viewModel.getGhanaCardDetails(config, momoWalletUiState.mobileNumber ?: "")
@@ -790,7 +826,8 @@ internal data class PayOrderScreen(
         val nextStep = when (walletType) {
             MOBILE_MONEY -> if (hasFees) CHECKOUT else null
             BANK_CARD -> if (hasFees) CARD_SETUP else null
-            OTHER_PAYMENT -> if (hasFees) CHECKOUT else null // TODO: implement correct
+            OTHER_PAYMENT -> if (hasFees) CHECKOUT else null
+            PAY_IN_4 -> if (hasFees) CHECKOUT else null // TODO: need further looking
         }
 
         // if next is null go back down to get fees
@@ -813,6 +850,7 @@ internal data class PayOrderScreen(
                 BANK_CARD -> VERIFY_CARD
                 MOBILE_MONEY -> CHECKOUT_SUCCESS_DIALOG
                 OTHER_PAYMENT -> CHECKOUT_SUCCESS_DIALOG // TODO: might need further looking into
+                PAY_IN_4 -> CHECKOUT_SUCCESS_DIALOG
             }
         } else CHECKOUT
     }

@@ -13,6 +13,7 @@
     <string name="checkout_use_saved_card">Use saved card</string>
     <string name="checkout_bank_card">Bank Card</string>
     <string name="checkout_others">Others</string>
+    <string name="checkout_pay_in_4">Pay-In-4</string>
     <string name="checkout_mobile_money">Mobile Money</string>
     <string name="checkout_wallet_phone_number">Wallet Phone Number</string>
 

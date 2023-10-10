@@ -88,6 +88,8 @@ internal class PayOrderViewModel constructor(
     var otherChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
 
+    var payIn4Channels by mutableStateOf<List<PaymentChannel>>(emptyList())
+        private set
 
     var paymentInfo by mutableStateOf<PaymentInfo?>(null)
         private set
@@ -158,6 +160,10 @@ internal class PayOrderViewModel constructor(
         bankCardUiState: BankCardUiState,
     ) {
         paymentInfo = when (payOrderWalletType) {
+            PayOrderWalletType.PAY_IN_4 -> {
+                null // TODO: implement paymentInfo
+            }
+
             PayOrderWalletType.OTHER_PAYMENT -> {
 
                 val walletProvider = otherPaymentUiState.walletProvider
@@ -367,6 +373,9 @@ internal class PayOrderViewModel constructor(
                 PayOrderWalletType.OTHER_PAYMENT -> {
                     payOrderWithOthers(config)
                 }
+
+                PayOrderWalletType.PAY_IN_4 -> {
+                }
             }
         }
     }
@@ -418,7 +427,6 @@ internal class PayOrderViewModel constructor(
             if (it.saveForLater) saveCard(it)
 
         }
-
 
 
     }
@@ -675,6 +683,10 @@ internal class PayOrderViewModel constructor(
         channel == PaymentChannel.HUBTEL || channel == PaymentChannel.ZEE_PAY || channel == PaymentChannel.G_MONEY
     }
 
+    private fun List<PaymentChannel>.getPayIn4Channels(): List<PaymentChannel> = filter { channel ->
+        channel == PaymentChannel.MTN || channel == PaymentChannel.VODAFONE || channel == PaymentChannel.VISA || channel == PaymentChannel.MASTERCARD
+    }
+
     private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
         coroutineScope {
             val savedMomoWallets =
@@ -692,6 +704,7 @@ internal class PayOrderViewModel constructor(
                     bankChannels = this.getBankChannels()
                     momoChannels = this.getMomoChannels()
                     otherChannels = this.getOtherChannels()
+                    payIn4Channels = this.getPayIn4Channels()
                 }
 
                 _paymentChannelsUiState.update {

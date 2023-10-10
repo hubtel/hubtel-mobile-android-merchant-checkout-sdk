@@ -43,12 +43,16 @@ internal class PaymentWalletUiState(
         payOrderWalletType == PayOrderWalletType.OTHER_PAYMENT
     }
 
+    val isPayIn4 by derivedStateOf {
+        payOrderWalletType == PayOrderWalletType.PAY_IN_4
+    }
+
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
     }
 }
 
-class MomoWalletUiState () {
+class MomoWalletUiState() {
 
     var mobileNumber by mutableStateOf<String?>(null)
 
@@ -76,6 +80,15 @@ class OtherPaymentUiState {
     val isValid
         get() = ((mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
+}
+
+class PayIn4UiState {
+    var mobileNumber by mutableStateOf<String?>(null)
+    var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.MTN)
+
+    val isValid
+        get() = ((mobileNumber?.length ?: 0) >= 9
+                && walletProvider != null)
 }
 
 class BankCardUiState constructor(
@@ -188,7 +201,8 @@ internal data class PaymentInfo(
 internal enum class PayOrderWalletType {
     MOBILE_MONEY,
     BANK_CARD,
-    OTHER_PAYMENT
+    OTHER_PAYMENT,
+    PAY_IN_4,
 }
 
 internal val PayOrderWalletType.paymentTypeName: String
@@ -197,6 +211,7 @@ internal val PayOrderWalletType.paymentTypeName: String
             PayOrderWalletType.MOBILE_MONEY -> "mobilemoney"
             PayOrderWalletType.BANK_CARD -> "card"
             PayOrderWalletType.OTHER_PAYMENT -> "others"
+            PayOrderWalletType.PAY_IN_4 -> "payin4"
         }
     }
 
@@ -308,6 +323,18 @@ internal fun List<PaymentChannel>.toOthersWalletProviders(): List<WalletProvider
             PaymentChannel.G_MONEY -> WalletProvider.GMoney
             PaymentChannel.ZEE_PAY -> WalletProvider.ZeePay
             PaymentChannel.HUBTEL -> WalletProvider.Hubtel
+            else -> null
+        }
+    }
+}
+
+internal fun List<PaymentChannel>.toPayIn4WalletProviders(): List<WalletProvider> {
+    return mapNotNull {
+        when (it) {
+            PaymentChannel.MTN -> WalletProvider.MTN
+            PaymentChannel.VODAFONE -> WalletProvider.Vodafone
+            PaymentChannel.VISA -> WalletProvider.Visa
+            PaymentChannel.MASTERCARD -> WalletProvider.Mastercard
             else -> null
         }
     }
