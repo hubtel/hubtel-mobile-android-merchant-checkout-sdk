@@ -90,7 +90,7 @@ internal fun BankPayOption(
             ) {
 
                 Image(
-                    painter = painterResource(R.drawable.checkout_ic_bank_pay_png),
+                    painter = painterResource(R.drawable.checkout_ic_bank_pay),
                     contentDescription = stringResource(R.string.checkout_bank_pay),
                     modifier = Modifier.size(20.dp),
                 )
