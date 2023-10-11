@@ -10,7 +10,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.DbWallet
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.HubtelWallet
 
 private const val DB_NAME = "checkout_wallets"
-private const val DB_VERSION = 4
+private const val DB_VERSION = 5
 
 @Database(
     version = DB_VERSION,

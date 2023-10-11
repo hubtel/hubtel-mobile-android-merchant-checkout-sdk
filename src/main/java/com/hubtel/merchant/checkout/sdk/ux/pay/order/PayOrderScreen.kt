@@ -76,6 +76,7 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_PAY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.OTHER_PAYMENT
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.PAY_IN_FOUR
+import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.BankPayOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableOtherPayments
@@ -366,6 +367,28 @@ internal data class PayOrderScreen(
                         })
                 }
 
+                Divider(
+                    color = HubtelTheme.colors.outline,
+                    modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                )
+
+                // BankPay
+                AnimatedVisibility(businessInfoUiState.data?.isHubtelInternalMerchant == true && otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
+                    BankPayOption(
+                        state = bankPayUiState,
+                        channels = bankChannels,
+                        expanded = walletUiState.isBankPay,
+                        onExpand = {
+                            bankPayUiState.isWalletSelected = true
+                            walletUiState.setWalletType(BANK_PAY)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
+                            ?: emptyList() else emptyList(),
+                    )
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -625,13 +648,14 @@ internal data class PayOrderScreen(
             bankCardUiState.cardNumber,
             bankCardUiState.monthYear,
             bankCardUiState.cvv,
+            bankCardUiState.isValidYear,
             momoWalletUiState.walletProvider,
             momoWalletUiState.mobileNumber,
-            momoWalletUiState.isWalletSelected, // added
+            momoWalletUiState.isWalletSelected,
             otherPaymentUiState.walletProvider,
             otherPaymentUiState.mobileNumber,
-            otherPaymentUiState.isWalletSelected, // added
-            otherPaymentUiState.isHubtelInternalMerchant, // added
+            otherPaymentUiState.isWalletSelected,
+            otherPaymentUiState.isHubtelInternalMerchant,
         ) {
             // update payment info object when user checkout input
             // changes
@@ -643,7 +667,7 @@ internal data class PayOrderScreen(
 
             isPayButtonEnabled = when (walletType) {
                 MOBILE_MONEY -> momoWalletUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && momoWalletUiState.isWalletSelected) // modified
-                BANK_CARD -> bankCardUiState.isValid
+                BANK_CARD -> bankCardUiState.isValid && bankCardUiState.isValidYear
                 OTHER_PAYMENT -> otherPaymentUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && otherPaymentUiState.isWalletSelected) // modified
                 BANK_PAY -> bankPayUiState.isValid
                 else -> false

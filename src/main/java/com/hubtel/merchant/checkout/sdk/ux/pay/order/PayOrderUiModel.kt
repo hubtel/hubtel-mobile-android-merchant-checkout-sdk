@@ -114,6 +114,8 @@ class BankCardUiState constructor(
 
     var selectedWallet by mutableStateOf<Wallet?>(wallet)
 
+    var isValidYear by mutableStateOf(false)
+
     val isValid: Boolean
         get() {
             return if (useSavedBankCard) {

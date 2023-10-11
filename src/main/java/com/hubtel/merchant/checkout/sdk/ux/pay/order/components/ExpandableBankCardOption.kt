@@ -21,11 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,6 +46,8 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.toBankWalletProviders
 import com.hubtel.merchant.checkout.sdk.ux.text.input.CreditCardVisualTransformation
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import kotlinx.coroutines.delay
+import timber.log.Timber
+import java.util.Calendar
 
 @Composable
 internal fun ExpandableBankCardOption(
@@ -157,6 +161,7 @@ private fun NewCardInputContent(
         mutableStateOf(res)
     }
 
+    var isYearError by remember { mutableStateOf(false) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(Dimens.paddingDefault),
@@ -216,6 +221,7 @@ private fun NewCardInputContent(
         ) {
             HBTextField(
                 value = state.monthYear,
+                textStyle = TextStyle(color = if (isYearError) Color.Red else Color.Black),
                 onValueChange = { value ->
                     val inputText = value.text.filter { it.isDigit() }
                     val formatted = if (inputText.length > 2) {
@@ -240,7 +246,8 @@ private fun NewCardInputContent(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .focusRequester(expiryFocusRequester)
-                    .weight(1f)
+                    .weight(1f),
+
             )
 
             HBTextField(
@@ -291,6 +298,20 @@ private fun NewCardInputContent(
         }
     }
 
+    LaunchedEffect(state.monthYear.text) {
+        Timber.tag("LaunchedEffect").i("Running ...")
+        if (state.monthYear.text.length >= 5) {
+            val yy = state.monthYear.text.takeLast(2).toIntOrNull() ?: 0
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR) % 100
+
+            Timber.tag("YEAR").i("$year");
+            Timber.tag("YY").i("$yy")
+
+            isYearError = yy < year
+            state.isValidYear = yy >= year
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(500)

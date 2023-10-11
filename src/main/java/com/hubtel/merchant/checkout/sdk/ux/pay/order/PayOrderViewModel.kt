@@ -158,6 +158,14 @@ internal class PayOrderViewModel constructor(
         bankCardUiState: BankCardUiState,
     ) {
         paymentInfo = when (payOrderWalletType) {
+            PayOrderWalletType.BANK_PAY -> {
+                null
+            }
+
+            PayOrderWalletType.PAY_IN_FOUR -> {
+                null
+            }
+
             PayOrderWalletType.OTHER_PAYMENT -> {
 
                 val walletProvider = otherPaymentUiState.walletProvider
@@ -367,6 +375,10 @@ internal class PayOrderViewModel constructor(
                 PayOrderWalletType.OTHER_PAYMENT -> {
                     payOrderWithOthers(config)
                 }
+
+                PayOrderWalletType.PAY_IN_FOUR -> {}
+
+                PayOrderWalletType.BANK_PAY -> {}
             }
         }
     }
@@ -418,9 +430,6 @@ internal class PayOrderViewModel constructor(
             if (it.saveForLater) saveCard(it)
 
         }
-
-
-
     }
 
     private suspend fun payOrderWithCard(config: CheckoutConfig) {
