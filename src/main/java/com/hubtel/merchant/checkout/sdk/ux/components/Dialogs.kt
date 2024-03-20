@@ -19,10 +19,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.hubtel.core_ui.R
-import com.hubtel.core_ui.components.custom.HBDivider
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.HubtelTheme
+
+
+
+
 import com.hubtel.core_utils.extensions.capitalizeFirst
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import java.util.*

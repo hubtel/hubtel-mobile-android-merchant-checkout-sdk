@@ -23,5 +23,11 @@ data class ThreeDSSetupReq(
     @SerializedName("expiryMonth")
     val expiryMonth: String?,
     @SerializedName("expiryYear")
-    val expiryYear: String?
+    val expiryYear: String?,
+    @SerializedName("country")
+
+    // added
+    val country: String? = "gh",
+    @SerializedName("currency")
+    val currency: String? = "ghs"
 )

@@ -12,41 +12,63 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.hubtel.merchant.checkout.sdk.ux.model.UiState2
-import com.hubtel.merchant.checkout.sdk.ux.model.UiText
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.CheckoutApiService
+import com.hubtel.merchant.checkout.sdk.network.ResultWrapper
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
-import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.CheckoutRepository
+import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.toWalletResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
+import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.storage.CheckoutPrefManager
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.model.UiState2
+import com.hubtel.merchant.checkout.sdk.ux.model.UiText
 import com.hubtel.merchant.checkout.sdk.ux.utils.toWallet
 import com.hubtel.merchant.checkout.sdk.ux.utils.update
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 internal class PayOrderViewModel constructor(
-    private val checkoutRepository: CheckoutRepository,
+    private val unifiedCheckoutRepository: UnifiedCheckoutRepository,
 ) : ViewModel() {
+
+    private val _ghanaCardUiState = mutableStateOf(UiState2<GhanaCardResponse>())
+    val ghanaCardUiState: State<UiState2<GhanaCardResponse>> = _ghanaCardUiState
 
     var bankWallets by mutableStateOf(emptyList<Wallet>())
         private set
 
+    private var _customerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
+    val customerWalletsUiState: State<UiState2<List<WalletResponse>>> = _customerWalletsUiState
+
+    private var _cachedCustomerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
+    val cachedCustomerWalletsUiState: State<UiState2<List<WalletResponse>>> =
+        _cachedCustomerWalletsUiState
+
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
 
-    private val _checkoutFeesUiState = mutableStateOf(UiState2<List<CheckoutFee>>())
-    val checkoutFeesUiState: State<UiState2<List<CheckoutFee>>> = _checkoutFeesUiState
+    private val _businessInfoUiState = mutableStateOf(UiState2<BusinessResponseInfo>())
+    val businessInfoUiState: State<UiState2<BusinessResponseInfo>> = _businessInfoUiState
+
+    private val _checkoutFeesUiState = mutableStateOf(UiState2<CheckoutFee>())
+    val checkoutFeesUiState: State<UiState2<CheckoutFee>> = _checkoutFeesUiState
 
     private val _threeDSSetupUiState = mutableStateOf(UiState2<ThreeDSSetupInfo>())
     val threeDSSetupUiState: State<UiState2<ThreeDSSetupInfo>> = _threeDSSetupUiState
@@ -60,6 +82,12 @@ internal class PayOrderViewModel constructor(
     var momoChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
 
+    var otherChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
+        private set
+
+    var payIn4Channels by mutableStateOf<List<PaymentChannel>>(emptyList())
+
+
     var paymentInfo by mutableStateOf<PaymentInfo?>(null)
         private set
 
@@ -71,6 +99,8 @@ internal class PayOrderViewModel constructor(
 
     private var loadServiceFeesJob: Job? = null
 
+    var mandateIdNumber by mutableStateOf("")
+
     fun initData(amount: Double) {
         getUserWallets()
         resetPaymentInfo()
@@ -79,16 +109,87 @@ internal class PayOrderViewModel constructor(
 
     private fun getUserWallets() {
         viewModelScope.launch {
-            bankWallets = checkoutRepository.getWallets().map { it.toWallet() }
+            bankWallets = unifiedCheckoutRepository.getWallets().map { it.toWallet() }
+        }
+    }
+
+    fun getCustomerWallets(config: CheckoutConfig) {
+        viewModelScope.launch {
+            val result =
+                unifiedCheckoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
+
+            _customerWalletsUiState.update {
+                UiState2(isLoading = true)
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    _customerWalletsUiState.update {
+                        UiState2(isLoading = false, data = result.response.data)
+                    }
+                }
+
+                is ApiResult.HttpError -> {
+                    _customerWalletsUiState.update {
+                        UiState2(
+                            isLoading = false,
+                            data = null,
+                            error = UiText.DynamicString(result.message ?: "")
+                        )
+                    }
+                }
+
+                else -> {
+                    _customerWalletsUiState.update {
+                        UiState2(
+                            success = false,
+                            error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                        )
+                    }
+                }
+            }
         }
     }
 
     fun updatePaymentInfo(
         payOrderWalletType: PayOrderWalletType,
         momoWalletUiState: MomoWalletUiState,
+        otherPaymentUiState: OtherPaymentUiState,
         bankCardUiState: BankCardUiState,
+        bankPayUiState: BankPayUiState?
     ) {
         paymentInfo = when (payOrderWalletType) {
+            PayOrderWalletType.BANK_PAY -> {
+                val walletProvider = bankPayUiState?.walletProvider ?: WalletProvider.BankPay
+
+                PaymentInfo(
+                    walletId = "0",
+                    accountName = "",
+                    accountNumber = bankPayUiState?.mobileNumber ?: "",
+                    paymentType = payOrderWalletType.paymentTypeName,
+                    providerName = walletProvider.provider,
+                    channel = walletProvider.channelName,
+                )
+            }
+
+            PayOrderWalletType.PAY_IN_FOUR -> {
+                null
+            }
+
+            PayOrderWalletType.OTHER_PAYMENT -> {
+
+                val walletProvider = otherPaymentUiState.walletProvider
+
+                PaymentInfo(
+                    walletId = "0",
+                    accountName = otherPaymentUiState.accountName ?: "",
+                    accountNumber = otherPaymentUiState.mobileNumber,
+                    paymentType = payOrderWalletType.paymentTypeName,
+                    providerName = walletProvider?.provider,
+                    channel = walletProvider?.channelName,
+                    saveForLater = otherPaymentUiState.saveForLater,
+                )
+            }
+
             PayOrderWalletType.MOBILE_MONEY -> {
                 val walletProvider = momoWalletUiState.walletProvider
 
@@ -120,7 +221,7 @@ internal class PayOrderViewModel constructor(
 
                 val channel = when (accountNumber?.take(1)) {
                     "4" -> "cardnotpresent-visa"
-                    "5" -> "cardnotpresent-master"
+                    "5" -> "cardnotpresent-mastercard" // TODO: may need to change to cardnotpresent-mastercard
                     else -> "cardnotpresent"
                 }
 
@@ -136,7 +237,6 @@ internal class PayOrderViewModel constructor(
                     saveForLater = bankCardUiState.saveForLater
                 )
             }
-
         }.also {
             Timber.i("PaymentInfo: $it")
         }
@@ -147,12 +247,23 @@ internal class PayOrderViewModel constructor(
     }
 
     private fun updateOrderTotal(amount: Double, fees: List<CheckoutFee>) {
-        orderTotal = amount + (fees.sumOf { it.feeAmount ?: 0.0 })
+        orderTotal = /*amount*/ +(fees.sumOf { it.amountPayable })
     }
 
     private fun saveCard(paymentInfo: PaymentInfo) {
-        checkoutRepository.saveCard(paymentInfo.toWallet())
+        unifiedCheckoutRepository.saveCard(paymentInfo.toWallet())
     }
+
+    private fun saveWallet(vararg wallet: WalletResponse) {
+        unifiedCheckoutRepository.saveWallet(*wallet.map { it.toHubtelWallet() }.toTypedArray())
+    }
+
+
+    private fun saveMandateId(id: String?) {
+        unifiedCheckoutRepository.saveMandateId(id)
+    }
+
+    fun getMandateId(): String? = unifiedCheckoutRepository.getMandateId()
 
     fun getCheckoutFees(config: CheckoutConfig) {
         loadServiceFeesJob?.cancel()
@@ -160,10 +271,15 @@ internal class PayOrderViewModel constructor(
         loadServiceFeesJob = viewModelScope.launch {
             getTransactionFees(config)
 
-            val fees = _checkoutFeesUiState.value.data ?: emptyList()
+            val fee = _checkoutFeesUiState.value.data ?: CheckoutFee(
+                0.0,
+                0.0,
+                CheckoutType.RECEIVE_MONEY_PROMPT.rawValue,
+                0.0,
+            )
 
             // update order total with fee amount added
-            updateOrderTotal(config.amount, fees)
+            updateOrderTotal(config.amount, listOf(fee))
         }
     }
 
@@ -177,15 +293,19 @@ internal class PayOrderViewModel constructor(
             channel = paymentInfo?.channel,
         )
 
-        val result = checkoutRepository.getFees(config.posSalesId ?: "", feesReq)
+        val result = unifiedCheckoutRepository.getFees(config.posSalesId ?: "", feesReq)
 
         if (result is ApiResult.Success) {
+
             _checkoutFeesUiState.update {
                 UiState2(
-                    success = true,
-                    data = result.response.data ?: emptyList()
+                    success = true, data = result.response.data ?: CheckoutFee(
+                        0.0, 0.0, CheckoutType.RECEIVE_MONEY_PROMPT.rawValue, 0.0
+                    )
                 )
             }
+
+            Timber.d("Checkout data", _checkoutFeesUiState.value.data)
         } else {
             _checkoutFeesUiState.update {
                 UiState2(
@@ -215,14 +335,13 @@ internal class PayOrderViewModel constructor(
                 callbackUrl = config.callbackUrl
             )
 
-            val result = checkoutRepository.apiSetup3DS(config.posSalesId ?: "", req)
+            val result = unifiedCheckoutRepository.apiSetup3DS(config.posSalesId ?: "", req)
 
             when (result) {
                 is ApiResult.Success -> {
                     _threeDSSetupUiState.update {
                         UiState2(
-                            success = true,
-                            data = result.response.data
+                            success = true, data = result.response.data
                         )
                     }
                 }
@@ -261,6 +380,106 @@ internal class PayOrderViewModel constructor(
                 PayOrderWalletType.MOBILE_MONEY -> {
                     payOrderWithMomo(config)
                 }
+
+                PayOrderWalletType.OTHER_PAYMENT -> {
+                    payOrderWithOthers(config)
+                }
+
+                PayOrderWalletType.PAY_IN_FOUR -> {}
+
+                PayOrderWalletType.BANK_PAY -> {
+                    payOrderWithBankPay(config)
+                }
+            }
+        }
+    }
+
+    private suspend fun payOrderWithOthers(config: CheckoutConfig) {
+        _checkoutUiState.update { UiState2(isLoading = true) }
+
+        val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
+            salesId = config.posSalesId ?: "",
+            req = MobileMoneyCheckoutReq(
+                amount = config.amount,
+                channel = paymentInfo?.channel,
+                clientReference = config.clientReference,
+                customerMsisdn = paymentInfo?.accountNumber,
+                customerName = "",
+                description = config.description,
+                primaryCallbackUrl = config.callbackUrl,
+//                mandateId = getMandateId().isNullOrEmpty() ?: mandateIdNumber
+                mandateId = if (getMandateId().isNullOrEmpty()) mandateIdNumber else getMandateId()
+            )
+        )
+
+        when (result) {
+            is ApiResult.Success -> {
+                if (paymentInfo?.channel == "g-money") saveMandateId(mandateIdNumber)
+                _checkoutUiState.update { UiState2(success = true, data = result.response.data) }
+            }
+
+            is ApiResult.HttpError -> {
+                _checkoutUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.DynamicString(result.message ?: "")
+                    )
+                }
+            }
+
+            else -> {
+                _checkoutUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
+                }
+            }
+        }
+
+        paymentInfo?.let {
+            if (it.saveForLater) saveCard(it)
+
+        }
+    }
+
+    private suspend fun payOrderWithBankPay(config: CheckoutConfig) {
+        _checkoutUiState.update { UiState2(isLoading = true) }
+
+        val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
+            salesId = config.posSalesId ?: "",
+            req = MobileMoneyCheckoutReq(
+                amount = config.amount,
+                channel = paymentInfo?.channel,
+                clientReference = config.clientReference,
+                customerMsisdn = paymentInfo?.accountNumber,
+                customerName = "",
+                description = config.description,
+                primaryCallbackUrl = config.callbackUrl,
+            )
+        )
+
+        when (result) {
+            is ApiResult.Success -> {
+                _checkoutUiState.update { UiState2(success = true, data = result.response.data) }
+            }
+
+            is ApiResult.HttpError -> {
+                _checkoutUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.DynamicString(result.message ?: "")
+                    )
+                }
+            }
+
+            else -> {
+                _checkoutUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
+                }
             }
         }
     }
@@ -268,17 +487,15 @@ internal class PayOrderViewModel constructor(
     private suspend fun payOrderWithCard(config: CheckoutConfig) {
         _checkoutUiState.update { UiState2(isLoading = true) }
 
-        val result = checkoutRepository.apiEnroll3DS(
-            salesId = config.posSalesId ?: "",
-            transactionId = transactionId ?: ""
+        val result = unifiedCheckoutRepository.apiEnroll3DS(
+            salesId = config.posSalesId ?: "", transactionId = transactionId ?: ""
         )
 
         when (result) {
             is ApiResult.Success -> {
                 _checkoutUiState.update {
                     UiState2(
-                        success = true,
-                        data = result.response.data
+                        success = true, data = result.response.data
                     )
                 }
             }
@@ -313,44 +530,142 @@ internal class PayOrderViewModel constructor(
     ) {
         _checkoutUiState.update { UiState2(isLoading = true) }
 
-        val result = checkoutRepository.apiReceiveMobileMoney(
-            salesId = config.posSalesId ?: "",
-            req = MobileMoneyCheckoutReq(
-                amount = orderTotal,
-                channel = paymentInfo?.channel,
-                clientReference = config.clientReference,
-                customerMsisdn = paymentInfo?.accountNumber,
-                customerName = "",
-                description = config.description,
-                primaryCallbackUrl = config.callbackUrl
-            )
+        val feesReq = GetFeesReq(
+            amount = config.amount,
+            channel = paymentInfo?.channel,
         )
+        val checkoutTypeResult = unifiedCheckoutRepository.getFees(config.posSalesId ?: "", feesReq)
 
-        when (result) {
-            is ApiResult.Success -> {
-                _checkoutUiState.update {
-                    UiState2(
-                        success = true,
-                        data = result.response.data
+        if (checkoutTypeResult is ApiResult.Success) {
+            val type =
+                checkoutTypeResult.response.data?.getCheckoutType ?: CheckoutType.DIRECT_DEBIT
+
+            when (type) {
+                CheckoutType.RECEIVE_MONEY_PROMPT -> {
+                    val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
+                        salesId = config.posSalesId ?: "", req = MobileMoneyCheckoutReq(
+                            amount = config.amount,
+                            channel = if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
+//                            channel = "mtn-gh-direct-debit",
+                            clientReference = config.clientReference,
+                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerName = "",
+                            description = config.description,
+                            primaryCallbackUrl = config.callbackUrl
+                        )
                     )
+
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = true, data = result.response.data
+                                )
+                            }
+                        }
+
+                        is ApiResult.HttpError -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.DynamicString(result.message ?: ""),
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                                )
+                            }
+                        }
+                    }
                 }
-            }
 
-            is ApiResult.HttpError -> {
-                _checkoutUiState.update {
-                    UiState2(
-                        success = false,
-                        error = UiText.DynamicString(result.message ?: ""),
+                CheckoutType.DIRECT_DEBIT -> {
+                    val result = unifiedCheckoutRepository.apiDirectDebit(
+                        salesId = config.posSalesId ?: "", req = MobileMoneyCheckoutReq(
+                            amount = config.amount,
+                            channel = paymentInfo?.channel,
+                            clientReference = config.clientReference,
+                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerName = "",
+                            description = config.description,
+                            primaryCallbackUrl = config.callbackUrl
+                        )
                     )
+
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = true, data = result.response.data
+                                )
+                            }
+                        }
+
+                        is ApiResult.HttpError -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.DynamicString(result.message ?: ""),
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                                )
+                            }
+                        }
+                    }
                 }
-            }
 
-            else -> {
-                _checkoutUiState.update {
-                    UiState2(
-                        success = false,
-                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                CheckoutType.PRE_APPROVAL_CONFIRM -> {
+                    val result = unifiedCheckoutRepository.apiPreapprovalNew(
+                        salesId = config.posSalesId ?: "", req = MobileMoneyCheckoutReq(
+                            amount = config.amount,
+                            channel = paymentInfo?.channel,
+                            clientReference = config.clientReference,
+                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerName = "",
+                            description = config.description,
+                            primaryCallbackUrl = config.callbackUrl
+                        )
                     )
+
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = true, data = result.response.data
+                                )
+                            }
+                        }
+
+                        is ApiResult.HttpError -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.DynamicString(result.message ?: ""),
+                                )
+                            }
+                        }
+
+                        else -> {
+                            _checkoutUiState.update {
+                                UiState2(
+                                    success = false,
+                                    error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -365,11 +680,11 @@ internal class PayOrderViewModel constructor(
         paymentInfo = null
     }
 
-    fun getPaymentChannels(salesId: String?) {
+    /*fun getPaymentChannels(salesId: String?) {
         viewModelScope.launch {
             salesId ?: return@launch
 
-            val savedChannels = checkoutRepository.getPaymentChannels().apply {
+            val savedChannels = unifiedCheckoutRepository.getPaymentChannels().apply {
                 bankChannels = this.getBankChannels()
                 momoChannels = this.getMomoChannels()
             }
@@ -381,11 +696,134 @@ internal class PayOrderViewModel constructor(
                 )
             }
 
-            val result = checkoutRepository.getBusinessPaymentChannels(salesId)
+            val result = unifiedCheckoutRepository.getBusinessPaymentChannels(salesId)
 
             when (result) {
                 is ApiResult.Success -> {
-                    val resultChannels = result.response.data?.toPaymentChannels() ?: emptyList()
+                    val resultChannels =
+                        result.response.data?.channels?.toPaymentChannels() ?: emptyList()
+
+                    _paymentChannelsUiState.update {
+                        it.copy(
+                            data = resultChannels,
+                            isLoading = false,
+                        )
+                    }
+
+                    bankChannels = resultChannels.getBankChannels()
+                    momoChannels = resultChannels.getMomoChannels()
+                    otherChannels = resultChannels.getOtherChannels()
+
+                    unifiedCheckoutRepository.savePaymentChannels(resultChannels)
+                }
+
+                is ApiResult.HttpError -> {}
+                else -> {}
+            }
+
+        }
+    }*/
+
+    private fun List<PaymentChannel>.getBankChannels(): List<PaymentChannel> = filter { channel ->
+        channel == PaymentChannel.MASTERCARD || channel == PaymentChannel.VISA
+    }
+
+    private fun List<PaymentChannel>.getMomoChannels(): List<PaymentChannel> = filter { channel ->
+        channel == PaymentChannel.MTN || channel == PaymentChannel.VODAFONE || channel == PaymentChannel.AIRTEL_TIGO
+    }
+
+    private fun List<PaymentChannel>.getOtherChannels(): List<PaymentChannel> = filter { channel ->
+        channel == PaymentChannel.HUBTEL || channel == PaymentChannel.ZEE_PAY || channel == PaymentChannel.G_MONEY
+    }
+
+    private fun List<PaymentChannel>.getPayIn4Channels(): List<PaymentChannel> = filter { channel ->
+        channel == PaymentChannel.MTN || channel == PaymentChannel.VODAFONE || channel == PaymentChannel.AIRTEL_TIGO ||
+                channel == PaymentChannel.MASTERCARD || channel == PaymentChannel.VISA
+    }
+
+    private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
+        coroutineScope {
+            val savedMomoWallets =
+                unifiedCheckoutRepository.savedMomoWallets().map { it.toWalletResponse() }
+            _cachedCustomerWalletsUiState.update {
+                UiState2(data = savedMomoWallets)
+            }
+
+            val customerWalletsDeferred = async {
+
+                unifiedCheckoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
+            }
+            val paymentChannelsDeferred = async {
+                val savedChannels = unifiedCheckoutRepository.getPaymentChannels().apply {
+                    bankChannels = this.getBankChannels()
+                    momoChannels = this.getMomoChannels()
+                    otherChannels = this.getOtherChannels()
+                    payIn4Channels = this.getPayIn4Channels()
+                }
+
+                _paymentChannelsUiState.update {
+                    UiState2(
+                        isLoading = savedChannels.isEmpty(),
+                        data = savedChannels,
+                    )
+                }
+
+                unifiedCheckoutRepository.getBusinessPaymentChannels(config.posSalesId ?: "")
+
+            }
+
+
+            val customerWalletsResult = customerWalletsDeferred.await()
+            val paymentChannelsResult = paymentChannelsDeferred.await()
+
+            if (customerWalletsResult is ApiResult.Success) {
+                val wallets = customerWalletsResult.response.data ?: emptyList()
+                saveWallet(*wallets.map { it }.toTypedArray())
+            }
+
+            customerWalletsResult to paymentChannelsResult
+        }
+
+    fun getCustomerWalletsAndPaymentChannels(config: CheckoutConfig) {
+        viewModelScope.launch {
+            _customerWalletsUiState.update { UiState2(isLoading = true) }
+            _paymentChannelsUiState.update { UiState2(isLoading = true) }
+            _businessInfoUiState.update { UiState2(isLoading = true) }
+
+            val (customerWalletsResult, paymentChannelsResult) = fetchData(config)
+
+            // Handle customerWalletsResult
+            _customerWalletsUiState.update {
+                when (customerWalletsResult) {
+                    is ApiResult.Success -> {
+                        UiState2(isLoading = false, data = customerWalletsResult.response.data)
+                    }
+
+                    is ApiResult.HttpError -> {
+                        UiState2(
+                            isLoading = false,
+                            data = null,
+                            error = UiText.DynamicString(customerWalletsResult.message ?: "")
+                        )
+                    }
+
+                    else -> {
+                        UiState2(
+                            success = false,
+                            error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                        )
+                    }
+                }
+            }
+
+            // Handle paymentChannelsResult & Business info
+            when (paymentChannelsResult) {
+                is ApiResult.Success -> {
+
+                    // payment channels
+                    val resultChannels =
+                        paymentChannelsResult.response.data?.channels?.toPaymentChannels()
+                            ?: emptyList()
 
                     _paymentChannelsUiState.update {
                         it.copy(
@@ -397,45 +835,91 @@ internal class PayOrderViewModel constructor(
                     bankChannels = resultChannels.getBankChannels()
                     momoChannels = resultChannels.getMomoChannels()
 
-                    checkoutRepository.savePaymentChannels(resultChannels)
+                    unifiedCheckoutRepository.savePaymentChannels(resultChannels)
+
+                    // business info
+                    val businessInfo = BusinessResponseInfo(
+                        businessID = paymentChannelsResult.response.data?.businessID,
+                        businessName = paymentChannelsResult.response.data?.businessName,
+                        businessLogoURL = paymentChannelsResult.response.data?.businessLogoURL,
+                        requireNationalID = paymentChannelsResult.response.data?.requireNationalID,
+                        isHubtelInternalMerchant = paymentChannelsResult.response.data?.isHubtelInternalMerchant
+                    )
+
+                    _businessInfoUiState.update {
+                        UiState2(isLoading = false, data = businessInfo)
+                    }
+
                 }
 
-                is ApiResult.HttpError -> {}
-                else -> {}
-            }
+                is ApiResult.HttpError -> {
+                    // Handle HTTP error
+                }
 
+                else -> {
+                    // Handle other errors
+                }
+            }
         }
     }
 
-    private fun List<PaymentChannel>.getBankChannels(): List<PaymentChannel> = filter { channel ->
-        channel == PaymentChannel.MASTERCARD
-                || channel == PaymentChannel.VISA
+    suspend fun getGhanaCardDetails(config: CheckoutConfig, number: String) {
+        viewModelScope.launch {
+            val result = unifiedCheckoutRepository.getGhanaCardDetails(
+                config.posSalesId ?: "", phoneNumber = number
+            )
+
+            _ghanaCardUiState.update {
+                UiState2(isLoading = true)
+            }
+
+            when (result) {
+                is ApiResult.Success -> {
+                    _ghanaCardUiState.update {
+                        UiState2(success = true, isLoading = false, data = result.response.data)
+                    }
+                }
+
+                is ApiResult.HttpError -> {
+                    _ghanaCardUiState.update {
+                        UiState2(
+                            success = false, error = UiText.DynamicString(result.message ?: "")
+                        )
+                    }
+                }
+
+                else -> {
+                    _ghanaCardUiState.update {
+                        UiState2(
+                            success = false,
+                            error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
+                        )
+                    }
+                }
+            }
+        }
     }
 
-    private fun List<PaymentChannel>.getMomoChannels(): List<PaymentChannel> = filter { channel ->
-        channel == PaymentChannel.MTN
-                || channel == PaymentChannel.VODAFONE
-                || channel == PaymentChannel.AIRTEL_TIGO
+    fun resetGhanaCardState() {
+        _ghanaCardUiState.value = UiState2()
     }
-
 
     companion object {
-
         fun getViewModelFactory(apiKey: String?): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = this[APPLICATION_KEY] as Application
 
                 val database = CheckoutDB.getInstance(application)
-                val checkoutService = CheckoutApiService(apiKey ?: "")
+                val unifiedCheckoutService = UnifiedCheckoutApiService(apiKey ?: "")
                 val checkoutPrefManager = CheckoutPrefManager(application)
 
-                val checkoutRepository = CheckoutRepository(
-                    database, checkoutService, checkoutPrefManager
+                val checkoutRepository = UnifiedCheckoutRepository(
+                    database, unifiedCheckoutService, checkoutPrefManager
                 )
 
                 PayOrderViewModel(checkoutRepository)
             }
         }
-
     }
 }
+

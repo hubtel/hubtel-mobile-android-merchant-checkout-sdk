@@ -16,4 +16,4 @@ rootProject.name = "android-checkout"
 include ':app'
 include ':core-network'
 include ':checkout-sdk'
-include ':network-kit'
+//include ':network-kit'

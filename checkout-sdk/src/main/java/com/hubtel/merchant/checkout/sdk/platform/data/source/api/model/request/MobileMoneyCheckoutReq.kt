@@ -16,5 +16,7 @@ data class MobileMoneyCheckoutReq(
     @SerializedName("Description")
     val description: String?,
     @SerializedName("PrimaryCallbackUrl")
-    val primaryCallbackUrl: String?
+    val primaryCallbackUrl: String?,
+    @SerializedName("mandateId")
+    val mandateId: String? = null
 )
