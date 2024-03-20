@@ -30,10 +30,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.hubtel.core_ui.components.custom.HBTextField
-import com.hubtel.core_ui.theme.Dimens
-import com.hubtel.core_ui.theme.GreyShade100
-import com.hubtel.core_ui.theme.HubtelTheme
+
+
+
+
 //import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.BankCardUiState

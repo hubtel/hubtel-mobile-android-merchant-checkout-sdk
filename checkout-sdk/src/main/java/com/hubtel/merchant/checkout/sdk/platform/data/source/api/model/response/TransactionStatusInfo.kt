@@ -2,6 +2,37 @@ package com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response
 
 import com.google.gson.annotations.SerializedName
 
+internal data class TransactionStatusInfo2(
+    @SerializedName("date")
+    val date: String?,
+    @SerializedName("status")
+    val status: String?,
+    @SerializedName("transactionId")
+    val transactionId: String?,
+    @SerializedName("externalTransactionId")
+    val externalTransactionId: String?,
+    @SerializedName("paymentMethod")
+    val paymentMethod: String?,
+    @SerializedName("clientReference")
+    val clientReference: String?,
+    @SerializedName("currencyCode")
+    val currencyCode: String?,
+    @SerializedName("amount")
+    val amount: Double?,
+    @SerializedName("charges")
+    val charges: Double?,
+    @SerializedName("amountAfterCharges")
+    val amountAfterCharges: Double?,
+) {
+    val paymentStatus: PaymentStatus
+        get() {
+            return when (status?.lowercase()) {
+                "success" -> PaymentStatus.PAID
+                "failed" -> PaymentStatus.UNPAID
+                else -> PaymentStatus.PENDING
+            }
+        }
+}
 
 internal data class TransactionStatusInfo(
     @SerializedName("amountAfterFees")
@@ -38,7 +69,7 @@ internal data class TransactionStatusInfo(
     val transactionAmount: Double?,
     @SerializedName("transactionId")
     val transactionId: String?,
-    @SerializedName("transactionStatus")
+    @SerializedName("status")
     val transactionStatus: String?,
     @SerializedName("transactionType")
     val transactionType: String?
@@ -47,9 +78,11 @@ internal data class TransactionStatusInfo(
     val paymentStatus: PaymentStatus
         get() {
             return when (transactionStatus?.lowercase()) {
-                "success" -> PaymentStatus.PAID
-                "failed" -> PaymentStatus.UNPAID
-                else -> PaymentStatus.PENDING
+                "paid" -> PaymentStatus.PAID
+                "unpaid" -> PaymentStatus.UNPAID
+                "pending" -> PaymentStatus.PENDING
+                "expired" -> PaymentStatus.EXPIRED
+                else -> PaymentStatus.FAILED
             }
         }
 }
@@ -58,4 +91,6 @@ internal enum class PaymentStatus {
     UNPAID,
     PAID,
     PENDING,
+    EXPIRED,
+    FAILED
 }

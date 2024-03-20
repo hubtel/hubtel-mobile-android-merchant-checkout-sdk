@@ -6,32 +6,57 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-
 import com.hubtel.merchant.checkout.sdk.R
+import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
+import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.ux.components.HBTextField
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.BankCardUiState
@@ -43,6 +68,8 @@ import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.GreyShade100
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import kotlinx.coroutines.delay
+import timber.log.Timber
+import java.util.Calendar
 
 @Composable
 internal fun ExpandableBankCardOption(
@@ -52,6 +79,7 @@ internal fun ExpandableBankCardOption(
     expanded: Boolean,
     onExpand: () -> Unit,
     modifier: Modifier = Modifier,
+    isInternalMerchant: Boolean = false
 ) {
 
     val bankProviders = remember(channels) { channels.toBankWalletProviders() }
@@ -84,37 +112,42 @@ internal fun ExpandableBankCardOption(
 
             // toggle use saved bank card
             if (wallets.isNotEmpty()) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
 
-                    // use new card
-                    TabChip(
-                        text = stringResource(R.string.checkout_use_new_card),
-                        selected = !state.useSavedBankCard,
-                        onClick = {
-                            state.useSavedBankCard = false
+                if (isInternalMerchant) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+
+                        // use new card
+                        TabChip(
+                            text = stringResource(R.string.checkout_use_new_card),
+                            selected = !state.useSavedBankCard,
+                            onClick = {
+                                state.useSavedBankCard = false
 //                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseNewCard)
-                        },
-                    )
+                            },
+                        )
 
-                    Spacer(Modifier.padding(Dimens.paddingNano))
+                        Spacer(Modifier.padding(Dimens.paddingNano))
 
-                    // use saved bank card
-                    TabChip(
-                        text = stringResource(R.string.checkout_use_saved_card),
-                        selected = state.useSavedBankCard,
-                        onClick = {
-                            state.useSavedBankCard = true
-//                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseSavedCard)
-                        },
-                    )
+                        // use saved bank card
+                        TabChip(
+                            text = stringResource(R.string.checkout_use_saved_card),
+                            selected = state.useSavedBankCard,
+                            onClick = {
+                                state.useSavedBankCard = true
+                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapUseSavedCard)
+                            },
+                        )
+                    }
+                } else {
+                    state.useSavedBankCard = false
                 }
             }
 
             if (!state.useSavedBankCard) {
-                NewCardInputContent(state)
+                NewCardInputContent(state, isInternalMerchant = isInternalMerchant)
             } else {
                 SavedCardSelectContent(
                     state,
@@ -130,6 +163,7 @@ internal fun ExpandableBankCardOption(
 private fun NewCardInputContent(
     state: BankCardUiState,
     modifier: Modifier = Modifier,
+    isInternalMerchant: Boolean = false
 ) {
     val cardHolderNameFocusRequester = remember { FocusRequester() }
     val cardNumberFocusRequester = remember { FocusRequester() }
@@ -149,28 +183,31 @@ private fun NewCardInputContent(
         mutableStateOf(res)
     }
 
+    var isYearError by remember { mutableStateOf(false) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(Dimens.paddingDefault),
         modifier = modifier.bringIntoViewRequester(bringIntoViewRequester),
     ) {
 
-        HBTextField(
-            value = state.cardHolderName,
-            onValueChange = { value ->
-                state.cardHolderName = value
-            },
-            placeholder = {
-                Text(text = "Card Holder Name")
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Ascii,
-                capitalization = KeyboardCapitalization.Words,
-            ),
-            modifier = Modifier
-                .focusRequester(cardHolderNameFocusRequester)
-                .fillMaxWidth()
-        )
+        if (!isInternalMerchant) {
+            HBTextField(
+                value = state.cardHolderName,
+                onValueChange = { value ->
+                    state.cardHolderName = value
+                },
+                placeholder = {
+                    Text(text = "Card Holder Name")
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Ascii,
+                    capitalization = KeyboardCapitalization.Words,
+                ),
+                modifier = Modifier
+                    .focusRequester(cardHolderNameFocusRequester)
+                    .fillMaxWidth()
+            )
+        }
 
         HBTextField(
             value = state.cardNumber,
@@ -206,6 +243,7 @@ private fun NewCardInputContent(
         ) {
             HBTextField(
                 value = state.monthYear,
+                textStyle = TextStyle(color = if (isYearError) Color.Red else Color.Black),
                 onValueChange = { value ->
                     val inputText = value.text.filter { it.isDigit() }
                     val formatted = if (inputText.length > 2) {
@@ -230,7 +268,8 @@ private fun NewCardInputContent(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .focusRequester(expiryFocusRequester)
-                    .weight(1f)
+                    .weight(1f),
+
             )
 
             HBTextField(
@@ -239,6 +278,7 @@ private fun NewCardInputContent(
                     val inputText = value.filter { it.isDigit() }
                     if (inputText.length <= 3) {
                         state.cvv = inputText
+                        state.isInternalMerchant = isInternalMerchant
                     }
                 },
                 placeholder = {
@@ -252,36 +292,54 @@ private fun NewCardInputContent(
             )
         }
 
-        /* Row(
-             verticalAlignment = Alignment.CenterVertically,
-             modifier = Modifier.clickable {
-                 state.saveForLater = state.saveForLater.not()
-             },
-         ) {
-             Checkbox(
-                 checked = state.saveForLater,
-                 onCheckedChange = null,
-                 colors = CheckboxDefaults.colors(
-                     checkedColor = CheckoutTheme.colors.colorPrimary,
-                     uncheckedColor = CheckoutTheme.colors.colorPrimary,
-                     checkmarkColor = HubtelTheme.colors.colorOnPrimary,
-                     disabledColor = HubtelTheme.colors.outline,
-                 )
-             )
+        if (isInternalMerchant) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable {
+                    state.saveForLater = state.saveForLater.not()
+                },
+            ) {
+                Checkbox(
+                    checked = state.saveForLater,
+                    onCheckedChange = null,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = CheckoutTheme.colors.colorPrimary,
+                        uncheckedColor = CheckoutTheme.colors.colorPrimary,
+                        checkmarkColor = HubtelTheme.colors.colorOnPrimary,
+                        disabledColor = HubtelTheme.colors.outline,
+                    )
+                )
 
-             Text(
-                 text = stringResource(R.string.checkout_card_future_use_mgs),
-                 modifier = Modifier
-                     .weight(1f)
-                     .padding(start = Dimens.spacingDefault),
-             )
-         }*/
+                Text(
+                    text = stringResource(R.string.checkout_card_future_use_mgs),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = Dimens.spacingDefault),
+                )
+            }
+        }
     }
 
+    LaunchedEffect(state.monthYear.text) {
+        Timber.tag("LaunchedEffect").i("Running ...")
+        if (state.monthYear.text.length >= 5) {
+            val yy = state.monthYear.text.takeLast(2).toIntOrNull() ?: 0
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR) % 100
+
+            Timber.tag("YEAR").i("$year");
+            Timber.tag("YY").i("$yy")
+
+            isYearError = yy < year
+            state.isValidYear = yy >= year
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(500)
-        cardHolderNameFocusRequester.requestFocus()
+        if (!isInternalMerchant) {
+            cardHolderNameFocusRequester.requestFocus()
+        }
         bringIntoViewRequester.bringIntoView()
     }
 }

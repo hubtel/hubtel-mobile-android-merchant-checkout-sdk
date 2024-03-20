@@ -30,17 +30,19 @@ class MainActivity : BaseActivity() {
 
     private fun startCheckout() {
         val themeConfig = ThemeConfig(
-            primaryColor = ContextCompat.getColor(this, R.color.purple_500)
+            primaryColor = ContextCompat.getColor(this, R.color.black)
         )
 
         val intent = CheckoutIntent.Builder(this)
             .setAmount(0.1)
+//            .setApiKey("clJEOG5ndzpmNWM5YjhmNzViNWQ0ZmQ2OWIzZTM4ZTMxNDNmMjM5MA==")
+//            .setMerchantId("2020492")
             .setApiKey("T0UwajAzcjo5ZjAxMzhkOTk5ZmM0ODMxYjc3MWFhMzEzYTNjMThhNA==")
+            .setMerchantId("11684")
             .setCallbackUrl("https://cd81-154-47-25-8.ngrok-free.app/payment-callback")
             .setDescription("Rice with Coleslaw")
-            .setMerchantId("11684")
             .setClientReference(UUID.randomUUID().toString())
-            .setCustomerPhoneNumber("233540343395")
+            .setCustomerPhoneNumber("233556236739")
             .setTheme(themeConfig)
             .build()
 

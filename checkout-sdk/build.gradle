@@ -114,6 +114,9 @@ dependencies {
 
     implementation "com.google.code.gson:gson:2.10.1"
 
+    // constraint layout
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
+
     def room_version = "2.5.1"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
@@ -128,6 +131,9 @@ dependencies {
     def voyager_version = "1.0.0-rc05"
     implementation "cafe.adriel.voyager:voyager-navigator:$voyager_version"
     implementation "cafe.adriel.voyager:voyager-androidx:$voyager_version"
+
+    def accompanist_version = "0.23.1"
+    api "com.google.accompanist:accompanist-navigation-material:$accompanist_version"
 
     // Timber Logging
     api 'com.jakewharton.timber:timber:5.0.1'

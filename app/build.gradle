@@ -49,7 +49,7 @@ android {
 dependencies {
 
     implementation project(":checkout-sdk")
-    implementation project(":network-kit")
+//    implementation project(":network-kit")
     implementation 'androidx.activity:activity-ktx:1.7.2'
 
     testImplementation 'junit:junit:4.13.2'

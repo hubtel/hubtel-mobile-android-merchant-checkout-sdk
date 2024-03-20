@@ -2,10 +2,11 @@ package com.hubtel.merchant.checkout.sdk.platform.data.source.db.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.dao.WalletDao
 
-@Entity(tableName = WalletDao.NAME)
+@Entity(tableName = WalletDao.NAME, indices = [Index(value = ["accountNo"], unique = true)])
 data class DbWallet(
     @ColumnInfo(name = "id")
     @PrimaryKey(autoGenerate = true) val id: Long,
