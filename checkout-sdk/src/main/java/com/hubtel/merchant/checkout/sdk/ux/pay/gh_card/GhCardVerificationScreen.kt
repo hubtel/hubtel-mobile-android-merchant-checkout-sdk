@@ -5,6 +5,8 @@ package com.hubtel.merchant.checkout.sdk.ux.pay.gh_card
 
 
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -58,13 +60,22 @@ import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-//internal data class CardInfo(val firstName: String)
 
 internal class GhCardVerificationScreen(
     val config: CheckoutConfig,
     private val phoneNumber: String,
     private val checkoutType: CheckoutType? = null
-) : Screen {
+) : Screen, Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readString()!!,
+        parcel.readString()?.let {
+            CheckoutType.valueOf(it)
+        }
+    ) {
+    }
+
     @Composable
     override fun Content() {
 
@@ -257,6 +268,25 @@ internal class GhCardVerificationScreen(
             return "$prefix-$middleChars-$lastChar"
         }
         return input
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(config, flags)
+        parcel.writeString(phoneNumber)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<GhCardVerificationScreen> {
+        override fun createFromParcel(parcel: Parcel): GhCardVerificationScreen {
+            return GhCardVerificationScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<GhCardVerificationScreen?> {
+            return arrayOfNulls(size)
+        }
     }
 
 }

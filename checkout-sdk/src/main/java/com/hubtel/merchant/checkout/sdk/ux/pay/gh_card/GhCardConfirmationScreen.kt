@@ -5,6 +5,8 @@ package com.hubtel.merchant.checkout.sdk.ux.pay.gh_card
 
 
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -66,7 +68,19 @@ internal data class GhCardConfirmationScreen(
     val unverified: Boolean = true,
     val checkoutType: CheckoutType? = null
 ) :
-    Screen {
+    Screen, Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readString()!!,
+        parcel.readString(),
+        parcel.readByte() != 0.toByte(),
+        parcel.readString()?.let {
+            CheckoutType.valueOf(it)
+        }
+    ) {
+    }
+
     @Composable
     override fun Content() {
 
@@ -320,6 +334,27 @@ internal data class GhCardConfirmationScreen(
             Text(
                 text = info, style = HubtelTheme.typography.h3
             )
+        }
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(config, flags)
+        parcel.writeString(phoneNumber)
+        parcel.writeString(cardNumber)
+        parcel.writeByte(if (unverified) 1 else 0)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<GhCardConfirmationScreen> {
+        override fun createFromParcel(parcel: Parcel): GhCardConfirmationScreen {
+            return GhCardConfirmationScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<GhCardConfirmationScreen?> {
+            return arrayOfNulls(size)
         }
     }
 }

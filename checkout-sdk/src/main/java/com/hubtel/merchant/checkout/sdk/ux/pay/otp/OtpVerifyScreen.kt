@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.otp
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -59,7 +61,13 @@ import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 
 internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo: CheckoutInfo) :
-    Screen {
+    Screen, Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readParcelable(CheckoutInfo::class.java.classLoader)!!
+    ) {
+    }
+
     @Composable
     override fun Content() {
         val viewModel =
@@ -284,5 +292,24 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
             },
             textAlign = TextAlign.Center
         )
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(config, flags)
+        parcel.writeParcelable(checkoutInfo, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<OtpVerifyScreen> {
+        override fun createFromParcel(parcel: Parcel): OtpVerifyScreen {
+            return OtpVerifyScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<OtpVerifyScreen?> {
+            return arrayOfNulls(size)
+        }
     }
 }

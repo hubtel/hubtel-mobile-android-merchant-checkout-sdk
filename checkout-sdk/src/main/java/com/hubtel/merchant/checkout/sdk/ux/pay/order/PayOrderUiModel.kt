@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.order
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,7 +13,6 @@ import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ReviewEntry
-import java.io.Serializable
 
 // NB: Steps are arranged based on order and should not be
 // refactored/re-ordered (unless new steps are being introduced).
@@ -59,7 +60,10 @@ internal class PaymentWalletUiState(
     }
 }
 
-class MomoWalletUiState {
+class MomoWalletUiState(): Parcelable {
+
+    constructor(parcel: Parcel) : this() {
+    }
 
     var mobileNumber by mutableStateOf<String?>(null)
 
@@ -70,9 +74,27 @@ class MomoWalletUiState {
     val isValid
         get() = ((mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<MomoWalletUiState> {
+        override fun createFromParcel(parcel: Parcel): MomoWalletUiState {
+            return MomoWalletUiState(parcel)
+        }
+
+        override fun newArray(size: Int): Array<MomoWalletUiState?> {
+            return arrayOfNulls(size)
+        }
+    }
 }
 
-class OtherPaymentUiState {
+class OtherPaymentUiState(): Parcelable {
     var mobileNumber by mutableStateOf<String?>(null)
     var accountName by mutableStateOf<String?>(null)
     var isHubtelInternalMerchant by mutableStateOf<Boolean?>(true)
@@ -88,6 +110,27 @@ class OtherPaymentUiState {
         get() = ((mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null) || ((mobileNumber?.length
             ?: 0) >= 9 && isWalletSelected) || (walletProvider != null && isWalletSelected)
+
+    constructor(parcel: Parcel) : this() {
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<OtherPaymentUiState> {
+        override fun createFromParcel(parcel: Parcel): OtherPaymentUiState {
+            return OtherPaymentUiState(parcel)
+        }
+
+        override fun newArray(size: Int): Array<OtherPaymentUiState?> {
+            return arrayOfNulls(size)
+        }
+    }
 }
 
 class BankPayUiState {
@@ -113,7 +156,7 @@ class PayIn4UiState {
 class BankCardUiState constructor(
     wallet: Wallet? = null,
     useSavedBankCard: Boolean = false,
-) {
+): Parcelable {
 
     var useSavedBankCard by mutableStateOf(useSavedBankCard)
 
@@ -150,6 +193,12 @@ class BankCardUiState constructor(
             }
         }
 
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(Wallet::class.java.classLoader)!!,
+        parcel.readByte() != 0.toByte(),
+    ) {
+    }
+
 
     override fun toString(): String {
         return """
@@ -163,6 +212,26 @@ class BankCardUiState constructor(
             )
         """.trimIndent()
     }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<BankCardUiState> {
+        override fun createFromParcel(parcel: Parcel): BankCardUiState {
+            return BankCardUiState(parcel)
+        }
+
+        override fun newArray(size: Int): Array<BankCardUiState?> {
+            return arrayOfNulls(size)
+        }
+    }
+
+
 }
 
 internal data class Verification3dsState(
@@ -385,4 +454,36 @@ internal data class BusinessResponseInfo(
     val businessLogoURL: String?,
     val requireNationalID: Boolean?,
     val isHubtelInternalMerchant: Boolean?
-) : Serializable
+) : Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readValue(Boolean::class.java.classLoader) as? Boolean,
+        parcel.readValue(Boolean::class.java.classLoader) as? Boolean
+    ) {
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(businessID)
+        parcel.writeString(businessName)
+        parcel.writeString(businessLogoURL)
+        parcel.writeValue(requireNationalID)
+        parcel.writeValue(isHubtelInternalMerchant)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<BusinessResponseInfo> {
+        override fun createFromParcel(parcel: Parcel): BusinessResponseInfo {
+            return BusinessResponseInfo(parcel)
+        }
+
+        override fun newArray(size: Int): Array<BusinessResponseInfo?> {
+            return arrayOfNulls(size)
+        }
+    }
+}

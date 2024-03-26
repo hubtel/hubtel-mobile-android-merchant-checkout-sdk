@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.order
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -98,7 +100,13 @@ import timber.log.Timber
 
 internal data class PayOrderScreen(
     private val config: CheckoutConfig, private val attempt: VerificationAttempt? = null
-) : AndroidScreen() {
+) : AndroidScreen(), Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readParcelable(VerificationAttempt::class.java.classLoader)
+    ) {
+    }
 
     @Composable
     override fun Content() {
@@ -330,7 +338,7 @@ internal data class PayOrderScreen(
                             .padding(Dimens.paddingDefault),
                     )
 
-                    if (paymentChannelsUiState.isLoading || customerWalletsUiState.isLoading || businessInfoUiState.isLoading) {
+                    if (paymentChannelsUiState.isLoading) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -931,12 +939,67 @@ internal data class PayOrderScreen(
             }
         } else CHECKOUT
     }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(config, flags)
+        parcel.writeParcelable(attempt, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<PayOrderScreen> {
+        override fun createFromParcel(parcel: Parcel): PayOrderScreen {
+            return PayOrderScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<PayOrderScreen?> {
+            return arrayOfNulls(size)
+        }
+    }
 }
 
 internal data class VerificationAttempt(
     val attempt: Boolean = false,
-    val number: String = "",
+    val number: String? = "",
     val step: CheckoutStep? = null,
     val checkoutType: CheckoutType? = null,
     val walletType: PayOrderWalletType? = null
-)
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readByte() != 0.toByte(),
+        parcel.readString(),
+        parcel.readString()?.let {
+            CheckoutStep.valueOf(it)
+        } ?: GET_FEES,
+        parcel.readString()?.let {
+            CheckoutType.valueOf(it)
+        } ?: CheckoutType.NONE,
+        parcel.readString()?.let {
+            PayOrderWalletType.valueOf(it)
+        } ?: MOBILE_MONEY
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeByte(if (attempt) 1 else 0)
+        parcel.writeString(number)
+        parcel.writeString(step?.name ?: GET_FEES.name)
+        parcel.writeString(checkoutType?.name ?: CheckoutType.NONE.name)
+        parcel.writeString(walletType?.name ?: MOBILE_MONEY.name)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<VerificationAttempt> {
+        override fun createFromParcel(parcel: Parcel): VerificationAttempt {
+            return VerificationAttempt(parcel)
+        }
+
+        override fun newArray(size: Int): Array<VerificationAttempt?> {
+            return arrayOfNulls(size)
+        }
+    }
+}

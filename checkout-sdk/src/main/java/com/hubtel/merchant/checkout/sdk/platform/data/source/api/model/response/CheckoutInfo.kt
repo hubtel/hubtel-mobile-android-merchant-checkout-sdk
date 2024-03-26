@@ -1,7 +1,8 @@
 package com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
-import java.io.Serializable
 
 data class CheckoutInfo(
     @SerializedName("transactionId")
@@ -53,7 +54,32 @@ data class CheckoutInfo(
 
     @SerializedName("invoiceNumber")
     val invoiceNumber: String?
-): Serializable {
+): Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readValue(Double::class.java.classLoader) as? Double,
+        parcel.readValue(Double::class.java.classLoader) as? Double,
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readValue(Boolean::class.java.classLoader) as? Boolean,
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString()
+    ) {
+    }
+
     val getVerificationType: VerificationType
         get() = when(verificationType?.lowercase()) {
             VerificationType.OTP.rawValue -> VerificationType.OTP
@@ -74,6 +100,43 @@ data class CheckoutInfo(
             BankCardStatus.PENDING_AUTHENTICATION.rawValue -> BankCardStatus.PENDING_AUTHENTICATION
             else -> BankCardStatus.OTHERS
         }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(transactionId)
+        parcel.writeString(description)
+        parcel.writeString(clientReference)
+        parcel.writeValue(amount)
+        parcel.writeValue(charges)
+        parcel.writeString(customData)
+        parcel.writeString(jwt)
+        parcel.writeString(preapprovalStatus)
+        parcel.writeString(customerMsisdn)
+        parcel.writeString(verificationType)
+        parcel.writeString(hubtelPreapprovalId)
+        parcel.writeString(otpPrefix)
+        parcel.writeValue(skipOtp)
+        parcel.writeString(cardStatus)
+        parcel.writeString(customerName)
+        parcel.writeString(email)
+        parcel.writeString(amountAfterCharges)
+        parcel.writeString(amountCharged)
+        parcel.writeString(deliveryFee)
+        parcel.writeString(invoiceNumber)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<CheckoutInfo> {
+        override fun createFromParcel(parcel: Parcel): CheckoutInfo {
+            return CheckoutInfo(parcel)
+        }
+
+        override fun newArray(size: Int): Array<CheckoutInfo?> {
+            return arrayOfNulls(size)
+        }
+    }
 
 }
 

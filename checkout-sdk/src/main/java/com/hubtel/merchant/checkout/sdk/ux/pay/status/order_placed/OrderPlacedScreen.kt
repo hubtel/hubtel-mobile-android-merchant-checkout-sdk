@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.status.order_placed
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,7 +43,14 @@ import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 
-internal data class OrderPlacedScreen(val walletName: String?, val amount: Double?) : Screen {
+internal data class OrderPlacedScreen(val walletName: String?, val amount: Double?) : Screen,
+    Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readValue(Double::class.java.classLoader) as? Double
+    ) {
+    }
+
     @Composable
     override fun Content() {
         ScreenContent()
@@ -68,7 +77,10 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
                 LoadingTextButton(text = "AGREE & CONTINUE", onClick = {
                     checkoutActivity?.finishWithResult()
                     recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                }, Modifier.fillMaxWidth().padding(Dimens.paddingSmall))
+                },
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(Dimens.paddingSmall))
             }
         }) {
             val constraints = ConstraintSet {
@@ -133,6 +145,25 @@ internal data class OrderPlacedScreen(val walletName: String?, val amount: Doubl
                     }
                 }
             }
+        }
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(walletName)
+        parcel.writeValue(amount)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<OrderPlacedScreen> {
+        override fun createFromParcel(parcel: Parcel): OrderPlacedScreen {
+            return OrderPlacedScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<OrderPlacedScreen?> {
+            return arrayOfNulls(size)
         }
     }
 }

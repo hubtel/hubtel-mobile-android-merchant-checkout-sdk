@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.add_mandate
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +51,16 @@ internal data class AddMandateScreen(
     val config: CheckoutConfig,
     val walletType: PayOrderWalletType?,
     val uiState: UiStates
-) : Screen {
+) : Screen, Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readString()?.let {
+            PayOrderWalletType.valueOf(it)
+        },
+        parcel.readParcelable(UiStates::class.java.classLoader)!!
+    ) {
+    }
+
     @Composable
     override fun Content() {
         val viewModel = viewModel<PayOrderViewModel>(
@@ -151,10 +162,57 @@ internal data class AddMandateScreen(
             isButtonEnabled = mandateId.length >= 5
         }
     }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(config, flags)
+        parcel.writeParcelable(uiState, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<AddMandateScreen> {
+        override fun createFromParcel(parcel: Parcel): AddMandateScreen {
+            return AddMandateScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<AddMandateScreen?> {
+            return arrayOfNulls(size)
+        }
+    }
 }
 
 data class UiStates(
     val momoWalletUiState: MomoWalletUiState,
     val otherPaymentUiState: OtherPaymentUiState,
     val bankCardUiState: BankCardUiState
-)
+): Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(MomoWalletUiState::class.java.classLoader)!!,
+        parcel.readParcelable(OtherPaymentUiState::class.java.classLoader)!!,
+        parcel.readParcelable(BankCardUiState::class.java.classLoader)!!
+    ) {
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(momoWalletUiState, flags)
+        parcel.writeParcelable(otherPaymentUiState, flags)
+        parcel.writeParcelable(bankCardUiState, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<UiStates> {
+        override fun createFromParcel(parcel: Parcel): UiStates {
+            return UiStates(parcel)
+        }
+
+        override fun newArray(size: Int): Array<UiStates?> {
+            return arrayOfNulls(size)
+        }
+    }
+
+}

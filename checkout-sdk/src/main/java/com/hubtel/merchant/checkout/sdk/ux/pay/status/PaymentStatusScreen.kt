@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.status
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -82,7 +84,16 @@ internal data class PaymentStatusScreen(
     private val providerName: String?,
     private val config: CheckoutConfig,
     private val checkoutType: CheckoutType?
-) : Screen {
+) : Screen, Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readString().let {
+            CheckoutType.valueOf(it!!)
+        }
+    ) {
+    }
 
     @Composable
     override fun Content() {
@@ -866,7 +877,24 @@ internal data class PaymentStatusScreen(
         }
     }
 
-    companion object {
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(providerName)
+        parcel.writeParcelable(config, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<PaymentStatusScreen> {
+        override fun createFromParcel(parcel: Parcel): PaymentStatusScreen {
+            return PaymentStatusScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<PaymentStatusScreen?> {
+            return arrayOfNulls(size)
+        }
+
         private const val CHECK_COUNTDOWN_TIME = 5000L
     }
 }

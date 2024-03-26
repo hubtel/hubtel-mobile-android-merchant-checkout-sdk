@@ -25,7 +25,8 @@ internal data class CheckoutFee(
 enum class CheckoutType(val rawValue: String) {
     RECEIVE_MONEY_PROMPT("receivemoneyprompt"),
     DIRECT_DEBIT("directdebit"),
-    PRE_APPROVAL_CONFIRM("preapprovalconfirm")
+    PRE_APPROVAL_CONFIRM("preapprovalconfirm"),
+    NONE("none")
 }
 
 internal data class BusinessInfo(

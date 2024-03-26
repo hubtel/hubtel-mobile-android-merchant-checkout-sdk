@@ -667,6 +667,8 @@ internal class PayOrderViewModel constructor(
                         }
                     }
                 }
+
+                else -> {}
             }
         }
 

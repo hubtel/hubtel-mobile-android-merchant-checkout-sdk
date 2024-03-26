@@ -3,6 +3,8 @@ package com.hubtel.merchant.checkout.sdk.ux.pay.bankpay
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
 import android.print.PrintAttributes
 import android.print.PrintManager
 import android.view.ViewGroup
@@ -61,7 +63,14 @@ internal data class BankPayReceipt(
     val checkoutConfig: CheckoutConfig,
     val checkoutInfo: CheckoutInfo?,
     val businessInfo: BusinessResponseInfo?
-) : Screen {
+) : Screen, Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!,
+        parcel.readParcelable(CheckoutInfo::class.java.classLoader),
+        parcel.readParcelable(BusinessResponseInfo::class.java.classLoader)
+    ) {
+    }
 
     @Composable
     override fun Content() {
@@ -571,5 +580,25 @@ internal data class BankPayReceipt(
 </body>
 </html>
         """.trimIndent()
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(checkoutConfig, flags)
+        parcel.writeParcelable(checkoutInfo, flags)
+        parcel.writeParcelable(businessInfo, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<BankPayReceipt> {
+        override fun createFromParcel(parcel: Parcel): BankPayReceipt {
+            return BankPayReceipt(parcel)
+        }
+
+        override fun newArray(size: Int): Array<BankPayReceipt?> {
+            return arrayOfNulls(size)
+        }
     }
 }

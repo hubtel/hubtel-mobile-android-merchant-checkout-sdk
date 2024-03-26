@@ -15,7 +15,7 @@ The `Hubtel Checkout` library is available on Maven Central. To integrate it in 
 to the `dependencies` block:
 ```groovy
 dependencies {
-	implementation "com.hubtel:merchant-checkout-sdk:1.0.1"
+	implementation "com.hubtel:merchant-checkout-sdk:1.0.4"
 }
 ```
 4. Sync your project to download the library and make it available for use in your project.

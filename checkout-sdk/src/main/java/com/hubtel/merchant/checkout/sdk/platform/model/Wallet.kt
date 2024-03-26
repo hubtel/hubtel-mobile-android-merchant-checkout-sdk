@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.platform.model
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.core.text.isDigitsOnly
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
@@ -11,7 +13,41 @@ data class Wallet(
     val expiry: String?,
     val cvv: String?,
     val provider: String?
-)
+): Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readLong(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString()
+    ) {
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeLong(id)
+        parcel.writeString(accountNumber)
+        parcel.writeString(accountName)
+        parcel.writeString(expiry)
+        parcel.writeString(cvv)
+        parcel.writeString(provider)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<Wallet> {
+        override fun createFromParcel(parcel: Parcel): Wallet {
+            return Wallet(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Wallet?> {
+            return arrayOfNulls(size)
+        }
+    }
+
+}
 
 data class Wallet2(
     @SerializedName("id")

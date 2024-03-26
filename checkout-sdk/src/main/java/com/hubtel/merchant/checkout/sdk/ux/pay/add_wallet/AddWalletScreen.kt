@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.add_wallet
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -33,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -51,7 +52,7 @@ import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 import timber.log.Timber
 import java.util.Locale
 
-internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
+internal data class AddWalletScreen(val config: CheckoutConfig) : Screen, Parcelable {
     @Composable
     override fun Content() {
         val viewModel =
@@ -64,6 +65,9 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
         ProviderRes("Vodafone", R.drawable.checkout_ic_vodafone_cash),
         ProviderRes("AirtelTigo", R.drawable.checkout_ic_airtel_tigo),
     )
+
+    constructor(parcel: Parcel) : this(parcel.readParcelable(CheckoutConfig::class.java.classLoader)!!) {
+    }
 
     @Composable
     private fun ScreenContent(viewModel: AddWalletViewModel) {
@@ -241,5 +245,23 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
                 "airteltigo" -> "AirtelTigo"
                 else -> ""
             }
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeParcelable(config, flags)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<AddWalletScreen> {
+        override fun createFromParcel(parcel: Parcel): AddWalletScreen {
+            return AddWalletScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<AddWalletScreen?> {
+            return arrayOfNulls(size)
+        }
     }
 }
