@@ -44,37 +44,44 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+typealias GhanaCardResponseState = State<UiState2<GhanaCardResponse>>
+typealias WalletResponseState = State<UiState2<List<WalletResponse>>>
+internal typealias PaymentChannelState = State<UiState2<List<PaymentChannel>>>
+internal typealias BusinessResponseInfoState = State<UiState2<BusinessResponseInfo>>
+internal typealias CheckoutFeeState = State<UiState2<CheckoutFee>>
+internal typealias CheckoutInfoState = State<UiState2<CheckoutInfo>>
+internal typealias ThreeDSSetupInfoState = State<UiState2<ThreeDSSetupInfo>>
+
 internal class PayOrderViewModel constructor(
     private val unifiedCheckoutRepository: UnifiedCheckoutRepository,
 ) : ViewModel() {
 
     private val _ghanaCardUiState = mutableStateOf(UiState2<GhanaCardResponse>())
-    val ghanaCardUiState: State<UiState2<GhanaCardResponse>> = _ghanaCardUiState
+    val ghanaCardUiState: GhanaCardResponseState = _ghanaCardUiState
 
     var bankWallets by mutableStateOf(emptyList<Wallet>())
         private set
 
     private var _customerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
-    val customerWalletsUiState: State<UiState2<List<WalletResponse>>> = _customerWalletsUiState
+    val customerWalletsUiState: WalletResponseState = _customerWalletsUiState
 
     private var _cachedCustomerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
-    val cachedCustomerWalletsUiState: State<UiState2<List<WalletResponse>>> =
-        _cachedCustomerWalletsUiState
+    val cachedCustomerWalletsUiState: WalletResponseState = _cachedCustomerWalletsUiState
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
-    val paymentChannelsUiState: State<UiState2<List<PaymentChannel>>> = _paymentChannelsUiState
+    val paymentChannelsUiState: PaymentChannelState = _paymentChannelsUiState
 
     private val _businessInfoUiState = mutableStateOf(UiState2<BusinessResponseInfo>())
-    val businessInfoUiState: State<UiState2<BusinessResponseInfo>> = _businessInfoUiState
+    val businessInfoUiState: BusinessResponseInfoState = _businessInfoUiState
 
     private val _checkoutFeesUiState = mutableStateOf(UiState2<CheckoutFee>())
-    val checkoutFeesUiState: State<UiState2<CheckoutFee>> = _checkoutFeesUiState
+    val checkoutFeesUiState: CheckoutFeeState = _checkoutFeesUiState
 
     private val _threeDSSetupUiState = mutableStateOf(UiState2<ThreeDSSetupInfo>())
-    val threeDSSetupUiState: State<UiState2<ThreeDSSetupInfo>> = _threeDSSetupUiState
+    val threeDSSetupUiState: ThreeDSSetupInfoState = _threeDSSetupUiState
 
     private val _checkoutUiState = mutableStateOf(UiState2<CheckoutInfo>())
-    val checkoutUiState: State<UiState2<CheckoutInfo>> = _checkoutUiState
+    val checkoutUiState: CheckoutInfoState = _checkoutUiState
 
     var bankChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
