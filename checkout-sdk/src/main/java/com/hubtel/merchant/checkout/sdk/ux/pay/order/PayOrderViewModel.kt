@@ -120,43 +120,6 @@ internal class PayOrderViewModel constructor(
         }
     }
 
-    fun getCustomerWallets(config: CheckoutConfig) {
-        viewModelScope.launch {
-            val result =
-                unifiedCheckoutRepository.getCustomerWallets(config.posSalesId, config.msisdn)
-
-            _customerWalletsUiState.update {
-                UiState2(isLoading = true)
-            }
-            when (result) {
-                is ApiResult.Success -> {
-                    _customerWalletsUiState.update {
-                        UiState2(isLoading = false, data = result.response.data)
-                    }
-                }
-
-                is ApiResult.HttpError -> {
-                    _customerWalletsUiState.update {
-                        UiState2(
-                            isLoading = false,
-                            data = null,
-                            error = UiText.DynamicString(result.message ?: "")
-                        )
-                    }
-                }
-
-                else -> {
-                    _customerWalletsUiState.update {
-                        UiState2(
-                            success = false,
-                            error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     fun updatePaymentInfo(
         payOrderWalletType: PayOrderWalletType,
         momoWalletUiState: MomoWalletUiState,
@@ -687,67 +650,6 @@ internal class PayOrderViewModel constructor(
         paymentInfo = null
     }
 
-    /*fun getPaymentChannels(salesId: String?) {
-        viewModelScope.launch {
-            salesId ?: return@launch
-
-            val savedChannels = unifiedCheckoutRepository.getPaymentChannels().apply {
-                bankChannels = this.getBankChannels()
-                momoChannels = this.getMomoChannels()
-            }
-
-            _paymentChannelsUiState.update {
-                UiState2(
-                    isLoading = savedChannels.isEmpty(),
-                    data = savedChannels,
-                )
-            }
-
-            val result = unifiedCheckoutRepository.getBusinessPaymentChannels(salesId)
-
-            when (result) {
-                is ApiResult.Success -> {
-                    val resultChannels =
-                        result.response.data?.channels?.toPaymentChannels() ?: emptyList()
-
-                    _paymentChannelsUiState.update {
-                        it.copy(
-                            data = resultChannels,
-                            isLoading = false,
-                        )
-                    }
-
-                    bankChannels = resultChannels.getBankChannels()
-                    momoChannels = resultChannels.getMomoChannels()
-                    otherChannels = resultChannels.getOtherChannels()
-
-                    unifiedCheckoutRepository.savePaymentChannels(resultChannels)
-                }
-
-                is ApiResult.HttpError -> {}
-                else -> {}
-            }
-
-        }
-    }*/
-
-    private fun List<PaymentChannel>.getBankChannels(): List<PaymentChannel> = filter { channel ->
-        channel == PaymentChannel.MASTERCARD || channel == PaymentChannel.VISA
-    }
-
-    private fun List<PaymentChannel>.getMomoChannels(): List<PaymentChannel> = filter { channel ->
-        channel == PaymentChannel.MTN || channel == PaymentChannel.VODAFONE || channel == PaymentChannel.AIRTEL_TIGO
-    }
-
-    private fun List<PaymentChannel>.getOtherChannels(): List<PaymentChannel> = filter { channel ->
-        channel == PaymentChannel.HUBTEL || channel == PaymentChannel.ZEE_PAY || channel == PaymentChannel.G_MONEY
-    }
-
-    private fun List<PaymentChannel>.getPayIn4Channels(): List<PaymentChannel> = filter { channel ->
-        channel == PaymentChannel.MTN || channel == PaymentChannel.VODAFONE || channel == PaymentChannel.AIRTEL_TIGO ||
-                channel == PaymentChannel.MASTERCARD || channel == PaymentChannel.VISA
-    }
-
     private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
         coroutineScope {
             val savedMomoWallets =
@@ -930,3 +832,27 @@ internal class PayOrderViewModel constructor(
     }
 }
 
+
+private val momoChannels = setOf(
+    PaymentChannel.MTN,
+    PaymentChannel.VODAFONE,
+    PaymentChannel.AIRTEL_TIGO
+)
+
+private val otherChannels = setOf(
+    PaymentChannel.HUBTEL,
+    PaymentChannel.ZEE_PAY,
+    PaymentChannel.G_MONEY
+)
+
+private val bankChannels = setOf(
+    PaymentChannel.MASTERCARD,
+    PaymentChannel.VISA
+)
+
+private val payIn4Channels = bankChannels + momoChannels
+
+private fun List<PaymentChannel>.getBankChannels() = filter { it in bankChannels }
+private fun List<PaymentChannel>.getMomoChannels() = filter { it in momoChannels }
+private fun List<PaymentChannel>.getOtherChannels() = filter { it in otherChannels }
+private fun List<PaymentChannel>.getPayIn4Channels() = filter { it in payIn4Channels }
