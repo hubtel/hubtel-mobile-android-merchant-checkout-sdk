@@ -19,5 +19,8 @@ data class PaymentChannelResponse (
     val requireNationalID: Boolean?,
 
     @SerializedName("isHubtelInternalMerchant")
-    val isHubtelInternalMerchant: Boolean?
+    val isHubtelInternalMerchant: Boolean?,
+
+    @SerializedName("requireMobileMoneyOTP")
+    val requireMobileMoneyOtp: Boolean?
 )
