@@ -31,11 +31,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
+import coil.compose.rememberImagePainter
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
@@ -50,8 +52,10 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.VerificationType
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
+import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutActionDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.HBProgressDialog
+import com.hubtel.merchant.checkout.sdk.ux.components.HBRoundedDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.layouts.HBModalBottomSheetLayout
@@ -234,7 +238,7 @@ internal data class PayOrderScreen(
                         LoadingTextButton(
 //                        text = "${stringResource(R.string.checkout_pay)} ${orderTotal.formatMoney()}",
                             text = when {
-                                walletUiState.isBankPay -> "generate invoice"
+                                walletUiState.isBankPay -> stringResource(R.string.checkout_generate_invoice)
                                 payIn4UiState.repaymentEntries?.isNotEmpty() == true -> "pay"
                                 walletUiState.isPayIn4 -> "accept and pay"
                                 else -> stringResource(
@@ -276,6 +280,8 @@ internal data class PayOrderScreen(
                                         currentCheckoutStep = CHECKOUT
                                     }
                                 }
+
+                                // If checkout requiresKyc(requireNationalId) && wallet type is momo then check verification details
 
                                 Timber.d("TAP: PAY tapped!")
                                 currentCheckoutStep = PAY_ORDER
@@ -363,10 +369,8 @@ internal data class PayOrderScreen(
                             modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                             wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
                                 ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
-//                        wallets = cachedMomoWalletsUiState.data ?: emptyList()
-                            onAddNewTapped = {
-                                navigator?.push(AddWalletScreen(config))
-                            })
+                            onAddNewTapped = { navigator?.push(AddWalletScreen(config)) }
+                        )
                     }
 
 
@@ -448,27 +452,6 @@ internal data class PayOrderScreen(
                         )
                     }
 
-                    /*Divider(
-                        color = HubtelTheme.colors.outline,
-                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
-                    )*/
-
-                    /*AnimatedVisibility(payIn4Channels.isNotEmpty()) {
-                        ExpandablePayIn4Option(
-                            state = payIn4UiState,
-                            channels = payIn4Channels,
-                            expanded = walletUiState.isPayIn4,
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                            onExpand = {
-                                payIn4UiState.isWalletSelected = true
-                                payIn4UiState.isMomoWalletSelected = true
-                                walletUiState.setWalletType(PAY_IN_FOUR)
-                            },
-                            wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
-                                ?: emptyList() else emptyList(),
-                            onAddNewTapped = { *//*TODO*//* },)
-                    }*/
-
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -492,6 +475,17 @@ internal data class PayOrderScreen(
             HBProgressDialog(
                 message = "${stringResource(R.string.checkout_please_wait)}...",
                 progressColor = CheckoutTheme.colors.colorPrimary,
+            )
+        }
+
+        if (checkoutUiState.hasError) {
+            CheckoutMessageDialog(
+                onDismissRequest = { viewModel.resetCheckoutState() },
+                positiveText = stringResource(id = R.string.checkout_okay),
+                titleText = stringResource(R.string.checkout_error),
+                painter = painterResource(id = R.drawable.checkout_ic_alert_red),
+                onPositiveClick = { viewModel.resetCheckoutState() },
+                message = checkoutUiState.error?.asString()
             )
         }
 
@@ -593,11 +587,7 @@ internal data class PayOrderScreen(
             )
         }
         if (attempt?.checkoutType == CheckoutType.RECEIVE_MONEY_PROMPT && !attempt.attempt) {
-//            currentCheckoutStep = GET_FEES
             currentCheckoutStep = PAYMENT_COMPLETED
-//                    walletUiState.payOrderWalletType?.let { walletType ->
-//                        viewModel.payOrder(config, walletType)
-//                    }
             navigator?.push(
                 PaymentStatusScreen(
                     providerName = paymentInfo?.providerName,
@@ -707,8 +697,6 @@ internal data class PayOrderScreen(
         }
 
         LaunchedEffect(Unit) {
-//            viewModel.getCustomerWallets(config)
-//            viewModel.getPaymentChannels(config.posSalesId
             viewModel.getCustomerWalletsAndPaymentChannels(config)
             viewModel.initData(config.amount)
             recordCheckoutEvent(CheckoutEvent.CheckoutPayViewPagePay)
