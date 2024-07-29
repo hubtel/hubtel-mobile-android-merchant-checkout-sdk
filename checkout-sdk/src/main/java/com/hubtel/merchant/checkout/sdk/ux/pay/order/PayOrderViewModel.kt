@@ -813,6 +813,10 @@ internal class PayOrderViewModel constructor(
         _ghanaCardUiState.value = UiState2()
     }
 
+    fun resetCheckoutState() {
+        _checkoutUiState.value = UiState2()
+    }
+
     companion object {
         fun getViewModelFactory(apiKey: String?): ViewModelProvider.Factory = viewModelFactory {
             initializer {
