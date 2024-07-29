@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -249,14 +250,14 @@ private fun FeeListItem(
 
 @Composable
 internal fun ExpandableFeesCard(fees: List<CheckoutFee>) {
-    var isExpanded by remember { mutableStateOf(false) }
+   // var isExpanded by remember { mutableStateOf(true) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         AnimatedVisibility(
-            visible = isExpanded,
+            visible = true,
         ) {
             Column(
                 modifier = Modifier
@@ -272,21 +273,23 @@ internal fun ExpandableFeesCard(fees: List<CheckoutFee>) {
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(Dimens.paddingDefault))
             }
 
         }
 
-        FlatButton(
-            onClick = { isExpanded = !isExpanded },
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-        ) {
-            Text(
-                text = if (isExpanded) stringResource(id = R.string.checkout_less_details) else stringResource(
-                    id = R.string.checkout_view_fees
-                ),
-                style = HubtelTheme.typography.h3,
-                color = CheckoutTheme.colors.colorPrimary/*.copy(alpha = 0.5f)*/,
-            )
-        }
+//        FlatButton(
+//            onClick = { isExpanded = !isExpanded },
+//            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+//        ) {
+//            Text(
+//                text = if (isExpanded) stringResource(id = R.string.checkout_less_details) else stringResource(
+//                    id = R.string.checkout_view_fees
+//                ),
+//                style = HubtelTheme.typography.h3,
+//                color = CheckoutTheme.colors.colorPrimary/*.copy(alpha = 0.5f)*/,
+//            )
+//        }
     }
 }
