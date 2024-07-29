@@ -147,5 +147,8 @@
     <string name="checkout_bank_pay_via">Pay at your bank branch via </string>
     <string name="checkout_bank_pay_complete_stage">Once complete you may check the status of this pay-in-slip in your payment history or dial  </string>
     <string name="checkout_payment_platfrom"> payment platform.</string>
+    <string name="checkout_error">Error</string>
+    <string name="checkout_generate_invoice">generate invoice</string>
+    <string name="checkout_accept_and_pay">accept and pay</string>
 
 </resources>

@@ -239,11 +239,13 @@ internal data class PayOrderScreen(
 //                        text = "${stringResource(R.string.checkout_pay)} ${orderTotal.formatMoney()}",
                             text = when {
                                 walletUiState.isBankPay -> stringResource(R.string.checkout_generate_invoice)
-                                payIn4UiState.repaymentEntries?.isNotEmpty() == true -> "pay"
-                                walletUiState.isPayIn4 -> "accept and pay"
-                                else -> stringResource(
-                                    R.string.checkout_pay
-                                )
+                                payIn4UiState.repaymentEntries?.isNotEmpty() == true -> {
+                                    stringResource(R.string.checkout_pay)
+                                }
+
+                                walletUiState.isPayIn4 -> stringResource(R.string.checkout_accept_and_pay)
+
+                                else -> stringResource(R.string.checkout_pay)
                             },
                             onClick = {
                                 Timber.d("Wallet Type: ${walletUiState.payOrderWalletType}")
