@@ -878,6 +878,7 @@ internal fun CheckoutActivity.finishWithResult(
     submitCheckoutResult(
         CheckoutStatus(
             transactionId = orderStatus?.transactionId,
+            paymentMethod = orderStatus?.paymentMethod,
             isCanceled = orderStatus == null,
             isPaymentSuccessful = paymentStatus == com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentStatus.PAID
         )
