@@ -18,5 +18,8 @@ data class MobileMoneyCheckoutReq(
     @SerializedName("PrimaryCallbackUrl")
     val primaryCallbackUrl: String?,
     @SerializedName("mandateId")
-    val mandateId: String? = null
+    val mandateId: String? = null,
+
+    @SerializedName("integrationChannel")
+    val integrationChannel : String = "UnifiedCheckout-Flutter"
 )

@@ -27,7 +27,7 @@ import retrofit2.http.Query
 internal interface UnifiedCheckoutApiService {
 
     // Bank Card Endpoints
-    @POST("/api/v1/merchant/{salesId}/cardnotpresent/setup-payerauth")
+    @POST("/api/v1/merchant/{salesId}/cardnotpresentunified/initiate-authentication")
     suspend fun setup3DS(
         @Path("salesId") salesId: String,
         @Body req: ThreeDSSetupReq,
@@ -137,3 +137,34 @@ internal interface UnifiedCheckoutApiService {
         }
     }
 }
+
+
+// https://checkout.hubtel.com/api/v1/merchant/11684/cardnotpresentunified/initiate-authentication
+//Params: {amount: 1.0, cardHolderName: ,
+//    cardNumber: 4445692000273218,
+//    cvv: 371,
+//    expiryMonth: 11,
+//    expiryYear: 24,
+//    customerMsisdn: 233200585542,
+//    description: Camera,
+//    clientReference: 33902619-b3c1-4372-945f-1256bc571355,
+//    callbackUrl: https://webhook.site/80c682ba-abb2-4255-8942-c44d1ec766cc,
+//     integrationChannel: UnifiedCheckout-Flutter
+//    }
+//
+//
+//
+//    I  --> POST https://checkout.hubtel.com/api/v1/merchant/11684/cardnotpresentunified/initiate-authentication
+//   I  {"amount":1.02,
+//        "callbackUrl":"https://webhook.site/80c682ba-abb2-4255-8942-c44d1ec766cc",
+//        "cardHolderName":"",
+//        "cardNumber":"4445692000273218",
+//        "clientReference":"36ac791e-a164-4801-ad6c-b941b56b7897"
+//        ,"country":"gh",
+//        "currency":"ghs",
+//        "customerMsisdn":"233200585542",
+//        "cvv":"371",
+//        "description":"Rice with Coleslaw",
+//        "expiryMonth":"11",
+//        "expiryYear":"2024"
+//    }

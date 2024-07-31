@@ -24,10 +24,7 @@ data class ThreeDSSetupReq(
     val expiryMonth: String?,
     @SerializedName("expiryYear")
     val expiryYear: String?,
-    @SerializedName("country")
-
-    // added
-    val country: String? = "gh",
-    @SerializedName("currency")
-    val currency: String? = "ghs"
+    @SerializedName("integrationChannel")
+    val integrationChannel: String? = "UnifiedCheckout-Android",
 )
+

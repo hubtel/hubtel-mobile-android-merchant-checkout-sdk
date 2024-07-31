@@ -1,5 +1,10 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.order
 
+import android.annotation.SuppressLint
+import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -34,10 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import coil.compose.rememberImagePainter
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
@@ -52,10 +57,8 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.VerificationType
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
-import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutActionDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.HBProgressDialog
-import com.hubtel.merchant.checkout.sdk.ux.components.HBRoundedDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.layouts.HBModalBottomSheetLayout
@@ -643,6 +646,11 @@ internal data class PayOrderScreen(
             )
         }
 
+
+        if (currentCheckoutStep == CARD_SETUP && cardSetupUiState.hasData) {
+            DeviceCollectionWebView(cardSetupUiState.data?.html ?: "")
+        }
+
         if (businessInfoUiState.data?.requireNationalID == true && currentCheckoutStep == PAY_ORDER && attempt == null) {
             currentCheckoutStep =
                 if (walletUiState.isBankCard || walletUiState.isOtherPaymentWallet || walletUiState.isBankPay) {
@@ -754,7 +762,10 @@ internal data class PayOrderScreen(
             if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
 
 //            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)) return@LaunchedEffect
-            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid) || (walletUiState.isOtherPaymentWallet && !otherPaymentUiState.isValid)) return@LaunchedEffect
+            if ((walletUiState.isBankCard && !bankCardUiState.isValid)
+                || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)
+                || (walletUiState.isOtherPaymentWallet && !otherPaymentUiState.isValid)
+            ) return@LaunchedEffect
 
             viewModel.getCheckoutFees(config)
         }
@@ -930,3 +941,50 @@ internal data class VerificationAttempt(
     val checkoutType: CheckoutType? = null,
     val walletType: PayOrderWalletType? = null
 )
+
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+internal fun DeviceCollectionWebView(html: String) {
+    AndroidView(factory = {
+        WebView(it).apply {
+            layoutParams = ViewGroup.LayoutParams(0, 0)
+
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            CookieManager.getInstance().setAcceptCookie(true)
+
+            addJavascriptInterface(
+                CheckoutJsInterface { _ -> },
+                CheckoutJsInterface.JS_NAME,
+            )
+        }
+    }, update = {
+        val jsInjectedHtml = html.replace(
+            "CONTROL_RETURN_IDENTIFIER",
+            "DeviceCollectionComplete.postMessage('loadingBegan')"
+        )
+        // getHtml from 3ds result and replace the parts
+        it.loadDataWithBaseURL(
+            "https://localhost/",jsInjectedHtml ,
+            "text/html", "UTF-8", null,
+        )
+    })
+
+
+}
+
+
+internal class CheckoutJsInterface(
+    private val onSomeCheckoutAction: (result: Any?) -> Unit
+) {
+
+    @JavascriptInterface
+    fun onSuccess(data: String) {
+        print(data)
+    }
+
+    companion object {
+        const val JS_NAME = "LoginJavascriptInterface"
+    }
+}

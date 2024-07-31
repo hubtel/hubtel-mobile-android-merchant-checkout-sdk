@@ -44,13 +44,13 @@ class MainActivity : BaseActivity() {
         )
 
         val intent = CheckoutIntent.Builder(this)
-            .setAmount(0.1)
+            .setAmount(1.0)
             .setApiKey("T0UwajAzcjo5ZjAxMzhkOTk5ZmM0ODMxYjc3MWFhMzEzYTNjMThhNA==")
             .setMerchantId("11684")
-            .setCallbackUrl("https://cd81-154-47-25-8.ngrok-free.app/payment-callback")
+            .setCallbackUrl("https://webhook.site/80c682ba-abb2-4255-8942-c44d1ec766cc")
             .setDescription("Rice with Coleslaw")
             .setClientReference(UUID.randomUUID().toString())
-            .setCustomerPhoneNumber("233540975983")
+            .setCustomerPhoneNumber("233200585542")
             .setTheme(themeConfig)
             .build()
 

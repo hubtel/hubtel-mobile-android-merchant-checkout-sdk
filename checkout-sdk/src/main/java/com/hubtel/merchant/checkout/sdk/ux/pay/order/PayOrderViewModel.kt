@@ -294,10 +294,10 @@ internal class PayOrderViewModel constructor(
 
             val req = ThreeDSSetupReq(
                 amount = orderTotal,
-                cardHolderName = paymentInfo?.accountName?.trim(),
+                cardHolderName = "",
                 cardNumber = paymentInfo?.accountNumber,
                 expiryMonth = paymentInfo?.expiryMonth,
-                expiryYear = paymentInfo?.fullExpiryYear,
+                expiryYear = paymentInfo?.expiryYear,
                 cvv = paymentInfo?.cvv,
                 clientReference = config.clientReference,
                 description = config.description,
@@ -515,7 +515,13 @@ internal class PayOrderViewModel constructor(
                     val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
                         salesId = config.posSalesId ?: "", req = MobileMoneyCheckoutReq(
                             amount = config.amount,
-                            channel = if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
+                            channel = when{
+                                paymentInfo?.channel?.startsWith("mtn") == true  -> "mtn-gh"
+                                paymentInfo?.channel?.startsWith("vodafone") == true  -> "vodafone-gh"
+                                else -> "tigo-gh"
+                            },
+
+//                            if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
 //                            channel = "mtn-gh-direct-debit",
                             clientReference = config.clientReference,
                             customerMsisdn = paymentInfo?.accountNumber,
