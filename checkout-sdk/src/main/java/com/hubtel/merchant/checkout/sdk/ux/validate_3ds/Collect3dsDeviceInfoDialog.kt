@@ -17,66 +17,63 @@ import com.hubtel.merchant.checkout.sdk.ux.components.HBProgressDialog
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.ThreeDSSetupState
 import timber.log.Timber
 
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-internal fun Collect3dsDeviceInfoDialog(
-    setupState: ThreeDSSetupState,
-    onCollectionComplete: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val pageHtml = remember(setupState) {
-        buildDeviceDataCollectionIframe(setupState)
-    }
-
-    Box(modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                WebView(ctx).apply {
-                    this.layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    CookieManager.getInstance().setAcceptCookie(true)
-
-                    addJavascriptInterface(
-                        CollectDeviceInfoJavascriptInterface(onCollectionComplete),
-                        CollectDeviceInfoJavascriptInterface.JS_NAME,
-                    )
-
-                    webViewClient = WebViewClient()
-                    webChromeClient = WebChromeClient()
-                }
-            },
-            update = {
-                it.loadDataWithBaseURL(
-                    "https://localhost/", pageHtml,
-                    "text/html", "UTF-8", null,
-                )
-            },
-            modifier = Modifier
-                .size(0.dp, 0.dp)
-        )
-
-        HBProgressDialog(
-            message = "${stringResource(R.string.checkout_please_wait)}..."
-        )
-    }
-}
-
-internal class CollectDeviceInfoJavascriptInterface(
-    private val onComplete: () -> Unit
-) {
-
-    @JavascriptInterface
-    fun onDataCollectionCompleted() {
-        Timber.tag(JS_NAME).i("Device Info Collection Complete")
-        onComplete()
-    }
-
-    companion object {
-        const val JS_NAME = "CollectDeviceInfoJavascriptInterface"
-    }
-}
+//@SuppressLint("SetJavaScriptEnabled")
+//@Composable
+//internal fun Collect3dsDeviceInfoDialog(
+//    setupState: ThreeDSSetupState,
+//    onCollectionComplete: () -> Unit,
+//    modifier: Modifier = Modifier
+//) {
+//
+//    Box(modifier.fillMaxSize()) {
+//        AndroidView(
+//            factory = { ctx ->
+//                WebView(ctx).apply {
+//                    this.layoutParams = ViewGroup.LayoutParams(
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        ViewGroup.LayoutParams.MATCH_PARENT
+//                    )
+//
+//                    settings.javaScriptEnabled = true
+//                    settings.domStorageEnabled = true
+//                    CookieManager.getInstance().setAcceptCookie(true)
+//
+//                    addJavascriptInterface(
+//                        CollectDeviceInfoJavascriptInterface(onCollectionComplete),
+//                        CollectDeviceInfoJavascriptInterface.JS_NAME,
+//                    )
+//
+//                    webViewClient = WebViewClient()
+//                    webChromeClient = WebChromeClient()
+//                }
+//            },
+//            update = {
+//                it.loadDataWithBaseURL(
+//                    "https://localhost/", pageHtml,
+//                    "text/html", "UTF-8", null,
+//                )
+//            },
+//            modifier = Modifier
+//                .size(0.dp, 0.dp)
+//        )
+//
+//        HBProgressDialog(
+//            message = "${stringResource(R.string.checkout_please_wait)}..."
+//        )
+//    }
+//}
+//
+//internal class CollectDeviceInfoJavascriptInterface(
+//    private val onComplete: () -> Unit
+//) {
+//
+//    @JavascriptInterface
+//    fun onDataCollectionCompleted() {
+//        Timber.tag(JS_NAME).i("Device Info Collection Complete")
+//        onComplete()
+//    }
+//
+//    companion object {
+//        const val JS_NAME = "CollectDeviceInfoJavascriptInterface"
+//    }
+//}

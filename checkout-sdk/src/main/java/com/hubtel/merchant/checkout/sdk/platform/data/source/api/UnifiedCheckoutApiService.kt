@@ -14,6 +14,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSEnrollResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.UserWalletResponse
@@ -33,11 +34,11 @@ internal interface UnifiedCheckoutApiService {
         @Body req: ThreeDSSetupReq,
     ): DataResponse2<ThreeDSSetupInfo>
 
-    @GET("/api/v1/merchant/{salesId}/cardnotpresent/enroll-payerauth/{transactionId}")
+    @POST("/api/v1/merchant/{salesId}/cardnotpresentunified/authenticate-payer/{transactionId}")
     suspend fun enroll3DS(
         @Path("salesId") salesId: String,
         @Path("transactionId") transactionId: String,
-    ): DataResponse2<CheckoutInfo>
+    ): DataResponse2<ThreeDSEnrollResponse>
 
     // Mobile Money Endpoints
     @POST("/api/v1/merchant/{salesId}/unifiedcheckout/receive/mobilemoney/prompt")

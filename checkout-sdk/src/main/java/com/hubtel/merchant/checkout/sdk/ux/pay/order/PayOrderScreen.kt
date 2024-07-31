@@ -1,10 +1,5 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.order
 
-import android.annotation.SuppressLint
-import android.view.ViewGroup
-import android.webkit.CookieManager
-import android.webkit.JavascriptInterface
-import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -39,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.androidx.AndroidScreen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -99,7 +93,8 @@ import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
-import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.VerificationDialog3ds
+import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.CardCheckoutWebview
+import com.hubtel.merchant.checkout.sdk.ux.validate_3ds.DeviceCollectionWebView
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -128,6 +123,7 @@ internal data class PayOrderScreen(
         val checkoutFeesUiState by viewModel.checkoutFeesUiState
         val cardSetupUiState by viewModel.threeDSSetupUiState
         val checkoutUiState by viewModel.checkoutUiState
+        val enrollUiState by viewModel.enrollUiState
 
         val ghanaCardUiState by viewModel.ghanaCardUiState
 
@@ -174,11 +170,8 @@ internal data class PayOrderScreen(
             )
         }
 
-        var shouldShowWebView = remember(
-            walletUiState, currentCheckoutStep
-        ) {
-            currentCheckoutStep in COLLECT_DEVICE_INFO..VERIFY_CARD && walletUiState.isBankCard
-        }
+
+        var shouldShowWebView by remember { mutableStateOf(false) }
 
         var isPayButtonEnabled by remember { mutableStateOf(false) }
 
@@ -501,32 +494,36 @@ internal data class PayOrderScreen(
             }
         }
 
-        if (shouldShowWebView) {
-            VerificationDialog3ds(
-                step = currentCheckoutStep,
-                setupState = remember(cardSetupUiState) {
-                    val threeDSSetupInfo = cardSetupUiState.data
-                    ThreeDSSetupState(
-                        accessToken = threeDSSetupInfo?.accessToken,
-                        referenceId = threeDSSetupInfo?.clientReference
-                    )
-                },
-                verificationState = remember(checkoutUiState) {
-                    val checkoutInfo = checkoutUiState.data
+        if (currentCheckoutStep == COLLECT_DEVICE_INFO) {
+            DeviceCollectionWebView(html = cardSetupUiState.data?.html ?: "") {
 
-                    Verification3dsState(
-                        jwt = checkoutInfo?.jwt,
-                        customData = checkoutInfo?.customData,
-                    )
-                },
-                onCollectionComplete = { currentCheckoutStep = CHECKOUT },
-                onCardVerified = { currentCheckoutStep = PAYMENT_COMPLETED },
-                onBackClick = {
-                    if (currentCheckoutStep == VERIFY_CARD) {
-                        showCancelDialog = true
+                coroutineScope.launch {
+                    //enroll 3ds here
+                    viewModel.enroll3DS(config)
+
+                    //display checkout webview here.
+                    if (enrollUiState.success) {
+                        navigator?.push(
+                            CardCheckoutWebview(
+                                config = config,
+                                html = enrollUiState.data?.html ?: "",
+                                onFinish = {
+                                    currentCheckoutStep = PAYMENT_COMPLETED
+                                    navigator.push(
+                                        PaymentStatusScreen(
+                                            providerName = paymentInfo?.providerName,
+                                            config = config,
+                                            checkoutType = checkoutFeesUiState.data?.getCheckoutType
+                                        )
+                                    )
+                                }
+                            )
+                        )
                     }
-                },
-            )
+
+                }
+                //start enrollment here.
+            }
 
             Timber.d("Custom Data: ${checkoutUiState.data?.customData}")
             Timber.d("Bank Card Status: ${checkoutUiState.data?.getBankCardStatus}")
@@ -646,10 +643,6 @@ internal data class PayOrderScreen(
             )
         }
 
-
-        if (currentCheckoutStep == CARD_SETUP && cardSetupUiState.hasData) {
-            DeviceCollectionWebView(cardSetupUiState.data?.html ?: "")
-        }
 
         if (businessInfoUiState.data?.requireNationalID == true && currentCheckoutStep == PAY_ORDER && attempt == null) {
             currentCheckoutStep =
@@ -941,50 +934,3 @@ internal data class VerificationAttempt(
     val checkoutType: CheckoutType? = null,
     val walletType: PayOrderWalletType? = null
 )
-
-
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-internal fun DeviceCollectionWebView(html: String) {
-    AndroidView(factory = {
-        WebView(it).apply {
-            layoutParams = ViewGroup.LayoutParams(0, 0)
-
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            CookieManager.getInstance().setAcceptCookie(true)
-
-            addJavascriptInterface(
-                CheckoutJsInterface { _ -> },
-                CheckoutJsInterface.JS_NAME,
-            )
-        }
-    }, update = {
-        val jsInjectedHtml = html.replace(
-            "CONTROL_RETURN_IDENTIFIER",
-            "DeviceCollectionComplete.postMessage('loadingBegan')"
-        )
-        // getHtml from 3ds result and replace the parts
-        it.loadDataWithBaseURL(
-            "https://localhost/",jsInjectedHtml ,
-            "text/html", "UTF-8", null,
-        )
-    })
-
-
-}
-
-
-internal class CheckoutJsInterface(
-    private val onSomeCheckoutAction: (result: Any?) -> Unit
-) {
-
-    @JavascriptInterface
-    fun onSuccess(data: String) {
-        print(data)
-    }
-
-    companion object {
-        const val JS_NAME = "LoginJavascriptInterface"
-    }
-}

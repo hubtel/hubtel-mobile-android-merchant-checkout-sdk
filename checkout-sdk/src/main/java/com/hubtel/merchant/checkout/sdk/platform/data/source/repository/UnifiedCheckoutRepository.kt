@@ -16,6 +16,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSEnrollResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.TransactionStatusInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.UserWalletResponse
@@ -43,7 +44,7 @@ internal class UnifiedCheckoutRepository(
 
     suspend fun apiEnroll3DS(
         salesId: String, transactionId: String
-    ): ResultWrapper2<CheckoutInfo> = makeRequestToApi {
+    ): ResultWrapper2<ThreeDSEnrollResponse> = makeRequestToApi {
         unifiedCheckoutApiService.enroll3DS(salesId, transactionId)
     }
 

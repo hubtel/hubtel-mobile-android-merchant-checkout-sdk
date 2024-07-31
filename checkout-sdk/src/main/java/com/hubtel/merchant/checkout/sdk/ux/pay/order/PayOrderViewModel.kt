@@ -24,6 +24,7 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSEnrollResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
@@ -50,6 +51,7 @@ internal typealias PaymentChannelState = State<UiState2<List<PaymentChannel>>>
 internal typealias BusinessResponseInfoState = State<UiState2<BusinessResponseInfo>>
 internal typealias CheckoutFeeState = State<UiState2<CheckoutFee>>
 internal typealias CheckoutInfoState = State<UiState2<CheckoutInfo>>
+internal typealias EnrollState = State<UiState2<ThreeDSEnrollResponse>>
 internal typealias ThreeDSSetupInfoState = State<UiState2<ThreeDSSetupInfo>>
 
 internal class PayOrderViewModel constructor(
@@ -82,6 +84,9 @@ internal class PayOrderViewModel constructor(
 
     private val _checkoutUiState = mutableStateOf(UiState2<CheckoutInfo>())
     val checkoutUiState: CheckoutInfoState = _checkoutUiState
+
+    private val _enrollUiState = mutableStateOf(UiState2<ThreeDSEnrollResponse>())
+    val enrollUiState: EnrollState = _enrollUiState
 
     var bankChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
@@ -344,7 +349,7 @@ internal class PayOrderViewModel constructor(
         viewModelScope.launch {
             when (walletType) {
                 PayOrderWalletType.BANK_CARD -> {
-                    payOrderWithCard(config)
+                 //   payOrderWithCard(config)
                 }
 
                 PayOrderWalletType.MOBILE_MONEY -> {
@@ -454,8 +459,8 @@ internal class PayOrderViewModel constructor(
         }
     }
 
-    private suspend fun payOrderWithCard(config: CheckoutConfig) {
-        _checkoutUiState.update { UiState2(isLoading = true) }
+    suspend fun enroll3DS(config: CheckoutConfig) {
+        _enrollUiState.update { UiState2(isLoading = true) }
 
         val result = unifiedCheckoutRepository.apiEnroll3DS(
             salesId = config.posSalesId ?: "", transactionId = transactionId ?: ""
@@ -463,7 +468,7 @@ internal class PayOrderViewModel constructor(
 
         when (result) {
             is ApiResult.Success -> {
-                _checkoutUiState.update {
+                _enrollUiState.update {
                     UiState2(
                         success = true, data = result.response.data
                     )
@@ -471,7 +476,7 @@ internal class PayOrderViewModel constructor(
             }
 
             is ApiResult.HttpError -> {
-                _checkoutUiState.update {
+                _enrollUiState.update {
                     UiState2(
                         success = false,
                         error = UiText.DynamicString(result.message ?: ""),
@@ -480,7 +485,7 @@ internal class PayOrderViewModel constructor(
             }
 
             else -> {
-                _checkoutUiState.update {
+                _enrollUiState.update {
                     UiState2(
                         success = false,
                         error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
@@ -489,10 +494,10 @@ internal class PayOrderViewModel constructor(
             }
         }
 
-        //save card
-        paymentInfo?.let {
-            if (it.saveForLater) saveCard(it)
-        }
+//        //save card
+//        paymentInfo?.let {
+//            if (it.saveForLater) saveCard(it)
+//        }
     }
 
     private suspend fun payOrderWithMomo(
@@ -515,9 +520,9 @@ internal class PayOrderViewModel constructor(
                     val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
                         salesId = config.posSalesId ?: "", req = MobileMoneyCheckoutReq(
                             amount = config.amount,
-                            channel = when{
-                                paymentInfo?.channel?.startsWith("mtn") == true  -> "mtn-gh"
-                                paymentInfo?.channel?.startsWith("vodafone") == true  -> "vodafone-gh"
+                            channel = when {
+                                paymentInfo?.channel?.startsWith("mtn") == true -> "mtn-gh"
+                                paymentInfo?.channel?.startsWith("vodafone") == true -> "vodafone-gh"
                                 else -> "tigo-gh"
                             },
 
