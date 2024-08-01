@@ -460,9 +460,8 @@ internal data class PayOrderScreen(
                 coroutineScope.launch {
                     //enroll 3ds here
                     viewModel.enroll3DS(config)
-
-                    //display checkout webview here.
                     if (enrollUiState.success) {
+                        currentCheckoutStep = CHECKOUT
                         navigator?.push(
                             CardCheckoutWebview(
                                 config = config,
