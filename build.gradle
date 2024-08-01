@@ -2,7 +2,7 @@ buildscript {
     ext {
         compose_version = '1.2.1'
         groud_id = "com.hubtel"
-        checkout_sdk_verison = "1.0.2"
+        checkout_sdk_verison = "1.0.4"
         checkout_artifact_id = "merchant-checkout-sdk"
     }
 }
@@ -10,5 +10,5 @@ buildscript {
 plugins {
     id 'com.android.application' version '8.0.2' apply false
     id 'com.android.library' version '8.0.2' apply false
-    id 'org.jetbrains.kotlin.android' version '1.7.20' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.21' apply false
 }
