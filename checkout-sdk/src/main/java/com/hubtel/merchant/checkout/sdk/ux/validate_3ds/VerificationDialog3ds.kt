@@ -79,17 +79,17 @@ internal fun DeviceCollectionWebView(
                 },
                 CheckoutJsInterface.JS_NAME,
             )
+
+            val jsInjectedHtml = html.replace(
+                "CONTROL_RETURN_IDENTIFIER",
+                "${CheckoutJsInterface.JS_NAME}.postMessage('${CheckoutJsInterface.ENROLLMENT}')"
+            )
+            // getHtml from 3ds result and replace the parts
+            loadDataWithBaseURL(
+                "https://localhost/", jsInjectedHtml,
+                "text/html", "UTF-8", null,
+            )
         }
-    }, update = {
-        val jsInjectedHtml = html.replace(
-            "CONTROL_RETURN_IDENTIFIER",
-            "${CheckoutJsInterface.JS_NAME}.postMessage('${CheckoutJsInterface.ENROLLMENT}')"
-        )
-        // getHtml from 3ds result and replace the parts
-        it.loadDataWithBaseURL(
-            "https://localhost/", jsInjectedHtml,
-            "text/html", "UTF-8", null,
-        )
     })
 }
 

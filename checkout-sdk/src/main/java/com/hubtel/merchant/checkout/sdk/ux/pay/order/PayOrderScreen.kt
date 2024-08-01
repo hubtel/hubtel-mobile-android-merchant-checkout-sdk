@@ -79,7 +79,6 @@ import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_CAR
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.BANK_PAY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.MOBILE_MONEY
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.OTHER_PAYMENT
-import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderWalletType.PAY_IN_FOUR
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.BankPayOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableBankCardOption
 import com.hubtel.merchant.checkout.sdk.ux.pay.order.components.ExpandableMomoOption
@@ -131,7 +130,6 @@ internal data class PayOrderScreen(
         val bankChannels = viewModel.bankChannels
         val momoChannels = viewModel.momoChannels
         val otherChannels = viewModel.otherChannels
-        val payIn4Channels = viewModel.payIn4Channels
 
         val businessInfoUiState by viewModel.businessInfoUiState
 
@@ -162,7 +160,6 @@ internal data class PayOrderScreen(
         }
 
         val customerWalletsUiState by viewModel.customerWalletsUiState
-        val cachedMomoWalletsUiState by viewModel.cachedCustomerWalletsUiState
 
         val feeItem = remember(checkoutFeesUiState) {
             checkoutFeesUiState.data ?: CheckoutFee(
@@ -184,288 +181,251 @@ internal data class PayOrderScreen(
         val activity = LocalActivity.current
         val navigator = LocalNavigator.current
 
-        val bottomSheetState =
-            rememberModalBottomSheetState(ModalBottomSheetValue.Hidden, skipHalfExpanded = true)
         val coroutineScope = rememberCoroutineScope()
 
-        val openBottomSheet: () -> Unit = {
-            coroutineScope.launch {
-                if (!bottomSheetState.isVisible) {
-                    bottomSheetState.show()
-                } else {
-                    bottomSheetState.hide()
-                }
-            }
-        }
+        HBScaffold(
+            topBar = {
+                HBTopAppBar(title = {
+                    Text(
+                        text = stringResource(id = R.string.checkout_heading),
+                    )
+                }, onNavigateUp = {
+                    showCancelDialog = true
+                    recordCheckoutEvent(CheckoutEvent.CheckoutPayTapClose)
+                })
+            },
+            bottomBar = {
+                Column(Modifier.animateContentSize()) {
+                    Divider(
+                        color = HubtelTheme.colors.outline,
+                        thickness = 2.dp,
+                    )
 
-        val closeBottomSheet: () -> Unit = {
-            coroutineScope.launch {
-                bottomSheetState.hide()
-            }
-        }
-
-        HBModalBottomSheetLayout(sheetState = bottomSheetState, sheetContent = {
-            ReviewInstallmentsBottomSheet(onCloseTap = {
-                closeBottomSheet()
-            }) {
-                currentCheckoutStep = SELECT_PAYMENT_METHOD
-                closeBottomSheet()
-                payIn4UiState.repaymentEntries = repaymentScheduleEntries
-            }
-        }) {
-            HBScaffold(
-                topBar = {
-                    HBTopAppBar(title = {
-                        Text(
-                            text = stringResource(id = R.string.checkout_heading),
-                        )
-                    }, onNavigateUp = {
-                        showCancelDialog = true
-                        recordCheckoutEvent(CheckoutEvent.CheckoutPayTapClose)
-                    })
-                },
-                bottomBar = {
-                    Column(Modifier.animateContentSize()) {
-                        Divider(
-                            color = HubtelTheme.colors.outline,
-                            thickness = 2.dp,
-                        )
-
-                        LoadingTextButton(
+                    LoadingTextButton(
 //                        text = "${stringResource(R.string.checkout_pay)} ${orderTotal.formatMoney()}",
-                            text = when {
-                                walletUiState.isBankPay -> stringResource(R.string.checkout_generate_invoice)
-                                payIn4UiState.repaymentEntries?.isNotEmpty() == true -> {
-                                    stringResource(R.string.checkout_pay)
-                                }
+                        text = when {
+                            walletUiState.isBankPay -> stringResource(R.string.checkout_generate_invoice)
+                            payIn4UiState.repaymentEntries?.isNotEmpty() == true -> {
+                                stringResource(R.string.checkout_pay)
+                            }
 
-                                walletUiState.isPayIn4 -> stringResource(R.string.checkout_accept_and_pay)
-
-                                else -> stringResource(R.string.checkout_pay)
-                            },
-                            onClick = {
-                                Timber.d("Wallet Type: ${walletUiState.payOrderWalletType}")
-                                Timber.d("Wallet Type2: ${walletUiState.isOtherPaymentWallet}")
-                                when {
-                                    walletUiState.isOtherPaymentWallet -> {
-                                        if (otherPaymentUiState.newMandate || (viewModel.getMandateId()
-                                                ?.isEmpty() == true && otherPaymentUiState.walletProvider == WalletProvider.GMoney)
-                                        ) {
-                                            navigator?.push(
-                                                AddMandateScreen(
-                                                    config = config,
-                                                    walletUiState.payOrderWalletType,
-                                                    UiStates(
-                                                        momoWalletUiState,
-                                                        otherPaymentUiState,
-                                                        bankCardUiState
-                                                    )
+                            else -> stringResource(R.string.checkout_pay)
+                        },
+                        onClick = {
+                            Timber.d("Wallet Type: ${walletUiState.payOrderWalletType}")
+                            Timber.d("Wallet Type2: ${walletUiState.isOtherPaymentWallet}")
+                            when {
+                                walletUiState.isOtherPaymentWallet -> {
+                                    if (otherPaymentUiState.newMandate || (viewModel.getMandateId()
+                                            ?.isEmpty() == true && otherPaymentUiState.walletProvider == WalletProvider.GMoney)
+                                    ) {
+                                        navigator?.push(
+                                            AddMandateScreen(
+                                                config = config,
+                                                walletUiState.payOrderWalletType,
+                                                UiStates(
+                                                    momoWalletUiState,
+                                                    otherPaymentUiState,
+                                                    bankCardUiState
                                                 )
                                             )
-                                            return@LoadingTextButton
-                                        }
-                                    }
-
-                                    walletUiState.isBankPay -> {
-                                        currentCheckoutStep = CHECKOUT
-                                    }
-
-                                    walletUiState.isPayIn4 -> {
-                                        if (payIn4UiState.repaymentEntries?.isEmpty() == true) {
-                                            openBottomSheet()
-                                            return@LoadingTextButton
-                                        }
-                                        currentCheckoutStep = CHECKOUT
+                                        )
+                                        return@LoadingTextButton
                                     }
                                 }
 
-                                // If checkout requiresKyc(requireNationalId) && wallet type is momo then check verification details
+                                walletUiState.isBankPay -> {
+                                    currentCheckoutStep = CHECKOUT
+                                }
 
-                                Timber.d("TAP: PAY tapped!")
-                                currentCheckoutStep = PAY_ORDER
-                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapButtonPay)
-                            },
-                            enabled = isPayButtonEnabled,
-                            loading = checkoutFeesUiState.isLoading,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateContentSize()
-                                .padding(Dimens.paddingDefault),
-                        )
-                    }
-                },
-                backgroundColor = HubtelTheme.colors.uiBackground,
-            ) { paddingValues ->
+                            }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .verticalScroll(rememberScrollState())
-                ) {
+                            // If checkout requiresKyc(requireNationalId) && wallet type is momo then check verification details
 
-                    CheckoutReceiptCard(
-                        fees = listOf(feeItem),
-                        amount = config.amount,
-                        total = if (orderTotal != 0.0) orderTotal else config.amount,
-                        businessInfo = BusinessInfo(
-                            businessInfoUiState.data?.businessName,
-                            businessInfoUiState.data?.businessLogoURL
-                        ),
-                        modifier = Modifier
-                            .padding(Dimens.paddingMedium)
-                            .animateContentSize()
-                    )
-
-                    Text(
-                        text = stringResource(R.string.checkout_pay_with),
-                        style = HubtelTheme.typography.h2,
+                            Timber.d("TAP: PAY tapped!")
+                            currentCheckoutStep = PAY_ORDER
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapButtonPay)
+                        },
+                        enabled = isPayButtonEnabled,
+                        loading = checkoutFeesUiState.isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = Dimens.paddingDefault)
-                            .padding(horizontal = Dimens.paddingDefault)
-                            .background(
-                                color = HubtelTheme.colors.cardBackground,
-                                shape = HubtelTheme.shapes.medium.copy(
-                                    bottomStart = CornerSize(0.dp),
-                                    bottomEnd = CornerSize(0.dp),
-                                ),
-                            )
+                            .animateContentSize()
                             .padding(Dimens.paddingDefault),
                     )
+                }
+            },
+            backgroundColor = HubtelTheme.colors.uiBackground,
+        ) { paddingValues ->
 
-                    if (paymentChannelsUiState.isLoading || customerWalletsUiState.isLoading || businessInfoUiState.isLoading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Dimens.paddingDefault)
-                                .background(HubtelTheme.colors.uiBackground2)
-                                .padding(Dimens.paddingDefault)
-                        ) {
-                            CircularProgressIndicator(
-                                color = CheckoutTheme.colors.colorPrimary,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        }
-                    }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+            ) {
 
+                CheckoutReceiptCard(
+                    fees = listOf(feeItem),
+                    amount = config.amount,
+                    total = if (orderTotal != 0.0) orderTotal else config.amount,
+                    businessInfo = BusinessInfo(
+                        businessInfoUiState.data?.businessName,
+                        businessInfoUiState.data?.businessLogoURL
+                    ),
+                    modifier = Modifier
+                        .padding(Dimens.paddingMedium)
+                        .animateContentSize()
+                )
 
-                    AnimatedVisibility(
-                        momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
-                    ) {
-                        // Mobile Money
-                        ExpandableMomoOption(
-                            state = momoWalletUiState,
-                            channels = momoChannels,
-                            expanded = walletUiState.isMomoWallet,
-                            onExpand = {
-                                momoWalletUiState.isWalletSelected = true
-                                walletUiState.setWalletType(MOBILE_MONEY)
-                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
-                            },
-
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                            wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
-                                ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
-                            onAddNewTapped = { navigator?.push(AddWalletScreen(config)) }
+                Text(
+                    text = stringResource(R.string.checkout_pay_with),
+                    style = HubtelTheme.typography.h2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Dimens.paddingDefault)
+                        .padding(horizontal = Dimens.paddingDefault)
+                        .background(
+                            color = HubtelTheme.colors.cardBackground,
+                            shape = HubtelTheme.shapes.medium.copy(
+                                bottomStart = CornerSize(0.dp),
+                                bottomEnd = CornerSize(0.dp),
+                            ),
                         )
-                    }
+                        .padding(Dimens.paddingDefault),
+                )
 
-
-                    if (bankChannels.isNotEmpty()) {
-                        Divider(
-                            color = HubtelTheme.colors.outline,
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
-                        )
-                    }
-
-                    AnimatedVisibility(bankChannels.isNotEmpty() /*&& customerWalletsUiState.data?.isNotEmpty() == true*/) {
-                        // Bank Card
-                        ExpandableBankCardOption(
-                            state = bankCardUiState,
-                            channels = bankChannels,
-                            wallets = bankWallets,
-                            expanded = walletUiState.isBankCard,
-                            onExpand = {
-                                walletUiState.setWalletType(BANK_CARD)
-                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapBankCard)
-                            },
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                            isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
-                        )
-                    }
-
-                    Divider(
-                        color = HubtelTheme.colors.outline,
-                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
-                    )
-
-                    if (otherChannels.isNotEmpty()) {
-                        Divider(
-                            color = HubtelTheme.colors.outline,
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
-                        )
-                    }
-
-                    AnimatedVisibility(otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
-                        val filteredChannels =
-                            if (businessInfoUiState.data?.isHubtelInternalMerchant == true) otherChannels else otherChannels.filter { it != PaymentChannel.HUBTEL }
-                        otherPaymentUiState.isHubtelInternalMerchant = true
-                        ExpandableOtherPayments(state = otherPaymentUiState,
-                            channels = otherChannels,
-                            expanded = walletUiState.isOtherPaymentWallet,
-                            onExpand = {
-                                otherPaymentUiState.isWalletSelected = true
-                                walletUiState.setWalletType(OTHER_PAYMENT)
-                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
-                            },
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                            isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true,
-                            wallets = customerWalletsUiState.data ?: emptyList(),
-                            onAddNewTapped = {
-                                navigator?.push(AddWalletScreen(config))
-                            })
-                    }
-
-                    Divider(
-                        color = HubtelTheme.colors.outline,
-                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
-                    )
-
-                    // BankPay
-                    AnimatedVisibility(otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
-                        BankPayOption(
-                            state = bankPayUiState,
-                            channels = bankChannels,
-                            expanded = walletUiState.isBankPay,
-                            onExpand = {
-                                bankPayUiState.isWalletSelected = true
-                                bankPayUiState.mobileNumber = config.msisdn
-                                walletUiState.setWalletType(BANK_PAY)
-                                recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
-                            },
-                            modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
-                            wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
-                                ?: emptyList() else emptyList(),
-                        )
-                    }
-
+                if (paymentChannelsUiState.isLoading || customerWalletsUiState.isLoading || businessInfoUiState.isLoading) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = Dimens.paddingDefault)
-                            .background(
-                                color = HubtelTheme.colors.cardBackground,
-                                shape = HubtelTheme.shapes.medium.copy(
-                                    topStart = CornerSize(0.dp),
-                                    topEnd = CornerSize(0.dp),
-                                )
-                            )
-                            .padding(top = Dimens.paddingDefault),
-                    )
-
-                    Spacer(modifier = Modifier.height(50.dp))
+                            .background(HubtelTheme.colors.uiBackground2)
+                            .padding(Dimens.paddingDefault)
+                    ) {
+                        CircularProgressIndicator(
+                            color = CheckoutTheme.colors.colorPrimary,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
                 }
+
+
+                AnimatedVisibility(
+                    momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
+                ) {
+                    // Mobile Money
+                    ExpandableMomoOption(
+                        state = momoWalletUiState,
+                        channels = momoChannels,
+                        expanded = walletUiState.isMomoWallet,
+                        onExpand = {
+                            momoWalletUiState.isWalletSelected = true
+                            walletUiState.setWalletType(MOBILE_MONEY)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
+
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
+                            ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
+                        onAddNewTapped = { navigator?.push(AddWalletScreen(config)) }
+                    )
+                }
+
+
+                if (bankChannels.isNotEmpty()) {
+                    Divider(
+                        color = HubtelTheme.colors.outline,
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                    )
+                }
+
+                AnimatedVisibility(bankChannels.isNotEmpty() /*&& customerWalletsUiState.data?.isNotEmpty() == true*/) {
+                    // Bank Card
+                    ExpandableBankCardOption(
+                        state = bankCardUiState,
+                        channels = bankChannels,
+                        wallets = bankWallets,
+                        expanded = walletUiState.isBankCard,
+                        onExpand = {
+                            walletUiState.setWalletType(BANK_CARD)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapBankCard)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true
+                    )
+                }
+
+                Divider(
+                    color = HubtelTheme.colors.outline,
+                    modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                )
+
+                if (otherChannels.isNotEmpty()) {
+                    Divider(
+                        color = HubtelTheme.colors.outline,
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                    )
+                }
+
+                AnimatedVisibility(otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
+                    val filteredChannels =
+                        if (businessInfoUiState.data?.isHubtelInternalMerchant == true) otherChannels else otherChannels.filter { it != PaymentChannel.HUBTEL }
+                    otherPaymentUiState.isHubtelInternalMerchant = true
+                    ExpandableOtherPayments(state = otherPaymentUiState,
+                        channels = otherChannels,
+                        expanded = walletUiState.isOtherPaymentWallet,
+                        onExpand = {
+                            otherPaymentUiState.isWalletSelected = true
+                            walletUiState.setWalletType(OTHER_PAYMENT)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        isInternalMerchant = businessInfoUiState.data?.isHubtelInternalMerchant == true,
+                        wallets = customerWalletsUiState.data ?: emptyList(),
+                        onAddNewTapped = {
+                            navigator?.push(AddWalletScreen(config))
+                        })
+                }
+
+                Divider(
+                    color = HubtelTheme.colors.outline,
+                    modifier = Modifier.padding(horizontal = Dimens.paddingDefault * 2),
+                )
+
+                // BankPay
+                AnimatedVisibility(otherChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)) {
+                    BankPayOption(
+                        state = bankPayUiState,
+                        channels = bankChannels,
+                        expanded = walletUiState.isBankPay,
+                        onExpand = {
+                            bankPayUiState.isWalletSelected = true
+                            bankPayUiState.mobileNumber = config.msisdn
+                            walletUiState.setWalletType(BANK_PAY)
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPayTapMobileMoney)
+                        },
+                        modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
+                        wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
+                            ?: emptyList() else emptyList(),
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.paddingDefault)
+                        .background(
+                            color = HubtelTheme.colors.cardBackground,
+                            shape = HubtelTheme.shapes.medium.copy(
+                                topStart = CornerSize(0.dp),
+                                topEnd = CornerSize(0.dp),
+                            )
+                        )
+                        .padding(top = Dimens.paddingDefault),
+                )
+
+                Spacer(modifier = Modifier.height(50.dp))
             }
         }
 
@@ -672,7 +632,7 @@ internal data class PayOrderScreen(
 
         if (currentCheckoutStep == GHANA_CARD_VERIFICATION /*&& ghanaCardUiState.error == UiText.DynamicString(
                 "Not Found"
-            )*/ && ghanaCardUiState.hasError && !walletUiState.isPayIn4
+            )*/ && ghanaCardUiState.hasError
         ) {
             viewModel.resetGhanaCardState()
             currentCheckoutStep = CHECKOUT
@@ -736,7 +696,6 @@ internal data class PayOrderScreen(
                 BANK_CARD -> bankCardUiState.isValid && bankCardUiState.isValidYear
                 OTHER_PAYMENT -> otherPaymentUiState.isValid || (businessInfoUiState.data?.isHubtelInternalMerchant == true && otherPaymentUiState.isWalletSelected) // modified
                 BANK_PAY -> bankPayUiState.isValid
-                PAY_IN_FOUR -> payIn4UiState.isValid
             }
 
             viewModel.getGhanaCardDetails(config, momoWalletUiState.mobileNumber ?: "")
@@ -896,7 +855,6 @@ internal data class PayOrderScreen(
             BANK_CARD -> if (hasFees) CARD_SETUP else null
             OTHER_PAYMENT -> if (hasFees) CHECKOUT else null
             BANK_PAY -> if (hasFees) CHECKOUT else null
-            PAY_IN_FOUR -> if (hasFees) SELECT_PAYMENT_METHOD else null
         }
 
         // if next is null go back down to get fees
@@ -921,7 +879,6 @@ internal data class PayOrderScreen(
                 OTHER_PAYMENT -> CHECKOUT_SUCCESS_DIALOG // TODO: might need further looking into
 //                BANK_PAY -> CHECKOUT_SUCCESS_DIALOG
                 BANK_PAY -> PAYMENT_COMPLETED
-                PAY_IN_FOUR -> CHECKOUT_SUCCESS_DIALOG
             }
         } else CHECKOUT
     }

@@ -28,7 +28,6 @@ import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.WalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
-import com.hubtel.merchant.checkout.sdk.platform.data.source.db.model.toWalletResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
 import com.hubtel.merchant.checkout.sdk.platform.model.Wallet
 import com.hubtel.merchant.checkout.sdk.platform.model.WalletProvider
@@ -67,8 +66,6 @@ internal class PayOrderViewModel constructor(
     private var _customerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
     val customerWalletsUiState: WalletResponseState = _customerWalletsUiState
 
-    private var _cachedCustomerWalletsUiState = mutableStateOf(UiState2<List<WalletResponse>>())
-    val cachedCustomerWalletsUiState: WalletResponseState = _cachedCustomerWalletsUiState
 
     private val _paymentChannelsUiState = mutableStateOf(UiState2<List<PaymentChannel>>())
     val paymentChannelsUiState: PaymentChannelState = _paymentChannelsUiState
@@ -146,9 +143,7 @@ internal class PayOrderViewModel constructor(
                 )
             }
 
-            PayOrderWalletType.PAY_IN_FOUR -> {
-                null
-            }
+
 
             PayOrderWalletType.OTHER_PAYMENT -> {
 
@@ -360,7 +355,6 @@ internal class PayOrderViewModel constructor(
                     payOrderWithOthers(config)
                 }
 
-                PayOrderWalletType.PAY_IN_FOUR -> {}
 
                 PayOrderWalletType.BANK_PAY -> {
                     payOrderWithBankPay(config)
@@ -663,11 +657,6 @@ internal class PayOrderViewModel constructor(
 
     private suspend fun fetchData(config: CheckoutConfig): Pair<ResultWrapper<List<WalletResponse>>, ResultWrapper<PaymentChannelResponse>> =
         coroutineScope {
-            val savedMomoWallets =
-                unifiedCheckoutRepository.savedMomoWallets().map { it.toWalletResponse() }
-            _cachedCustomerWalletsUiState.update {
-                UiState2(data = savedMomoWallets)
-            }
 
             val customerWalletsDeferred = async {
 

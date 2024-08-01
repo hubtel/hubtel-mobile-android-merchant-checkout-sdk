@@ -50,9 +50,6 @@ internal class PaymentWalletUiState(
         payOrderWalletType == PayOrderWalletType.BANK_PAY
     }
 
-    val isPayIn4 by derivedStateOf {
-        payOrderWalletType == PayOrderWalletType.PAY_IN_FOUR
-    }
 
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
@@ -224,7 +221,6 @@ internal enum class PayOrderWalletType {
     BANK_CARD,
     OTHER_PAYMENT,
     BANK_PAY,
-    PAY_IN_FOUR
 }
 
 internal val PayOrderWalletType.paymentTypeName: String
@@ -234,7 +230,6 @@ internal val PayOrderWalletType.paymentTypeName: String
             PayOrderWalletType.BANK_CARD -> "card"
             PayOrderWalletType.OTHER_PAYMENT -> "others"
             PayOrderWalletType.BANK_PAY -> "bankpay"
-            PayOrderWalletType.PAY_IN_FOUR -> "payin4"
         }
     }
 
