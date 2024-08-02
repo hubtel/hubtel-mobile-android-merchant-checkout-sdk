@@ -66,7 +66,6 @@ class MainActivity : BaseActivity() {
             status?.isCanceled
             status?.isPaymentSuccessful
             status?.transactionId
-            status?.paymentMethod
         }
     }
 
