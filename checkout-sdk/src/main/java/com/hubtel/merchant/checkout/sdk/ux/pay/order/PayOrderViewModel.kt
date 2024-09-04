@@ -17,12 +17,14 @@ import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.network.ResultWrapper
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetOtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpRequestResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSEnrollResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSSetupInfo
@@ -52,8 +54,9 @@ internal typealias CheckoutFeeState = State<UiState2<CheckoutFee>>
 internal typealias CheckoutInfoState = State<UiState2<CheckoutInfo>>
 internal typealias EnrollState = State<UiState2<ThreeDSEnrollResponse>>
 internal typealias ThreeDSSetupInfoState = State<UiState2<ThreeDSSetupInfo>>
+internal typealias SendOtpResponseState = State<UiState2<OtpRequestResponse>>
 
-internal class PayOrderViewModel constructor(
+internal class PayOrderViewModel (
     private val unifiedCheckoutRepository: UnifiedCheckoutRepository,
 ) : ViewModel() {
 
@@ -84,6 +87,9 @@ internal class PayOrderViewModel constructor(
 
     private val _enrollUiState = mutableStateOf(UiState2<ThreeDSEnrollResponse>())
     val enrollUiState: EnrollState = _enrollUiState
+
+    private val _sendOtpUiState = mutableStateOf(UiState2<OtpRequestResponse>())
+    val sendOtpUiState: SendOtpResponseState = _sendOtpUiState
 
     var bankChannels by mutableStateOf<List<PaymentChannel>>(emptyList())
         private set
@@ -752,7 +758,8 @@ internal class PayOrderViewModel constructor(
                         businessName = paymentChannelsResult.response.data?.businessName,
                         businessLogoURL = paymentChannelsResult.response.data?.businessLogoURL,
                         requireNationalID = paymentChannelsResult.response.data?.requireNationalID,
-                        isHubtelInternalMerchant = paymentChannelsResult.response.data?.isHubtelInternalMerchant
+                        isHubtelInternalMerchant = paymentChannelsResult.response.data?.isHubtelInternalMerchant,
+                        requireMobileMoneyOtp = paymentChannelsResult.response.data?.requireMobileMoneyOtp
                     )
 
                     _businessInfoUiState.update {
@@ -804,6 +811,35 @@ internal class PayOrderViewModel constructor(
                             error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred),
                         )
                     }
+                }
+            }
+        }
+    }
+
+    suspend fun sendOtpToUser(salesId:String, req: GetOtpReq) {
+        _sendOtpUiState.update { UiState2(isLoading = true) }
+
+        val result = unifiedCheckoutRepository.getOtp(salesId, req)
+
+        when (result) {
+            is ApiResult.Success -> {
+                _sendOtpUiState.update {
+                    UiState2(success = true, data = result.response.data)
+                }
+            }
+
+            is ApiResult.HttpError -> {
+                _sendOtpUiState.update {
+                    UiState2(success = false, error = UiText.DynamicString(result.message ?: ""))
+                }
+            }
+
+            else -> {
+                _sendOtpUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
                 }
             }
         }
