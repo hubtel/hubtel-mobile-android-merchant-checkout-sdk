@@ -18,3 +18,10 @@ data class OtpResponse (
 
     val skipOtp: Boolean?,
 )
+
+
+data class OtpRequestResponse(
+    @SerializedName("requestId") val requestId: String?,
+    @SerializedName("otpPrefix") val otpPrefix: String?,
+    @SerializedName("otpApprovalStatus") val otpApprovalStatus: String?
+)
