@@ -22,43 +22,51 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutType
 import com.hubtel.merchant.checkout.sdk.ux.CheckoutActivity
 import com.hubtel.merchant.checkout.sdk.ux.components.CheckoutMessageDialog
+import com.hubtel.merchant.checkout.sdk.ux.components.HBProgressDialog
 import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.layouts.HBScaffold
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
-import com.hubtel.merchant.checkout.sdk.ux.model.UiText
-import com.hubtel.merchant.checkout.sdk.ux.pay.order.PayOrderScreen
-import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.pay.status.finishWithResult
+import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
+import kotlinx.coroutines.launch
 
-internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo: CheckoutInfo) :
+internal data class OtpVerifyScreen(
+    val config: CheckoutConfig,
+    val otpPrefix: String,
+    val otpRequestId: String,
+    val onFinish: () -> Unit
+) :
     Screen {
     @Composable
     override fun Content() {
@@ -67,18 +75,21 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
                 factory = OtpVerifyViewModel.getViewModelFactory(config.apiKey),
             )
 
-        ScreenContent(viewModel = viewModel)
+        ScreenContent(viewModel = viewModel, onFinish)
     }
 
     @Composable
-    private fun ScreenContent(viewModel: OtpVerifyViewModel) {
+    private fun ScreenContent(
+        viewModel: OtpVerifyViewModel,
+        onFinish: () -> Unit
+    ) {
 
         val otpUiState by viewModel.otpUiState
 
-        val context = LocalContext.current
         val activity = LocalActivity.current
         val navigator = LocalNavigator.current
         val checkoutActivity = remember(activity) { activity as? CheckoutActivity }
+        val coroutineScope = rememberCoroutineScope()
 
         var isButtonEnabled by remember { mutableStateOf(false) }
 
@@ -89,35 +100,46 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
             mutableStateOf("")
         }
 
-        HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2, topBar = {
-            HBTopAppBar(title = {
-                Text(text = "Verify")
-            }, onNavigateUp = {
-                checkoutActivity?.finishWithResult()
-            })
-        }, bottomBar = {
-            Column(modifier = Modifier.animateContentSize()) {
+        HBScaffold(
+            backgroundColor = HubtelTheme.colors.uiBackground2,
+            topBar = {
+                HBTopAppBar(
+                    title = { Text(text = "Verify") },
+                    onNavigateUp = { checkoutActivity?.finishWithResult() })
+            },
+            bottomBar = {
+                Column(modifier = Modifier.animateContentSize()) {
 
-                LoadingTextButton(
-                    text = "VERIFY", enabled = isButtonEnabled, onClick = {
-//                    val req = OtpReq(
-//                        config.msisdn ?: "",
-//                        checkoutInfo.hubtelPreapprovalId ?: "",
-//                        config.clientReference ?: "",
-//                        "${checkoutInfo.otpPrefix}-$otpValue"
-//                    )
-                        viewModel.verify(config, checkoutInfo, otpValue)
-                        recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                    }, loading = isLoading, modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize()
-                        .padding(Dimens.paddingSmall)
-                )
-            }
-        }) {
+                    LoadingTextButton(
+                        text = "VERIFY",
+                        enabled = isButtonEnabled,
+                        loading = isLoading,
+                        onClick = {
+                            coroutineScope.launch {
+                                verifyOtp(
+                                    viewModel,
+                                    otpValue,
+                                    onVerificationFinish = { isSuccessful ->
+                                        if (isSuccessful) {
+                                            onFinish.invoke()
+                                            navigator?.pop()
+                                        } else {
+                                            showErrorMessage = true
+                                        }
+                                    }
+                                )
+                            }
+                            recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateContentSize()
+                            .padding(Dimens.paddingSmall)
+                    )
+                }
+            }) {
             Column(
                 horizontalAlignment = Alignment.Start,
-//            verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize()
@@ -133,38 +155,41 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
                         .align(Alignment.CenterHorizontally)
                 )
 
-                Text(text = "Enter the verification code sent to ")
-                Text(text = "${checkoutInfo.customerMsisdn} starting with ${checkoutInfo.otpPrefix}")
+                VerifyMsgText(
+                    phoneNumber = config.msisdn ?: "",
+                    requestCode = otpPrefix,
+                    modifier = Modifier.padding(bottom = Dimens.paddingSmall)
+                )
 
                 Box(modifier = Modifier.padding(Dimens.paddingNano))
 
                 OtpTextField(
-                    otpText = otpValue, otpCount = 4,
-                    onOtpTextChange = { value, _ ->
-                        otpValue = value
-                    }
+                    otpText = otpValue,
+                    otpCount = 4,
+                    onOtpTextChange = { value, _ -> otpValue = value }
                 )
 
                 Box(modifier = Modifier.padding(Dimens.paddingNano))
 
                 if (showErrorMessage) {
-                    Text(text = "The OTP you have entered is incorrect", color = Color(0xFFFF3344))
-
                     CheckoutMessageDialog(
-                        onDismissRequest = {},
+                        onDismissRequest = {
+                            showErrorMessage = false
+                        },
                         painter = painterResource(id = R.drawable.checkout_ic_close_circle_white),
                         titleText = "Error",
-                        message = "Kindly try again.",
+                        message = "OTP Verification failed.Kindly try again.",
                         positiveText = stringResource(R.string.checkout_okay),
                         onPositiveClick = {
                             showErrorMessage = false
-                            navigator?.push(
-                                PayOrderScreen(config = config)
-                            ) // TODO: would produce duplicate client reference error
                         },
-//                        properties = DialogProperties(
-//                            dismissOnBackPress = false, dismissOnClickOutside = false
-//                        )
+                    )
+                }
+
+                if (viewModel.paymentOtpUiState.value.isLoading) {
+                    HBProgressDialog(
+                        message = "${stringResource(R.string.checkout_please_wait)}...",
+                        progressColor = CheckoutTheme.colors.colorPrimary,
                     )
                 }
             }
@@ -172,38 +197,37 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
 
         LaunchedEffect(otpValue) {
             if (otpValue.length == 4) {
-//                val req = OtpReq(
-//                    config.msisdn ?: "",
-//                    checkoutInfo.hubtelPreapprovalId ?: "",
-//                    config.clientReference ?: "",
-//                    "${checkoutInfo.otpPrefix}-$otpValue"
-//                )
                 isButtonEnabled = true
-                viewModel.verify(config, checkoutInfo, otpValue)
-//                navigator?.push(PaymentStatusScreen(providerName = "", config = config, checkoutType = CheckoutType.DIRECT_DEBIT))
 
-            }
-        }
-
-        LaunchedEffect(otpUiState) {
-            if (otpUiState.hasData) {
-                navigator?.push(
-                    PaymentStatusScreen(
-                        providerName = "",
-                        config = config,
-                        checkoutType = CheckoutType.DIRECT_DEBIT
-                    )
+                verifyOtp(
+                    viewModel,
+                    otpValue,
+                    onVerificationFinish = { isSuccessful ->
+                        if (isSuccessful) {
+                            onFinish.invoke()
+                            navigator?.pop()
+                        } else {
+                            showErrorMessage = true
+                        }
+                    }
                 )
             }
-
-            if (otpUiState.error == UiText.DynamicString(
-                    "OTP Verification Failed. Try again"
-                )
-            ) {
-                showErrorMessage = true
-                isLoading = false
-            }
         }
+    }
+
+    private suspend fun verifyOtp(
+        viewModel: OtpVerifyViewModel,
+        otpValue: String,
+        onVerificationFinish: (Boolean) -> Unit,
+    ) {
+        viewModel.verify(
+            config = config,
+            userOtpEntry = otpValue,
+            otpPrefix = otpPrefix,
+            otpRequestId = otpRequestId,
+        )
+
+        onVerificationFinish.invoke(viewModel.paymentOtpUiState.value.success)
     }
 
     @Composable
@@ -285,4 +309,42 @@ internal data class OtpVerifyScreen(val config: CheckoutConfig, val checkoutInfo
             textAlign = TextAlign.Center
         )
     }
+}
+
+
+@Composable
+fun VerifyMsgText(
+    phoneNumber: String,
+    requestCode: String,
+    modifier: Modifier = Modifier
+) {
+    val regularStyle = SpanStyle(
+        color = Color.Black
+    )
+
+    val boldStyle = SpanStyle(
+        color = Color.Black,
+        fontWeight = FontWeight.Bold
+    )
+
+    val annotatedString = buildAnnotatedString {
+        withStyle(regularStyle) {
+            append("Enter the verification code sent to ")
+        }
+        withStyle(boldStyle) {
+            append(phoneNumber)
+        }
+        withStyle(regularStyle) {
+            append(" starting with ")
+        }
+        withStyle(boldStyle) {
+            append(requestCode)
+        }
+    }
+
+    Text(
+        text = annotatedString,
+        textAlign = TextAlign.Center,
+        modifier = modifier.fillMaxWidth()
+    )
 }

@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.order
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -28,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,13 +38,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.androidx.AndroidScreen
+import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.BeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordBeginPurchaseEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetOtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BankCardStatus
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.BusinessInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CardStatus
@@ -99,7 +103,7 @@ import timber.log.Timber
 
 internal data class PayOrderScreen(
     private val config: CheckoutConfig, private val attempt: VerificationAttempt? = null
-) : AndroidScreen() {
+) : Screen {
 
     @Composable
     override fun Content() {
@@ -135,21 +139,31 @@ internal data class PayOrderScreen(
 
         var showCancelDialog by remember { mutableStateOf(false) }
 
-        val walletUiState = remember { PaymentWalletUiState(null) }
+        val walletUiState = rememberSaveable(saver = PaymentWalletUiState.Saver) {
+            PaymentWalletUiState(null)
+        }
 
-        val bankCardUiState = remember(bankWallets) {
+        val bankCardUiState = rememberSaveable(bankWallets, saver = BankCardUiState.Saver) {
             BankCardUiState(
                 wallet = bankWallets.firstOrNull(), useSavedBankCard = bankWallets.isNotEmpty(),
             )
         }
 
-        val momoWalletUiState = remember { MomoWalletUiState() }
+        val momoWalletUiState = rememberSaveable(saver = MomoWalletUiState.Saver) {
+            MomoWalletUiState()
+        }
 
-        val otherPaymentUiState = remember { OtherPaymentUiState() }
+        val otherPaymentUiState = rememberSaveable(saver = OtherPaymentUiState.Saver) {
+            OtherPaymentUiState()
+        }
 
-        val bankPayUiState = remember { BankPayUiState() }
+        val bankPayUiState = rememberSaveable(saver = BankPayUiState.Saver) {
+            BankPayUiState()
+        }
 
-        val payIn4UiState = remember { PayIn4UiState() }
+        val payIn4UiState = rememberSaveable(saver = PayIn4UiState.Saver) {
+            PayIn4UiState()
+        }
 
         var currentCheckoutStep: CheckoutStep by rememberSaveable {
             if (attempt == null) mutableStateOf(GET_FEES) else {
@@ -183,6 +197,9 @@ internal data class PayOrderScreen(
 
         val coroutineScope = rememberCoroutineScope()
 
+
+
+
         HBScaffold(
             topBar = {
                 HBTopAppBar(title = {
@@ -201,49 +218,71 @@ internal data class PayOrderScreen(
                         thickness = 2.dp,
                     )
 
+                    fun handleOtherPaymentWallet() {
+                        if (otherPaymentUiState.newMandate || (viewModel.getMandateId()
+                                ?.isEmpty() == true && otherPaymentUiState.walletProvider == WalletProvider.GMoney)
+                        ) {
+                            navigator?.push(
+                                AddMandateScreen(
+                                    config = config,
+                                    walletUiState.payOrderWalletType,
+                                    UiStates(
+                                        momoWalletUiState,
+                                        otherPaymentUiState,
+                                        bankCardUiState
+                                    )
+                                )
+                            )
+                        }
+                    }
+
+                    fun handlePostOtpActions() {
+                        when {
+                            walletUiState.isOtherPaymentWallet -> handleOtherPaymentWallet()
+                            walletUiState.isBankPay -> currentCheckoutStep = CHECKOUT
+                        }
+                        Timber.d("TAP: PAY tapped!")
+                        currentCheckoutStep = PAY_ORDER
+                    }
+
+                    fun handleOtpFlow() {
+                        coroutineScope.launch {
+                            viewModel.sendOtpToUser(
+                                config.posSalesId ?: "",
+                                GetOtpReq(customerMsisdn = config.msisdn ?: "")
+                            )
+
+                            navigator?.push(
+                                OtpVerifyScreen(
+                                    config = config,
+                                    otpPrefix = viewModel.sendOtpUiState.value.data?.otpPrefix
+                                        ?: "",
+                                    otpRequestId = viewModel.sendOtpUiState.value.data?.requestId
+                                        ?: "",
+                                    onFinish = {
+                                        handlePostOtpActions()
+                                    },
+                                )
+                            )
+                        }
+                    }
+
                     LoadingTextButton(
-//                        text = "${stringResource(R.string.checkout_pay)} ${orderTotal.formatMoney()}",
                         text = when {
                             walletUiState.isBankPay -> stringResource(R.string.checkout_generate_invoice)
-                            payIn4UiState.repaymentEntries?.isNotEmpty() == true -> {
-                                stringResource(R.string.checkout_pay)
-                            }
-
+                            payIn4UiState.repaymentEntries?.isNotEmpty() == true -> stringResource(R.string.checkout_pay)
                             else -> stringResource(R.string.checkout_pay)
                         },
                         onClick = {
                             Timber.d("Wallet Type: ${walletUiState.payOrderWalletType}")
                             Timber.d("Wallet Type2: ${walletUiState.isOtherPaymentWallet}")
-                            when {
-                                walletUiState.isOtherPaymentWallet -> {
-                                    if (otherPaymentUiState.newMandate || (viewModel.getMandateId()
-                                            ?.isEmpty() == true && otherPaymentUiState.walletProvider == WalletProvider.GMoney)
-                                    ) {
-                                        navigator?.push(
-                                            AddMandateScreen(
-                                                config = config,
-                                                walletUiState.payOrderWalletType,
-                                                UiStates(
-                                                    momoWalletUiState,
-                                                    otherPaymentUiState,
-                                                    bankCardUiState
-                                                )
-                                            )
-                                        )
-                                        return@LoadingTextButton
-                                    }
-                                }
 
-                                walletUiState.isBankPay -> {
-                                    currentCheckoutStep = CHECKOUT
-                                }
-
+                            if (businessInfoUiState.data?.requireMobileMoneyOtp == true) {
+                                handleOtpFlow()
+                            } else {
+                                handlePostOtpActions()
                             }
 
-                            // If checkout requiresKyc(requireNationalId) && wallet type is momo then check verification details
-
-                            Timber.d("TAP: PAY tapped!")
-                            currentCheckoutStep = PAY_ORDER
                             recordCheckoutEvent(CheckoutEvent.CheckoutPayTapButtonPay)
                         },
                         enabled = isPayButtonEnabled,
@@ -315,8 +354,7 @@ internal data class PayOrderScreen(
                     momoChannels.isNotEmpty() && (customerWalletsUiState.data?.isNotEmpty() == true || customerWalletsUiState.hasError)
                 ) {
                     // Mobile Money
-                    ExpandableMomoOption(
-                        state = momoWalletUiState,
+                    ExpandableMomoOption(state = momoWalletUiState,
                         channels = momoChannels,
                         expanded = walletUiState.isMomoWallet,
                         onExpand = {
@@ -328,8 +366,7 @@ internal data class PayOrderScreen(
                         modifier = Modifier.padding(horizontal = Dimens.paddingDefault),
                         wallets = if (businessInfoUiState.data?.isHubtelInternalMerchant == true) customerWalletsUiState.data
                             ?: /*cachedMomoWalletsUiState.data ?:*/ emptyList() else emptyList(),
-                        onAddNewTapped = { navigator?.push(AddWalletScreen(config)) }
-                    )
+                        onAddNewTapped = { navigator?.push(AddWalletScreen(config)) })
                 }
 
 
@@ -463,8 +500,7 @@ internal data class PayOrderScreen(
                     if (enrollUiState.success) {
                         currentCheckoutStep = CHECKOUT
                         navigator?.push(
-                            CardCheckoutWebview(
-                                config = config,
+                            CardCheckoutWebview(config = config,
                                 html = enrollUiState.data?.html ?: "",
                                 onFinish = {
                                     currentCheckoutStep = PAYMENT_COMPLETED
@@ -475,8 +511,7 @@ internal data class PayOrderScreen(
                                             checkoutType = checkoutFeesUiState.data?.getCheckoutType
                                         )
                                     )
-                                }
-                            )
+                                })
                         )
                     }
 
@@ -658,7 +693,7 @@ internal data class PayOrderScreen(
             }
         }
 
-        LaunchedEffect(Unit) {
+        LaunchedEffect(paymentChannelsUiState) {
             viewModel.getCustomerWalletsAndPaymentChannels(config)
             viewModel.initData(config.amount)
             recordCheckoutEvent(CheckoutEvent.CheckoutPayViewPagePay)
@@ -700,11 +735,7 @@ internal data class PayOrderScreen(
             viewModel.getGhanaCardDetails(config, momoWalletUiState.mobileNumber ?: "")
 
             viewModel.updatePaymentInfo(
-                walletType,
-                momoWalletUiState,
-                otherPaymentUiState,
-                bankCardUiState,
-                bankPayUiState
+                walletType, momoWalletUiState, otherPaymentUiState, bankCardUiState, bankPayUiState
             )
 
             // ignore state change if we're not in the get
@@ -713,10 +744,7 @@ internal data class PayOrderScreen(
             if (currentCheckoutStep != GET_FEES) return@LaunchedEffect
 
 //            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)) return@LaunchedEffect
-            if ((walletUiState.isBankCard && !bankCardUiState.isValid)
-                || (walletUiState.isMomoWallet && !momoWalletUiState.isValid)
-                || (walletUiState.isOtherPaymentWallet && !otherPaymentUiState.isValid)
-            ) return@LaunchedEffect
+            if ((walletUiState.isBankCard && !bankCardUiState.isValid) || (walletUiState.isMomoWallet && !momoWalletUiState.isValid) || (walletUiState.isOtherPaymentWallet && !otherPaymentUiState.isValid)) return@LaunchedEffect
 
             viewModel.getCheckoutFees(config)
         }
@@ -784,9 +812,6 @@ internal data class PayOrderScreen(
                         )
                     }
 
-                    if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT && checkoutUiState.data?.skipOtp == false && checkoutUiState.data?.getVerificationType == VerificationType.OTP /* && walletUiState.isMomoWallet*/) {
-                        navigator?.push(OtpVerifyScreen(config, checkoutUiState.data!!))
-                    }
 
                     if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
                         Timber.d("TAP [INSIDE]: $currentCheckoutStep - DIRECT_DEBIT")
@@ -805,9 +830,7 @@ internal data class PayOrderScreen(
                     if (walletUiState.isBankPay) {
                         navigator?.push(
                             BankPayReceipt(
-                                config,
-                                checkoutUiState.data,
-                                businessInfoUiState.data
+                                config, checkoutUiState.data, businessInfoUiState.data
                             )
                         )
                     }
@@ -883,10 +906,42 @@ internal data class PayOrderScreen(
     }
 }
 
+
 internal data class VerificationAttempt(
     val attempt: Boolean = false,
     val number: String = "",
     val step: CheckoutStep? = null,
     val checkoutType: CheckoutType? = null,
     val walletType: PayOrderWalletType? = null
-)
+) : Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        attempt = parcel.readByte() != 0.toByte(),
+        number = parcel.readString() ?: "",
+        step = parcel.readSerializable() as? CheckoutStep,
+        checkoutType = parcel.readSerializable() as? CheckoutType,
+        walletType = parcel.readSerializable() as? PayOrderWalletType
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeByte(if (attempt) 1 else 0)
+        parcel.writeString(number)
+        parcel.writeSerializable(step)
+        parcel.writeSerializable(checkoutType)
+        parcel.writeSerializable(walletType)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<VerificationAttempt> {
+        override fun createFromParcel(parcel: Parcel): VerificationAttempt {
+            return VerificationAttempt(parcel)
+        }
+
+        override fun newArray(size: Int): Array<VerificationAttempt?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
