@@ -6,32 +6,20 @@ import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
-import cafe.adriel.voyager.androidx.AndroidScreen
+import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.layouts.HBScaffold
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
-import com.hubtel.merchant.checkout.sdk.ux.pay.order.VerificationAttempt
-import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 
 internal data class CardCheckoutWebview(
     private val config: CheckoutConfig,
     private val html: String,
     val onFinish: () -> Unit,
-) : AndroidScreen() {
+) : Screen {
 
     @SuppressLint("SetJavaScriptEnabled")
     @Composable
