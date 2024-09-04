@@ -12,7 +12,8 @@ import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.network.ApiResult
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
-import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.PaymentOtpReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpRequestResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.db.CheckoutDB
 import com.hubtel.merchant.checkout.sdk.platform.data.source.repository.UnifiedCheckoutRepository
@@ -28,18 +29,25 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
     private val _otpUiState = mutableStateOf(UiState2<OtpResponse>())
     val otpUiState: State<UiState2<OtpResponse>> = _otpUiState
 
-    fun verify(config: CheckoutConfig, checkoutInfo: CheckoutInfo, otpValue: String) {
-        viewModelScope.launch {
+    private val _paymentOtpUiState = mutableStateOf(UiState2<OtpRequestResponse>())
+    val paymentOtpUiState: State<UiState2<OtpRequestResponse>> = _paymentOtpUiState
 
-            val req = OtpReq(
-                checkoutInfo.customerMsisdn ?: "",
-                checkoutInfo.hubtelPreapprovalId ?: "",
-                config.clientReference ?: "",
-                "${checkoutInfo.otpPrefix}-$otpValue"
-            )
-            verifyOtp(config, req)
-        }
+    suspend fun verify(
+        config: CheckoutConfig,
+        userOtpEntry: String,
+        otpPrefix: String,
+        otpRequestId: String,
+    ) {
+
+        val req = PaymentOtpReq(
+            customerMsisdn = config.msisdn ?: "",
+            requestId = otpRequestId,
+            otpCode = "$otpPrefix-$userOtpEntry"
+        )
+
+        verifyPaymentOtp(config, req)
     }
+
 
     private suspend fun verifyOtp(config: CheckoutConfig, req: OtpReq) {
         _otpUiState.update { UiState2(isLoading = true) }
@@ -61,7 +69,39 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
 
             else -> {
                 _otpUiState.update {
-                    UiState2(success = false, error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred))
+                    UiState2(
+                        success = false,
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun verifyPaymentOtp(config: CheckoutConfig, req: PaymentOtpReq) {
+        _paymentOtpUiState.update { UiState2(isLoading = true) }
+
+        val result = unifiedCheckoutRepository.verifyPaymentOtp(config.posSalesId ?: "", req)
+
+        when (result) {
+            is ApiResult.Success -> {
+                _paymentOtpUiState.update {
+                    UiState2(success = true, data = result.response.data)
+                }
+            }
+
+            is ApiResult.HttpError -> {
+                _paymentOtpUiState.update {
+                    UiState2(success = false, error = UiText.DynamicString(result.message ?: ""))
+                }
+            }
+
+            else -> {
+                _paymentOtpUiState.update {
+                    UiState2(
+                        success = false,
+                        error = UiText.StringResource(R.string.checkout_sorry_an_error_occurred)
+                    )
                 }
             }
         }
@@ -70,7 +110,8 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
     companion object {
         fun getViewModelFactory(apiKey: String?): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val application = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as Application
+                val application =
+                    this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as Application
 
                 val database = CheckoutDB.getInstance(application)
                 val unifiedCheckoutService = UnifiedCheckoutApiService(apiKey ?: "")
