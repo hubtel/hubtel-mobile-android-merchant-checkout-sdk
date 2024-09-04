@@ -3,6 +3,7 @@ package com.hubtel.merchant.checkout.sdk.ux.pay.order
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.TextFieldValue
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.types.PurchaseOrderItem
@@ -54,6 +55,20 @@ internal class PaymentWalletUiState(
     fun setWalletType(type: PayOrderWalletType?) {
         payOrderWalletType = type
     }
+
+
+    companion object {
+        val Saver = listSaver<PaymentWalletUiState, String?>(
+            save = { state ->
+                listOf(state.payOrderWalletType?.name)
+            },
+            restore = { items ->
+                PaymentWalletUiState(
+                    walletType = items[0]?.let { PayOrderWalletType.valueOf(it) }
+                )
+            }
+        )
+    }
 }
 
 class MomoWalletUiState {
@@ -67,6 +82,26 @@ class MomoWalletUiState {
     val isValid
         get() = ((mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
+
+
+    companion object {
+        val Saver = listSaver<MomoWalletUiState, Any>(
+            save = { state ->
+                listOf<Any>(
+                    state.mobileNumber ?: "",
+                    state.walletProvider?.name ?: "",
+                    state.isWalletSelected
+                )
+            },
+            restore = { items ->
+                MomoWalletUiState().apply {
+                    mobileNumber = items[0] as? String
+                    walletProvider = (items[1] as? String)?.let { WalletProvider.valueOf(it) }
+                    isWalletSelected = items[2] as Boolean
+                }
+            }
+        )
+    }
 }
 
 class OtherPaymentUiState {
@@ -85,6 +120,34 @@ class OtherPaymentUiState {
         get() = ((mobileNumber?.length ?: 0) >= 9
                 && walletProvider != null) || ((mobileNumber?.length
             ?: 0) >= 9 && isWalletSelected) || (walletProvider != null && isWalletSelected)
+
+
+    companion object {
+        val Saver = listSaver<OtherPaymentUiState, Any>(
+            save = { state ->
+                listOf(
+                    state.mobileNumber ?: "",
+                    state.accountName ?: "",
+                    state.isHubtelInternalMerchant ?: false ,
+                    state.walletProvider?.name ?: WalletProvider.Hubtel.name,
+                    state.newMandate,
+                    state.isWalletSelected,
+                    state.saveForLater
+                )
+            },
+            restore = { items ->
+                OtherPaymentUiState().apply {
+                    mobileNumber = items[0] as? String
+                    accountName = items[1] as? String
+                    isHubtelInternalMerchant = items[2] as? Boolean
+                    walletProvider = (items[3] as? String)?.let { WalletProvider.valueOf(it) }
+                    newMandate = items[4] as Boolean
+                    isWalletSelected = items[5] as Boolean
+                    saveForLater = items[6] as Boolean
+                }
+            }
+        )
+    }
 }
 
 class BankPayUiState {
@@ -94,6 +157,26 @@ class BankPayUiState {
 
     val isValid
         get() = isWalletSelected
+
+
+    companion object {
+        val Saver = listSaver<BankPayUiState, Any>(
+            save = { state ->
+                listOf(
+                    state.isWalletSelected,
+                    state.mobileNumber ?: "",
+                    state.walletProvider?.name ?: WalletProvider.BankPay.name
+                )
+            },
+            restore = { items ->
+                BankPayUiState().apply {
+                    isWalletSelected = items[0] as Boolean
+                    mobileNumber = items[1] as? String
+                    walletProvider = (items[2] as? String)?.let { WalletProvider.valueOf(it) }
+                }
+            }
+        )
+    }
 }
 
 class PayIn4UiState {
@@ -105,6 +188,29 @@ class PayIn4UiState {
 
     val isValid
         get() = isWalletSelected
+
+    companion object {
+        val Saver = listSaver<PayIn4UiState, Any>(
+            save = { state ->
+                listOf(
+                    state.isWalletSelected,
+                    state.isMomoWalletSelected,
+                    state.walletProvider?.name ?: WalletProvider.MTN.name,
+                    state.mobileNumber ?: "",
+                    state.repaymentEntries ?: emptyList<ReviewEntry>()
+                )
+            },
+            restore = { items ->
+                PayIn4UiState().apply {
+                    isWalletSelected = items[0] as Boolean
+                    isMomoWalletSelected = items[1] as Boolean
+                    walletProvider = (items[2] as? String)?.let { WalletProvider.valueOf(it) }
+                    mobileNumber = items[3] as? String
+                    repaymentEntries = items[4] as? List<ReviewEntry>
+                }
+            })
+
+    }
 }
 
 class BankCardUiState constructor(
@@ -147,6 +253,37 @@ class BankCardUiState constructor(
             }
         }
 
+    companion object {
+        val Saver = listSaver(
+            save = { state ->
+                listOf(
+                    state.useSavedBankCard,
+                    state.cardHolderName,
+                    state.cardNumber,
+                    state.monthYear.text,
+                    state.cvv,
+                    state.saveForLater,
+                    state.isInternalMerchant,
+                    state.selectedWallet ?: false,
+                    state.isValidYear
+                )
+            },
+            restore = { items ->
+                BankCardUiState(
+                    wallet = items[7] as? Wallet,
+                    useSavedBankCard = items[0] as Boolean
+                ).apply {
+                    cardHolderName = items[1] as String
+                    cardNumber = items[2] as String
+                    monthYear = TextFieldValue(text = items[3] as String)
+                    cvv = items[4] as String
+                    saveForLater = items[5] as Boolean
+                    isInternalMerchant = items[6] as Boolean
+                    isValidYear = items[8] as Boolean
+                }
+            }
+        )
+    }
 
     override fun toString(): String {
         return """
@@ -379,5 +516,6 @@ internal data class BusinessResponseInfo(
     val businessName: String?,
     val businessLogoURL: String?,
     val requireNationalID: Boolean?,
-    val isHubtelInternalMerchant: Boolean?
+    val isHubtelInternalMerchant: Boolean?,
+    val requireMobileMoneyOtp: Boolean?
 ) : Serializable
