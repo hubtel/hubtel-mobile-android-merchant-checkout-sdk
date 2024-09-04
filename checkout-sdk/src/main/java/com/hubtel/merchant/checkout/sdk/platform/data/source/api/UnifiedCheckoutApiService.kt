@@ -5,13 +5,16 @@ import com.hubtel.merchant.checkout.sdk.network.createRetrofitService
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse
 import com.hubtel.merchant.checkout.sdk.network.response.DataResponse2
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.CardReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetOtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.PaymentOtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.UserWalletReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpRequestResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSEnrollResponse
@@ -86,11 +89,24 @@ internal interface UnifiedCheckoutApiService {
         @Path("PhoneNumber") phoneNumber: String?,
     ): DataResponse<List<WalletResponse>>
 
+    @POST("/api/v1/merchant/{salesId}/unifiedcheckout/verify-payment-otp")
+    suspend fun verifyPaymentOtp(
+        @Path("salesId") salesId: String,
+        @Body req: PaymentOtpReq,
+    ): DataResponse2<OtpRequestResponse>
+
     @POST("/api/v1/merchant/{salesId}/unifiedcheckout/verifyotp")
     suspend fun verifyOtp(
         @Path("salesId") salesId: String,
         @Body req: OtpReq,
     ): DataResponse2<OtpResponse>
+
+    @POST("api/v1/merchant/{salesId}/unifiedcheckout/payment-otp")
+    suspend fun getOtp(
+        @Path("salesId") salesId: String,
+        @Body req: GetOtpReq
+    ): DataResponse2<OtpRequestResponse>
+
 
     @GET("/api/v1/merchant/{salesId}/unifiedcheckout/checkoutchannels")
     suspend fun getBusinessChannels(

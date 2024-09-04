@@ -7,13 +7,16 @@ import com.hubtel.merchant.checkout.sdk.network.repository.Repository
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.UnifiedCheckoutApiService
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.CardReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetFeesReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.GetOtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.MobileMoneyCheckoutReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.OtpReq
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.PaymentOtpReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.ThreeDSSetupReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.request.UserWalletReq
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutFee
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.CheckoutInfo
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.GhanaCardResponse
+import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpRequestResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.OtpResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentChannelResponse
 import com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.ThreeDSEnrollResponse
@@ -102,6 +105,18 @@ internal class UnifiedCheckoutRepository(
         salesId: String, req: OtpReq
     ): ResultWrapper2<OtpResponse> = makeRequestToApi {
         unifiedCheckoutApiService.verifyOtp(salesId, req)
+    }
+
+    suspend fun getOtp(
+        salesId: String,req: GetOtpReq
+    ): ResultWrapper2<OtpRequestResponse> = makeRequestToApi {
+        unifiedCheckoutApiService.getOtp(salesId, req)
+    }
+
+    suspend fun verifyPaymentOtp(
+        salesId: String, req: PaymentOtpReq
+    ): ResultWrapper2<OtpRequestResponse> = makeRequestToApi {
+        unifiedCheckoutApiService.verifyPaymentOtp(salesId, req)
     }
 
     suspend fun getCustomerWallets(
