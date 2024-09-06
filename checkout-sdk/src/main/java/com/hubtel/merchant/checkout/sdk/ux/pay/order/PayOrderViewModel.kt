@@ -529,7 +529,7 @@ internal class PayOrderViewModel (
 //                            if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
 //                            channel = "mtn-gh-direct-debit",
                             clientReference = config.clientReference,
-                            customerMsisdn = paymentInfo?.accountNumber,
+                            customerMsisdn = config.msisdn,
                             customerName = "",
                             description = config.description,
                             primaryCallbackUrl = config.callbackUrl

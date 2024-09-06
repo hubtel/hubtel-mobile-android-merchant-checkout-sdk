@@ -564,7 +564,7 @@ internal data class PayOrderScreen(
                 titleText = stringResource(R.string.checkout_success),
                 message = stringResource(
                     R.string.checkout_momo_bill_prompt_msg,
-                    paymentInfo?.accountNumber ?: attempt.number ?: "",
+                    config.msisdn ?: attempt.number ,
                 ),
                 positiveText = stringResource(R.string.checkout_okay),
                 onPositiveClick = {
@@ -599,7 +599,7 @@ internal data class PayOrderScreen(
                 titleText = stringResource(R.string.checkout_success),
                 message = stringResource(
                     R.string.checkout_momo_bill_prompt_msg,
-                    paymentInfo?.accountNumber ?: "",
+                    config.msisdn ?: "",
                 ),
                 positiveText = stringResource(R.string.checkout_okay),
                 onPositiveClick = {
