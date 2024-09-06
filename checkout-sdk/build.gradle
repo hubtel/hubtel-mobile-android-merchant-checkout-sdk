@@ -131,9 +131,9 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.10.0'
 
     // voyager navigation
-    def voyager_version = "1.0.0-rc05"
+    def voyager_version = "1.0.0"
     implementation "cafe.adriel.voyager:voyager-navigator:$voyager_version"
-    implementation "cafe.adriel.voyager:voyager-androidx:$voyager_version"
+
 
     def accompanist_version = "0.23.1"
     api "com.google.accompanist:accompanist-navigation-material:$accompanist_version"
