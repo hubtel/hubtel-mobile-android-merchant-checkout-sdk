@@ -156,41 +156,53 @@ internal data class PaymentStatusScreen(
             } ?: ""
         }
 
-        HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2, topBar = {
-            HBTopAppBar(title = {
-                Text(
-                    text = stringResource(id = R.string.checkout_processing_payment),
-                    style = HubtelTheme.typography.body1
-                )
-            }, actions = {
-                TextButton(onClick = {
-                    checkoutActivity?.finishWithResult()
-                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCancel)
-                }) {
-                    Text(
-                        text = stringResource(id = R.string.checkout_cancel),
-                        color = HubtelTheme.colors.error,
-                    )
-                }
-            })
-        }, bottomBar = {
-            Column(
-                Modifier
-                    .padding(Dimens.paddingDefault)
-                    .animateContentSize(),
-            ) {
-
-                Timber.d("BEFORE LOAD: $beforeInitialLoad")
-                when {
-                    beforeInitialLoad -> {
-                        LoadingTextButton(
-                            text = stringResource(R.string.checkout_i_have_paid), onClick = {
-                                paymentStatusViewModel.checkPaymentStatus(config)
-                                recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
-                                reloadAttempt = true
-                            }, loading = isLoading, modifier = Modifier.fillMaxWidth()
+        HBScaffold(backgroundColor = HubtelTheme.colors.uiBackground2,
+            topBar = {
+                if (paymentStatus == PaymentStatus.PAID || paymentStatus == PaymentStatus.FAILED) {
+                    HBTopAppBar(title = {
+                        Text(
+                            text = stringResource(id = R.string.checkout_processing_payment),
+                            style = HubtelTheme.typography.body1
                         )
-                    }
+                    })
+                } else {
+                    HBTopAppBar(title = {
+                        Text(
+                            text = stringResource(id = R.string.checkout_processing_payment),
+                            style = HubtelTheme.typography.body1
+                        )
+                    }, actions = {
+                        TextButton(onClick = {
+                            checkoutActivity?.finishWithResult()
+                            recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCancel)
+                        }) {
+                            Text(
+                                text = stringResource(id = R.string.checkout_cancel),
+                                color = HubtelTheme.colors.error,
+                            )
+                        }
+
+                    })
+                }
+
+            }, bottomBar = {
+                Column(
+                    Modifier
+                        .padding(Dimens.paddingDefault)
+                        .animateContentSize(),
+                ) {
+
+                    Timber.d("BEFORE LOAD: $beforeInitialLoad")
+                    when {
+                        beforeInitialLoad -> {
+                            LoadingTextButton(
+                                text = stringResource(R.string.checkout_i_have_paid), onClick = {
+                                    paymentStatusViewModel.checkPaymentStatus(config)
+                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapIHavePaid)
+                                    reloadAttempt = true
+                                }, loading = isLoading, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
 //                    beforeInitialLoad && !buttonReloadAttempt -> {
 //                        LoadingTextButton(
@@ -202,113 +214,113 @@ internal data class PaymentStatusScreen(
 //                        )
 //                    }
 
-                    paymentStatus == PaymentStatus.PAID -> {
-                        Divider(
-                            color = HubtelTheme.colors.outline,
-                        )
-                        LoadingTextButton(
-                            text = stringResource(R.string.checkout_done), onClick = {
+                        paymentStatus == PaymentStatus.PAID -> {
+                            Divider(
+                                color = HubtelTheme.colors.outline,
+                            )
+                            LoadingTextButton(
+                                text = stringResource(R.string.checkout_done), onClick = {
                                     checkoutActivity?.finishWithResult(orderStatus, paymentStatus)
 //                                navigator?.push(
 //                                    TransactionSuccessfulScreen(providerName = "", config)
 //                                )
-                                recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
-                            }, modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                                    recordCheckoutEvent(CheckoutEvent.CheckoutPaymentSuccessfulTapButtonDone)
+                                }, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    paymentStatus == PaymentStatus.PENDING -> {
-                        LoadingTextButton(
-                            text = if (isCountingDown) {
-                                val time = countDownMillis.formatTime()
-                                "${stringResource(R.string.checkout_check_again)} ($time)"
-                            } else stringResource(R.string.checkout_check_again), onClick = {
-                                if (!isCountingDown) {
-                                    countDownMillis = CHECK_COUNTDOWN_TIME
+                        paymentStatus == PaymentStatus.PENDING -> {
+                            LoadingTextButton(
+                                text = if (isCountingDown) {
+                                    val time = countDownMillis.formatTime()
+                                    "${stringResource(R.string.checkout_check_again)} ($time)"
+                                } else stringResource(R.string.checkout_check_again), onClick = {
+                                    if (!isCountingDown) {
+                                        countDownMillis = CHECK_COUNTDOWN_TIME
 //                                        tapCount++
 
-                                    paymentStatusViewModel.checkPaymentStatus(config)
-                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
-                                }
-                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                                        paymentStatusViewModel.checkPaymentStatus(config)
+                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                    }
+                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    paymentStatus == PaymentStatus.UNPAID -> {
-                        LoadingTextButton(
-                            text = if (isCountingDown) {
-                                val time = countDownMillis.formatTime()
-                                "${stringResource(R.string.checkout_check_again)} ($time)"
-                            } else stringResource(R.string.checkout_check_again), onClick = {
-                                if (!isCountingDown) {
-                                    countDownMillis = CHECK_COUNTDOWN_TIME
+                        paymentStatus == PaymentStatus.UNPAID -> {
+                            LoadingTextButton(
+                                text = if (isCountingDown) {
+                                    val time = countDownMillis.formatTime()
+                                    "${stringResource(R.string.checkout_check_again)} ($time)"
+                                } else stringResource(R.string.checkout_check_again), onClick = {
+                                    if (!isCountingDown) {
+                                        countDownMillis = CHECK_COUNTDOWN_TIME
 //                                        tapCount++
 
-                                    paymentStatusViewModel.checkPaymentStatus(config)
-                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
-                                }
-                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                                        paymentStatusViewModel.checkPaymentStatus(config)
+                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                    }
+                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    paymentStatus == PaymentStatus.EXPIRED -> {
-                        LoadingTextButton(
-                            text = stringResource(R.string.checkout_cancel_transaction_title),
-                            onClick = {
-                                checkoutActivity?.finishWithResult()
+                        paymentStatus == PaymentStatus.EXPIRED -> {
+                            LoadingTextButton(
+                                text = stringResource(R.string.checkout_cancel_transaction_title),
+                                onClick = {
+                                    checkoutActivity?.finishWithResult()
 //                                    onPaymentComplete(false)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    uiState.hasError -> {
-                        LoadingTextButton(
-                            text = if (isCountingDown) {
-                                val time = countDownMillis.formatTime()
-                                "${stringResource(R.string.checkout_check_again)} ($time)"
-                            } else stringResource(R.string.checkout_check_again), onClick = {
-                                if (!isCountingDown) {
-                                    countDownMillis = CHECK_COUNTDOWN_TIME
+                        uiState.hasError -> {
+                            LoadingTextButton(
+                                text = if (isCountingDown) {
+                                    val time = countDownMillis.formatTime()
+                                    "${stringResource(R.string.checkout_check_again)} ($time)"
+                                } else stringResource(R.string.checkout_check_again), onClick = {
+                                    if (!isCountingDown) {
+                                        countDownMillis = CHECK_COUNTDOWN_TIME
 //                                        tapCount++
 
-                                    paymentStatusViewModel.checkPaymentStatus(config)
-                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
-                                }
-                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                                        paymentStatusViewModel.checkPaymentStatus(config)
+                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                    }
+                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    paymentStatus == PaymentStatus.FAILED -> {
-                        LoadingTextButton(
-                            text = stringResource(R.string.checkout_cancel),
-                            onClick = {
-                                checkoutActivity?.finishWithResult()
+                        paymentStatus == PaymentStatus.FAILED -> {
+                            LoadingTextButton(
+                                text = stringResource(R.string.checkout_cancel),
+                                onClick = {
+                                    checkoutActivity?.finishWithResult()
 //                                    onPaymentComplete(false)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
 
-                    else -> {
-                        LoadingTextButton(
-                            text = if (isCountingDown) {
-                                val time = countDownMillis.formatTime()
-                                "${stringResource(R.string.checkout_check_again)} ($time)"
-                            } else stringResource(R.string.checkout_check_again), onClick = {
-                                if (!isCountingDown) {
-                                    countDownMillis = CHECK_COUNTDOWN_TIME
+                        else -> {
+                            LoadingTextButton(
+                                text = if (isCountingDown) {
+                                    val time = countDownMillis.formatTime()
+                                    "${stringResource(R.string.checkout_check_again)} ($time)"
+                                } else stringResource(R.string.checkout_check_again), onClick = {
+                                    if (!isCountingDown) {
+                                        countDownMillis = CHECK_COUNTDOWN_TIME
 //                                        tapCount++
 
-                                    paymentStatusViewModel.checkPaymentStatus(config)
-                                    recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
-                                }
-                            }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
-                        )
+                                        paymentStatusViewModel.checkPaymentStatus(config)
+                                        recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCheckAgain)
+                                    }
+                                }, enabled = !isCountingDown, modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
-            }
-        }) { paddingValues ->
+            }) { paddingValues ->
             Column(
                 modifier = Modifier
                     .padding(paddingValues)
@@ -450,7 +462,9 @@ internal data class PaymentStatusScreen(
                         text = stringResource(R.string.checkout_failed),
                         style = HubtelTheme.typography.body2,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = Dimens.spacingDefault).fillMaxWidth()
+                        modifier = Modifier
+                            .padding(vertical = Dimens.spacingDefault)
+                            .fillMaxWidth()
                     )
                 }
 
