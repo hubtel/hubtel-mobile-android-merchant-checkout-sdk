@@ -15,24 +15,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 
-@Composable
-fun rememberGifPainter(
-    data: Any?,
-    onExecute: ImagePainter.ExecuteCallback = ImagePainter.ExecuteCallback.Default,
-    builder: ImageRequest.Builder.() -> Unit = {},
-): Painter {
-    val context = LocalContext.current
-    val imageLoader = ImageLoader.invoke(context).newBuilder()
-        .componentRegistry {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                add(ImageDecoderDecoder(context))
-            } else {
-                add(GifDecoder())
-            }
-        }.build()
 
-    return rememberImagePainter(data, imageLoader, onExecute, builder)
-}
 
 @Composable
 @ReadOnlyComposable
