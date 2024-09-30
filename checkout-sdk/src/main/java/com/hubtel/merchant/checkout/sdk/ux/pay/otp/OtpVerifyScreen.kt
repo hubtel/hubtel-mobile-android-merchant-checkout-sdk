@@ -63,6 +63,7 @@ import kotlinx.coroutines.launch
 
 internal data class OtpVerifyScreen(
     val config: CheckoutConfig,
+    val customerMsisdn: String,
     val otpPrefix: String,
     val otpRequestId: String,
     val onFinish: () -> Unit
@@ -156,7 +157,7 @@ internal data class OtpVerifyScreen(
                 )
 
                 VerifyMsgText(
-                    phoneNumber = config.msisdn ?: "",
+                    phoneNumber = customerMsisdn.formatInternational(),
                     requestCode = otpPrefix,
                     modifier = Modifier.padding(bottom = Dimens.paddingSmall)
                 )
@@ -221,7 +222,8 @@ internal data class OtpVerifyScreen(
         onVerificationFinish: (Boolean) -> Unit,
     ) {
         viewModel.verify(
-            config = config,
+            salesId = config.posSalesId ?: "",
+            customerMsisdn = customerMsisdn.formatInternational() ,
             userOtpEntry = otpValue,
             otpPrefix = otpPrefix,
             otpRequestId = otpRequestId,
@@ -347,4 +349,11 @@ fun VerifyMsgText(
         textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth()
     )
+}
+
+
+fun String.formatInternational() : String {
+    if(this.startsWith("0")) return this.replaceRange(0, 1, "233")
+
+    return this
 }

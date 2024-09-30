@@ -249,12 +249,13 @@ internal data class PayOrderScreen(
                         coroutineScope.launch {
                             viewModel.sendOtpToUser(
                                 config.posSalesId ?: "",
-                                GetOtpReq(customerMsisdn = config.msisdn ?: "")
+                                GetOtpReq(customerMsisdn = paymentInfo?.accountNumber ?: "")
                             )
 
                             navigator?.push(
                                 OtpVerifyScreen(
                                     config = config,
+                                    customerMsisdn = paymentInfo?.accountNumber ?: "",
                                     otpPrefix = viewModel.sendOtpUiState.value.data?.otpPrefix
                                         ?: "",
                                     otpRequestId = viewModel.sendOtpUiState.value.data?.requestId

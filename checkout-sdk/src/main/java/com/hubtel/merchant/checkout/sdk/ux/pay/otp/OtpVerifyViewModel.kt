@@ -33,19 +33,20 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
     val paymentOtpUiState: State<UiState2<OtpRequestResponse>> = _paymentOtpUiState
 
     suspend fun verify(
-        config: CheckoutConfig,
+        customerMsisdn: String,
+        salesId: String,
         userOtpEntry: String,
         otpPrefix: String,
         otpRequestId: String,
     ) {
 
         val req = PaymentOtpReq(
-            customerMsisdn = config.msisdn ?: "",
+            customerMsisdn = customerMsisdn,
             requestId = otpRequestId,
             otpCode = "$otpPrefix-$userOtpEntry"
         )
 
-        verifyPaymentOtp(config, req)
+        verifyPaymentOtp(salesId, req)
     }
 
 
@@ -78,10 +79,10 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
         }
     }
 
-    private suspend fun verifyPaymentOtp(config: CheckoutConfig, req: PaymentOtpReq) {
+    private suspend fun verifyPaymentOtp(salesId: String , req: PaymentOtpReq) {
         _paymentOtpUiState.update { UiState2(isLoading = true) }
 
-        val result = unifiedCheckoutRepository.verifyPaymentOtp(config.posSalesId ?: "", req)
+        val result = unifiedCheckoutRepository.verifyPaymentOtp(salesId , req)
 
         when (result) {
             is ApiResult.Success -> {
