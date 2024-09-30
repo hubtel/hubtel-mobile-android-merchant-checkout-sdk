@@ -278,7 +278,7 @@ internal data class PayOrderScreen(
                             Timber.d("Wallet Type: ${walletUiState.payOrderWalletType}")
                             Timber.d("Wallet Type2: ${walletUiState.isOtherPaymentWallet}")
 
-                            if (businessInfoUiState.data?.requireMobileMoneyOtp == true) {
+                            if (businessInfoUiState.data?.requireMobileMoneyOtp == true && paymentInfo?.paymentType == MOBILE_MONEY.paymentTypeName) {
                                 handleOtpFlow()
                             } else {
                                 handlePostOtpActions()
@@ -565,7 +565,7 @@ internal data class PayOrderScreen(
                 titleText = stringResource(R.string.checkout_success),
                 message = stringResource(
                     R.string.checkout_momo_bill_prompt_msg,
-                    config.msisdn ?: attempt.number ,
+                    config.msisdn ?: attempt.number,
                 ),
                 positiveText = stringResource(R.string.checkout_okay),
                 onPositiveClick = {
