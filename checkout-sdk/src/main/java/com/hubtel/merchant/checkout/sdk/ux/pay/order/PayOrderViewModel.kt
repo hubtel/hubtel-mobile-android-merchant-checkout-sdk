@@ -150,7 +150,6 @@ internal class PayOrderViewModel (
             }
 
 
-
             PayOrderWalletType.OTHER_PAYMENT -> {
 
                 val walletProvider = otherPaymentUiState.walletProvider
@@ -350,7 +349,7 @@ internal class PayOrderViewModel (
         viewModelScope.launch {
             when (walletType) {
                 PayOrderWalletType.BANK_CARD -> {
-                 //   payOrderWithCard(config)
+                    //   payOrderWithCard(config)
                 }
 
                 PayOrderWalletType.MOBILE_MONEY -> {
@@ -529,7 +528,7 @@ internal class PayOrderViewModel (
 //                            if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
 //                            channel = "mtn-gh-direct-debit",
                             clientReference = config.clientReference,
-                            customerMsisdn = config.msisdn,
+                            customerMsisdn = paymentInfo?.accountNumber,
                             customerName = "",
                             description = config.description,
                             primaryCallbackUrl = config.callbackUrl
@@ -816,7 +815,7 @@ internal class PayOrderViewModel (
         }
     }
 
-    suspend fun sendOtpToUser(salesId:String, req: GetOtpReq) {
+    suspend fun sendOtpToUser(salesId: String, req: GetOtpReq) {
         _sendOtpUiState.update { UiState2(isLoading = true) }
 
         val result = unifiedCheckoutRepository.getOtp(salesId, req)

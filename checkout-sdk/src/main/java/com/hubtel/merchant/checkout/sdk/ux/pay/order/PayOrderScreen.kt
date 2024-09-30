@@ -599,7 +599,7 @@ internal data class PayOrderScreen(
                 titleText = stringResource(R.string.checkout_success),
                 message = stringResource(
                     R.string.checkout_momo_bill_prompt_msg,
-                    config.msisdn ?: "",
+                    paymentInfo?.accountNumber ?: "",
                 ),
                 positiveText = stringResource(R.string.checkout_okay),
                 onPositiveClick = {
