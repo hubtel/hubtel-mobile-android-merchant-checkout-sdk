@@ -343,7 +343,10 @@ internal data class PaymentStatusScreen(
                         text = stringResource(R.string.checkout_other_bill_prompt_msg),
                         style = HubtelTheme.typography.body2,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = Dimens.spacingDefault)
+                        modifier = Modifier.padding(
+                            vertical = Dimens.spacingDefault,
+                            horizontal = Dimens.spacingDefault
+                        )
                     )
 
                     buttonReloadAttempt = true
