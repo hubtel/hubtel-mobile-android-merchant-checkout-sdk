@@ -43,14 +43,20 @@ class MainActivity : BaseActivity() {
             primaryColor = ContextCompat.getColor(this, R.color.black)
         )
 
+         //Platform Shop
+        //T0UwajAzcjo5ZjAxMzhkOTk5ZmM0ODMxYjc3MWFhMzEzYTNjMThhNA==
+        //11684
+
+
         val intent = CheckoutIntent.Builder(this)
-            .setAmount(1.0)
-            .setApiKey("T0UwajAzcjo5ZjAxMzhkOTk5ZmM0ODMxYjc3MWFhMzEzYTNjMThhNA==")
-            .setMerchantId("11684")
-            .setCallbackUrl("https://webhook.site/80c682ba-abb2-4255-8942-c44d1ec766cc")
+            .setAmount(1.00)
+            .setApiKey("ODZKUkRxbDphN2I4ZDdjMTg3Y2E0ZGRkODAzMmM3YTk2NjQzZjdlYQ==")
+            .setMerchantId("11989")
+            .setCallbackUrl("https://webhook.site/1b42932d-e0b0-4a12-9038-83e3eb9df4ab")
             .setDescription("Rice with Coleslaw")
             .setClientReference(UUID.randomUUID().toString())
-            .setCustomerPhoneNumber("233200585542")
+            .setCustomerPhoneNumber("233540975983")
+            //.setCustomerPhoneNumber("233556236739")
             .setTheme(themeConfig)
             .build()
 

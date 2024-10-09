@@ -298,7 +298,7 @@ internal class PayOrderViewModel (
             }
 
             val req = ThreeDSSetupReq(
-                amount = orderTotal,
+                amount = config.amount,
                 cardHolderName = "",
                 cardNumber = paymentInfo?.accountNumber,
                 expiryMonth = paymentInfo?.expiryMonth,
@@ -504,9 +504,15 @@ internal class PayOrderViewModel (
     ) {
         _checkoutUiState.update { UiState2(isLoading = true) }
 
+        val channel =  when {
+            paymentInfo?.channel?.startsWith("mtn") == true -> "mtn-gh"
+            paymentInfo?.channel?.startsWith("vodafone") == true -> "vodafone-gh"
+            else -> "tigo-gh"
+        }
+
         val feesReq = GetFeesReq(
             amount = config.amount,
-            channel = paymentInfo?.channel,
+            channel = channel,
         )
         val checkoutTypeResult = unifiedCheckoutRepository.getFees(config.posSalesId ?: "", feesReq)
 
@@ -519,12 +525,7 @@ internal class PayOrderViewModel (
                     val result = unifiedCheckoutRepository.apiReceiveMobilePrompt(
                         salesId = config.posSalesId ?: "", req = MobileMoneyCheckoutReq(
                             amount = config.amount,
-                            channel = when {
-                                paymentInfo?.channel?.startsWith("mtn") == true -> "mtn-gh"
-                                paymentInfo?.channel?.startsWith("vodafone") == true -> "vodafone-gh"
-                                else -> "tigo-gh"
-                            },
-
+                            channel = channel,
 //                            if (paymentInfo?.channel?.startsWith("mtn") != true) paymentInfo?.channel else "mtn-gh",
 //                            channel = "mtn-gh-direct-debit",
                             clientReference = config.clientReference,

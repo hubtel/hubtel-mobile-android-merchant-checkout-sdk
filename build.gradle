@@ -2,7 +2,7 @@ buildscript {
     ext {
         compose_version = '1.2.1'
         groud_id = "com.hubtel"
-        checkout_sdk_verison = "1.0.5"
+        checkout_sdk_verison = "1.0.10"
         checkout_artifact_id = "merchant-checkout-sdk"
     }
 }
