@@ -48,10 +48,10 @@ android {
 
 dependencies {
 
-    implementation project(":checkout-sdk")
+  //  implementation project(":checkout-sdk")
 //    implementation project(":network-kit")
     implementation 'androidx.activity:activity-ktx:1.7.2'
-   // implementation "com.hubtel:merchant-checkout-sdk:1.0.9"
+   implementation "com.hubtel:merchant-checkout-sdk:1.0.12"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
