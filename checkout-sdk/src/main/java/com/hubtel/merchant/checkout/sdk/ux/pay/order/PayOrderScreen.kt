@@ -103,7 +103,28 @@ import timber.log.Timber
 
 internal data class PayOrderScreen(
     private val config: CheckoutConfig, private val attempt: VerificationAttempt? = null
-) : Screen {
+) : Screen, Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable<CheckoutConfig>(CheckoutConfig::class.java.classLoader)
+            ?: throw IllegalArgumentException("CheckoutConfig cannot be null"),
+        parcel.readParcelable<VerificationAttempt>(VerificationAttempt::class.java.classLoader),
+    )
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeParcelable(config, flags)
+        dest.writeParcelable(attempt, flags)
+    }
+
+    companion object CREATOR : Parcelable.Creator<PayOrderScreen> {
+        override fun createFromParcel(source: Parcel): PayOrderScreen {
+            return PayOrderScreen(source)
+        }
+
+        override fun newArray(size: Int): Array<PayOrderScreen?> = arrayOfNulls(size)
+    }
 
     @Composable
     override fun Content() {
