@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.status
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -82,7 +84,31 @@ internal data class PaymentStatusScreen(
     private val providerName: String?,
     private val config: CheckoutConfig,
     private val checkoutType: CheckoutType?
-) : Screen {
+) : Screen, Parcelable{
+
+    constructor(parcel: Parcel) : this(
+        parcel.readString(),
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader) ?: throw IllegalArgumentException("CheckoutConfig cannot be null"),
+        parcel.readParcelable(CheckoutType::class.java.classLoader)
+    )
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(providerName)
+        dest.writeParcelable(config, flags)
+        dest.writeParcelable(checkoutType, flags)
+    }
+
+    companion object CREATOR : Parcelable.Creator<PaymentStatusScreen> {
+        override fun createFromParcel(source: Parcel): PaymentStatusScreen {
+            return PaymentStatusScreen(source)
+        }
+
+        override fun newArray(size: Int): Array<PaymentStatusScreen?> = arrayOfNulls(size)
+
+        private const val CHECK_COUNTDOWN_TIME = 5000L
+    }
 
     @Composable
     override fun Content() {
@@ -882,22 +908,18 @@ internal data class PaymentStatusScreen(
             )
         }
     }
-
-    companion object {
-        private const val CHECK_COUNTDOWN_TIME = 5000L
-    }
 }
 
 internal fun CheckoutActivity.finishWithResult(
     orderStatus: TransactionStatusInfo? = null,
-    paymentStatus: PaymentStatus = com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentStatus.UNPAID,
+    paymentStatus: PaymentStatus = PaymentStatus.UNPAID,
 ) {
     submitCheckoutResult(
         CheckoutStatus(
             transactionId = orderStatus?.transactionId,
             paymentMethod = orderStatus?.paymentMethod,
             isCanceled = orderStatus == null,
-            isPaymentSuccessful = paymentStatus == com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response.PaymentStatus.PAID
+            isPaymentSuccessful = paymentStatus == PaymentStatus.PAID
         )
     )
 }
