@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.platform.data.source.api.model.response
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 
 internal data class CheckoutFee(
@@ -22,10 +24,25 @@ internal data class CheckoutFee(
 }
 
 
-enum class CheckoutType(val rawValue: String) {
+enum class CheckoutType(val rawValue: String) : Parcelable {
     RECEIVE_MONEY_PROMPT("receivemoneyprompt"),
     DIRECT_DEBIT("directdebit"),
-    PRE_APPROVAL_CONFIRM("preapprovalconfirm")
+    PRE_APPROVAL_CONFIRM("preapprovalconfirm");
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(rawValue)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<CheckoutType> {
+        override fun createFromParcel(parcel: Parcel): CheckoutType {
+            val rawValue = parcel.readString()
+            return CheckoutType.entries.first { it.rawValue == rawValue }
+        }
+
+        override fun newArray(size: Int): Array<CheckoutType?> = arrayOfNulls(size)
+    }
 }
 
 internal data class BusinessInfo(
