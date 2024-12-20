@@ -1,5 +1,7 @@
 package com.hubtel.merchant.checkout.sdk.ux.pay.add_wallet
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -45,13 +47,35 @@ import com.hubtel.merchant.checkout.sdk.ux.components.HBTopAppBar
 import com.hubtel.merchant.checkout.sdk.ux.components.LoadingTextButton
 import com.hubtel.merchant.checkout.sdk.ux.layouts.HBScaffold
 import com.hubtel.merchant.checkout.sdk.ux.model.CheckoutConfig
+import com.hubtel.merchant.checkout.sdk.ux.pay.status.PaymentStatusScreen
 import com.hubtel.merchant.checkout.sdk.ux.theme.CheckoutTheme
 import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 import timber.log.Timber
 import java.util.Locale
 
-internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
+internal data class AddWalletScreen(val config: CheckoutConfig) : Screen, Parcelable {
+
+    constructor(parcel: Parcel) : this(
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)
+            ?: throw IllegalArgumentException("CheckoutConfig cannot be null")
+    )
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeParcelable(config, flags)
+    }
+
+    companion object CREATOR : Parcelable.Creator<AddWalletScreen> {
+        override fun createFromParcel(source: Parcel): AddWalletScreen {
+            return AddWalletScreen(source)
+        }
+
+        override fun newArray(size: Int): Array<AddWalletScreen?> = arrayOfNulls(size)
+
+    }
+
     @Composable
     override fun Content() {
         val viewModel =
@@ -134,7 +158,10 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
                 Box(modifier = Modifier.padding(bottom = Dimens.paddingDefault))
 
 //                LazyRow(horizontalArrangement = Arrangement.spacedBy(space = Dimens.paddingDefault)) {
-                LazyRow(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     itemsIndexed(providers) { index, res ->
 
                         Column(
@@ -232,6 +259,7 @@ internal data class AddWalletScreen(val config: CheckoutConfig) : Screen {
             }
         }
     }
+
 
     data class ProviderRes(val name: String, val res: Int) {
         val provider: String
