@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import com.hubtel.merchant.checkout.sdk.R
 import com.hubtel.merchant.checkout.sdk.platform.analytics.events.sections.CheckoutEvent
 import com.hubtel.merchant.checkout.sdk.platform.analytics.recordCheckoutEvent
@@ -66,6 +65,9 @@ internal data class OtpVerifyScreen(
     val customerMsisdn: String,
     val otpPrefix: String,
     val otpRequestId: String,
+    val clientReference: String,
+    val preApprovalId: String,
+    val paymentChannel: String,
     val onFinish: () -> Unit
 ) :
     Screen {
@@ -223,13 +225,16 @@ internal data class OtpVerifyScreen(
     ) {
         viewModel.verify(
             salesId = config.posSalesId ?: "",
-            customerMsisdn = customerMsisdn.formatInternational() ,
+            customerMsisdn = customerMsisdn.formatInternational(),
             userOtpEntry = otpValue,
             otpPrefix = otpPrefix,
-            otpRequestId = otpRequestId,
+            otpRequestId = "",
+            clientReference = clientReference,
+            preApprovalId = preApprovalId,
+            paymentChannel = paymentChannel
         )
 
-        onVerificationFinish.invoke(viewModel.paymentOtpUiState.value.success)
+        onVerificationFinish.invoke(viewModel.otpUiState.value.success)
     }
 
     @Composable
@@ -352,8 +357,8 @@ fun VerifyMsgText(
 }
 
 
-fun String.formatInternational() : String {
-    if(this.startsWith("0")) return this.replaceRange(0, 1, "233")
+fun String.formatInternational(): String {
+    if (this.startsWith("0")) return this.replaceRange(0, 1, "233")
 
     return this
 }
