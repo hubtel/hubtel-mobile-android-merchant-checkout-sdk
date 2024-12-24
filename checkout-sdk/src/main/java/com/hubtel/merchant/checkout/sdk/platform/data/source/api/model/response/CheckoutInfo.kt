@@ -8,7 +8,7 @@ data class CheckoutInfo(
     val transactionId: String?,
     @SerializedName("description")
     val description: String?,
-    @SerializedName("clientReference")
+    @SerializedName("clientReferenceId")
     val clientReference: String?,
     @SerializedName("amount")
     val amount: Double?,
