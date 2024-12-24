@@ -10,7 +10,9 @@ internal data class OtpReq(
     @SerializedName("clientReferenceId")
     val clientReferenceID: String,
     @SerializedName("OtpCode")
-    val otpCode: String
+    val otpCode: String,
+    @SerializedName("channel")
+    val channel: String,
 )
 
 internal data class PaymentOtpReq(
@@ -19,7 +21,11 @@ internal data class PaymentOtpReq(
     @SerializedName("requestId")
     val requestId: String,
     @SerializedName("OtpCode")
-    val otpCode: String
+    val otpCode: String,
+    @SerializedName("clientReferenceId")
+    val clientReference: String,
+    @SerializedName("hubtelPreApprovalId")
+    val hubtelPreApprovalId: String,
 )
 
 internal data class GetOtpReq(
