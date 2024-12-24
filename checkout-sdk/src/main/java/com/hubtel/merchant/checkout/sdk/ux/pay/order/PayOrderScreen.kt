@@ -281,6 +281,9 @@ internal data class PayOrderScreen(
                                         ?: "",
                                     otpRequestId = viewModel.sendOtpUiState.value.data?.requestId
                                         ?: "",
+                                    clientReference = checkoutUiState.data?.clientReference ?: "",
+                                    preApprovalId = checkoutUiState.data?.hubtelPreapprovalId ?: "",
+                                    paymentChannel = paymentInfo?.channel ?: "",
                                     onFinish = {
                                         handlePostOtpActions()
                                     },
@@ -297,7 +300,7 @@ internal data class PayOrderScreen(
                         },
                         onClick = {
                             Timber.d("Wallet Type: ${walletUiState.payOrderWalletType}")
-                            Timber.d("Wallet Type2: ${walletUiState.isOtherPaymentWallet}")
+                            Timber.d("Wallet TypbusinessInfoUiState.data = {BusinessResponseInfo@27269} BusinessResponseInfo(businessID=ericacormey, businessName=Rethink Store, businessLogoURL=https://drwfqcqcb8ho1.cloudfront.net/images/1a02ed1fba374c60a2434f0974a78c75-30082018140915.png, requireNationalID=false, isHubtelInternalMerchant=true, requireMobileMoneyOtp=false)e2: ${walletUiState.isOtherPaymentWallet}")
 
                             if (businessInfoUiState.data?.requireMobileMoneyOtp == true && paymentInfo?.paymentType == MOBILE_MONEY.paymentTypeName) {
                                 handleOtpFlow()
@@ -835,6 +838,24 @@ internal data class PayOrderScreen(
                     }
 
 
+                    if(checkoutUiState.data?.skipOtp == false ){
+                        navigator?.push(
+                            OtpVerifyScreen(
+                                config = config,
+                                customerMsisdn = paymentInfo?.accountNumber ?: "",
+                                otpPrefix = checkoutUiState.data?.otpPrefix
+                                    ?: "",
+                                otpRequestId = viewModel.sendOtpUiState.value.data?.requestId
+                                    ?: "",
+                                clientReference = checkoutUiState.data?.clientReference ?: "",
+                                preApprovalId = checkoutUiState.data?.hubtelPreapprovalId ?: "",
+                                paymentChannel = paymentInfo?.channel ?: "",
+                                onFinish = {
+
+                                },
+                            )
+                        )
+                    }
                     if (checkoutFeesUiState.data?.getCheckoutType == CheckoutType.DIRECT_DEBIT) {
                         Timber.d("TAP [INSIDE]: $currentCheckoutStep - DIRECT_DEBIT")
                     }
