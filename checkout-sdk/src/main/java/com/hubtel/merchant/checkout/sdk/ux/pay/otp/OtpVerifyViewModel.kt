@@ -38,22 +38,37 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
         userOtpEntry: String,
         otpPrefix: String,
         otpRequestId: String,
+        clientReference: String,
+        preApprovalId: String,
+        paymentChannel : String,
     ) {
 
         val req = PaymentOtpReq(
             customerMsisdn = customerMsisdn,
             requestId = otpRequestId,
-            otpCode = "$otpPrefix-$userOtpEntry"
+            otpCode = "$otpPrefix-$userOtpEntry",
+            clientReference = clientReference,
+            hubtelPreApprovalId = preApprovalId,
         )
 
-        verifyPaymentOtp(salesId, req)
+//        verifyPaymentOtp(salesId, req)
+
+        val otpReq = OtpReq(
+            customerMsisdn = customerMsisdn,
+            otpCode = "$otpPrefix-$userOtpEntry",
+            clientReferenceID = clientReference,
+            hubtelPreApprovalID = preApprovalId,
+            //TODO: BRIGHT PROMISED HE'LL FIX THIS
+            channel =  "mtn-gh",
+        )
+        verifyOtp(salesId, otpReq)
     }
 
 
-    private suspend fun verifyOtp(config: CheckoutConfig, req: OtpReq) {
+    private suspend fun verifyOtp(salesId: String, req: OtpReq) {
         _otpUiState.update { UiState2(isLoading = true) }
 
-        val result = unifiedCheckoutRepository.verifyOtp(config.posSalesId ?: "", req)
+        val result = unifiedCheckoutRepository.verifyOtp(salesId, req)
 
         when (result) {
             is ApiResult.Success -> {
@@ -79,10 +94,10 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
         }
     }
 
-    private suspend fun verifyPaymentOtp(salesId: String , req: PaymentOtpReq) {
+    private suspend fun verifyPaymentOtp(salesId: String, req: PaymentOtpReq) {
         _paymentOtpUiState.update { UiState2(isLoading = true) }
 
-        val result = unifiedCheckoutRepository.verifyPaymentOtp(salesId , req)
+        val result = unifiedCheckoutRepository.verifyPaymentOtp(salesId, req)
 
         when (result) {
             is ApiResult.Success -> {
