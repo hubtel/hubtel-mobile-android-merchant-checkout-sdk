@@ -3,6 +3,7 @@ package com.hubtel.merchant.checkout.sdk.ux.pay.status
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -84,11 +85,12 @@ internal data class PaymentStatusScreen(
     private val providerName: String?,
     private val config: CheckoutConfig,
     private val checkoutType: CheckoutType?
-) : Screen, Parcelable{
+) : Screen, Parcelable {
 
     constructor(parcel: Parcel) : this(
         parcel.readString(),
-        parcel.readParcelable(CheckoutConfig::class.java.classLoader) ?: throw IllegalArgumentException("CheckoutConfig cannot be null"),
+        parcel.readParcelable(CheckoutConfig::class.java.classLoader)
+            ?: throw IllegalArgumentException("CheckoutConfig cannot be null"),
         parcel.readParcelable(CheckoutType::class.java.classLoader)
     )
 
@@ -198,16 +200,19 @@ internal data class PaymentStatusScreen(
                             style = HubtelTheme.typography.body1
                         )
                     }, actions = {
-                        TextButton(onClick = {
-                            checkoutActivity?.finishWithResult()
-                            recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCancel)
-                        }) {
-                            Text(
-                                text = stringResource(id = R.string.checkout_cancel),
-                                color = HubtelTheme.colors.error,
-                            )
+                        if (config.showCancelAction) {
+                            TextButton(onClick = {
+                                checkoutActivity?.finishWithResult()
+                                recordCheckoutEvent(CheckoutEvent.CheckoutCheckStatusTapCancel)
+                            }) {
+                                Text(
+                                    text = stringResource(id = R.string.checkout_cancel),
+                                    color = HubtelTheme.colors.error,
+                                )
+                            }
+                        } else {
+                            Box(modifier = Modifier.size(0.dp))
                         }
-
                     })
                 }
 

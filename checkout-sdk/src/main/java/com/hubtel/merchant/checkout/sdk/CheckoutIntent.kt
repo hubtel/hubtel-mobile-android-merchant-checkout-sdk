@@ -16,6 +16,7 @@ object CheckoutIntent {
         private var callbackUrl: String? = null
         private var clientReference: String? = null
         private var description: String? = null
+        private var showCancelAction : Boolean = false;
 
         private var themeConfig: ThemeConfig? = null
 
@@ -59,6 +60,11 @@ object CheckoutIntent {
             return this
         }
 
+        fun setShowCancelAction(value : Boolean): Builder{
+            this.showCancelAction = value
+            return this
+        }
+
         fun build(): Intent {
             require(amount > 0) { "Amount should be greater than zero" }
             require(!apiKey.isNullOrBlank()) { "Api key is required" }
@@ -79,6 +85,7 @@ object CheckoutIntent {
                 clientReference = this.clientReference,
                 description = this.description,
                 themeConfig = themeConfig,
+                showCancelAction = showCancelAction
             )
 
             return Intent(context, CheckoutActivity::class.java).apply {

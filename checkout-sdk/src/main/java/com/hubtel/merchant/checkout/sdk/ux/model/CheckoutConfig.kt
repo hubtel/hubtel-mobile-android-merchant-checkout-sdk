@@ -13,6 +13,7 @@ internal data class CheckoutConfig(
     val clientReference: String?,
     val description: String?,
     val themeConfig: ThemeConfig?,
+    val showCancelAction : Boolean
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString(),
@@ -22,7 +23,8 @@ internal data class CheckoutConfig(
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
-        parcel.readParcelable(ThemeConfig::class.java.classLoader)
+        parcel.readParcelable(ThemeConfig::class.java.classLoader),
+        parcel.readInt() == 1
     ) {
     }
 
@@ -35,6 +37,7 @@ internal data class CheckoutConfig(
         parcel.writeString(clientReference)
         parcel.writeString(description)
         parcel.writeParcelable(themeConfig, flags)
+        parcel.writeInt(if (showCancelAction) 1 else 0)
     }
 
     override fun describeContents(): Int {
