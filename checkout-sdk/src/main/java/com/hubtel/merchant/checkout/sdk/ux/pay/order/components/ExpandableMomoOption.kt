@@ -89,7 +89,7 @@ internal fun ExpandableMomoOption(
         title = stringResource(R.string.checkout_mobile_money),
         expanded = expanded,
         onExpand =
-        onExpand,
+            onExpand,
         decoration = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spacingDefault),
@@ -209,7 +209,8 @@ private fun WalletDropdownMenu(
     var dropDownHeight by remember { mutableStateOf(0.dp) }
 
     Box(modifier = modifier) {
-        HBTextField(readOnly = true,
+        HBTextField(
+            readOnly = true,
             value = wallet.accountNo ?: "",
             onValueChange = {},
             placeholder = placeholder,
@@ -337,8 +338,10 @@ private fun OtherWalletProviderDownMenu(
     var dropDownHeight by remember { mutableStateOf(0.dp) }
 
     Box(modifier) {
-        HBTextField(readOnly = true,
-            value = value?.let { stringResource(it.providerNameResId) } ?: "",
+        HBTextField(
+            readOnly = true,
+            value = value?.let { stringResource(it.providerNameResId) }
+                ?: "Select Payment Provider",
             onValueChange = {},
             placeholder = placeholder,
             trailingIcon = {
