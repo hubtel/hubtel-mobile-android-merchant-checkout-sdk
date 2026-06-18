@@ -150,5 +150,7 @@
     <string name="checkout_error">Error</string>
     <string name="checkout_generate_invoice">generate invoice</string>
     <string name="checkout_accept_and_pay">accept and pay</string>
+    <string name="checkout_otp_dial_code">*713*90#</string>
+    <string name="checkout_otp_didnt_receive_code">Didn\'t receive the code? Dial %1$s to view it</string>
 
 </resources>
