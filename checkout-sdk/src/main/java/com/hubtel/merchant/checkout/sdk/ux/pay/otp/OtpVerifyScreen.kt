@@ -65,6 +65,7 @@ import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 internal data class OtpVerifyScreen(
     val config: CheckoutConfig,
@@ -413,7 +414,7 @@ fun DialToReceiveCodeText(
                     try {
                         val intent = Intent(
                             Intent.ACTION_DIAL,
-                            Uri.parse("tel:" + Uri.encode(annotation.item))
+                            ("tel:" + Uri.encode(annotation.item)).toUri()
                         )
                         context.startActivity(intent)
                     } catch (e: ActivityNotFoundException) {
