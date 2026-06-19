@@ -160,6 +160,8 @@ internal data class PayOrderScreen(
 
         var showCancelDialog by remember { mutableStateOf(false) }
 
+        var navigateToStatusAfterOtp by rememberSaveable { mutableStateOf(false) }
+
         val walletUiState = rememberSaveable(saver = PaymentWalletUiState.Saver) {
             PaymentWalletUiState(null)
         }
@@ -851,7 +853,7 @@ internal data class PayOrderScreen(
                                 preApprovalId = checkoutUiState.data?.hubtelPreapprovalId ?: "",
                                 paymentChannel = paymentInfo?.channel ?: "",
                                 onFinish = {
-
+                                    navigateToStatusAfterOtp = true
                                 },
                             )
                         )
@@ -883,6 +885,19 @@ internal data class PayOrderScreen(
 
 
                 else -> {}
+            }
+        }
+
+        LaunchedEffect(navigateToStatusAfterOtp) {
+            if (navigateToStatusAfterOtp) {
+                navigateToStatusAfterOtp = false
+                navigator?.push(
+                    PaymentStatusScreen(
+                        providerName = paymentInfo?.providerName,
+                        config = config,
+                        checkoutType = checkoutFeesUiState.data?.getCheckoutType,
+                    )
+                )
             }
         }
 
