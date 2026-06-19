@@ -285,7 +285,11 @@ internal data class PayOrderScreen(
                                     preApprovalId = checkoutUiState.data?.hubtelPreapprovalId ?: "",
                                     paymentChannel = paymentInfo?.channel ?: "",
                                     onFinish = {
-                                        handlePostOtpActions()
+                                        // OTP screen will pop and Voyager recreates this
+                                        // screen, so set the resume flag on the ViewModel
+                                        // (survives recreation); a LaunchedEffect picks it
+                                        // up and resumes the payment flow.
+                                        viewModel.resumeAfterOtp = true
                                     },
                                 )
                             )
@@ -883,6 +887,27 @@ internal data class PayOrderScreen(
 
 
                 else -> {}
+            }
+        }
+
+        LaunchedEffect(viewModel.resumeAfterOtp) {
+            if (viewModel.resumeAfterOtp) {
+                viewModel.resumeAfterOtp = false
+                // OTP verified: call the payment endpoint directly, then go to the
+                // status screen to poll. payOrder() resolves fees with the correct
+                // (mtn-gh) channel internally and sends the prompt. We bypass the UI
+                // step machine because its fee gate uses the saved wallet's
+                // direct-debit channel, which 404s ("fees not set") and stalls.
+                walletUiState.payOrderWalletType?.let { walletType ->
+                    viewModel.payOrder(config, walletType)
+                }
+                navigator?.push(
+                    PaymentStatusScreen(
+                        providerName = paymentInfo?.providerName,
+                        config = config,
+                        checkoutType = checkoutFeesUiState.data?.getCheckoutType,
+                    )
+                )
             }
         }
 
