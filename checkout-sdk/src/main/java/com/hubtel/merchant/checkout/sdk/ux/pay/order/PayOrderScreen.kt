@@ -160,6 +160,10 @@ internal data class PayOrderScreen(
 
         var showCancelDialog by remember { mutableStateOf(false) }
 
+        // Post-OTP bill-prompt dialog state.
+        var awaitingPaymentPrompt by remember { mutableStateOf(false) }
+        var showBillPromptDialog by remember { mutableStateOf(false) }
+
         val walletUiState = rememberSaveable(saver = PaymentWalletUiState.Saver) {
             PaymentWalletUiState(null)
         }
@@ -893,22 +897,44 @@ internal data class PayOrderScreen(
         LaunchedEffect(viewModel.resumeAfterOtp) {
             if (viewModel.resumeAfterOtp) {
                 viewModel.resumeAfterOtp = false
-                // OTP verified: call the payment endpoint directly, then go to the
-                // status screen to poll. payOrder() resolves fees with the correct
-                // (mtn-gh) channel internally and sends the prompt. We bypass the UI
-                // step machine because its fee gate uses the saved wallet's
-                // direct-debit channel, which 404s ("fees not set") and stalls.
+                // OTP verified: fire the payment endpoint. payOrder() resolves fees
+                // with the correct (mtn-gh) channel internally and sends the prompt.
+                // Wait for success, then show the "bill prompt sent" dialog before
+                // navigating to the status screen (instead of jumping straight there).
                 walletUiState.payOrderWalletType?.let { walletType ->
                     viewModel.payOrder(config, walletType)
                 }
-                navigator?.push(
-                    PaymentStatusScreen(
-                        providerName = paymentInfo?.providerName,
-                        config = config,
-                        checkoutType = checkoutFeesUiState.data?.getCheckoutType,
-                    )
-                )
+                awaitingPaymentPrompt = true
             }
+        }
+
+        LaunchedEffect(checkoutUiState, awaitingPaymentPrompt) {
+            if (awaitingPaymentPrompt && checkoutUiState.success) {
+                awaitingPaymentPrompt = false
+                showBillPromptDialog = true
+            }
+        }
+
+        if (showBillPromptDialog) {
+            CheckoutMessageDialog(
+                onDismissRequest = { },
+                titleText = stringResource(R.string.checkout_success),
+                message = stringResource(
+                    R.string.checkout_momo_bill_prompt_msg,
+                    paymentInfo?.accountNumber ?: "",
+                ),
+                positiveText = stringResource(R.string.checkout_okay),
+                onPositiveClick = {
+                    showBillPromptDialog = false
+                    navigator?.push(
+                        PaymentStatusScreen(
+                            providerName = paymentInfo?.providerName,
+                            config = config,
+                            checkoutType = checkoutFeesUiState.data?.getCheckoutType,
+                        )
+                    )
+                },
+            )
         }
 
         LaunchedEffect(Unit) {
