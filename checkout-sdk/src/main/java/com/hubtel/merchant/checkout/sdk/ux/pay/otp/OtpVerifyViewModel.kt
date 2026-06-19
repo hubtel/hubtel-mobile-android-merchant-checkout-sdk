@@ -51,17 +51,7 @@ internal class OtpVerifyViewModel(private val unifiedCheckoutRepository: Unified
             hubtelPreApprovalId = preApprovalId,
         )
 
-//        verifyPaymentOtp(salesId, req)
-
-        val otpReq = OtpReq(
-            customerMsisdn = customerMsisdn,
-            otpCode = "$otpPrefix-$userOtpEntry",
-            clientReferenceID = clientReference,
-            hubtelPreApprovalID = preApprovalId,
-            //TODO: BRIGHT PROMISED HE'LL FIX THIS
-            channel =  "mtn-gh",
-        )
-        verifyOtp(salesId, otpReq)
+        verifyPaymentOtp(salesId, req)
     }
 
 

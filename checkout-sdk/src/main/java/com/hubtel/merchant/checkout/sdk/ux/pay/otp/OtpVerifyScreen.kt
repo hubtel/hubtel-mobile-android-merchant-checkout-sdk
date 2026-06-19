@@ -239,13 +239,13 @@ internal data class OtpVerifyScreen(
             customerMsisdn = customerMsisdn.formatInternational(),
             userOtpEntry = otpValue,
             otpPrefix = otpPrefix,
-            otpRequestId = "",
+            otpRequestId = otpRequestId,
             clientReference = clientReference,
             preApprovalId = preApprovalId,
             paymentChannel = paymentChannel
         )
 
-        onVerificationFinish.invoke(viewModel.otpUiState.value.success)
+        onVerificationFinish.invoke(viewModel.paymentOtpUiState.value.success)
     }
 
     @Composable
