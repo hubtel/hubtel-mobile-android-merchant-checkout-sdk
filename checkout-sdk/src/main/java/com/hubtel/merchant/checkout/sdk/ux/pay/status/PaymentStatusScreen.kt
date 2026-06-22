@@ -3,7 +3,6 @@ package com.hubtel.merchant.checkout.sdk.ux.pay.status
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -667,7 +666,7 @@ internal data class PaymentStatusScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_enterprise_insurance),
+                        painter = painterResource(id = R.drawable.checkout_ic_enterprise_insurance),
                         contentDescription = null,
                         modifier = Modifier.size(25.dp)
                     )

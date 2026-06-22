@@ -194,7 +194,7 @@ internal data class TransactionSuccessfulScreen(
                         modifier = Modifier.padding(Dimens.paddingNano)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_enterprise_insurance),
+                            painter = painterResource(id = R.drawable.checkout_ic_enterprise_insurance),
                             contentDescription = null,
                             modifier = Modifier.size(25.dp)
                         )

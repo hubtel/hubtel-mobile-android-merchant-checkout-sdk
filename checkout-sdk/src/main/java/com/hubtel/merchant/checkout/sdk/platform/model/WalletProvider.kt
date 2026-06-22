@@ -17,7 +17,7 @@ enum class WalletImages(
     Hubtel(R.drawable.checkout_ic_hubtel),
     ZeePay(R.drawable.checkout_ic_zeepay),
     GMoney(R.drawable.checkout_ic_gmoney),
-    BankPay(R.drawable.img)
+    BankPay(R.drawable.checkout_img)
 }
 
 

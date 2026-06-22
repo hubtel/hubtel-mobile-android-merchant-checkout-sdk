@@ -75,13 +75,13 @@ class MomoWalletUiState {
 
     var mobileNumber by mutableStateOf<String?>(null)
 
-    var walletProvider by mutableStateOf<WalletProvider?>(WalletProvider.MTN)
+    var walletProvider by mutableStateOf<WalletProvider?>(null)
 
     var isWalletSelected by mutableStateOf(false)
 
     val isValid
         get() = ((mobileNumber?.length ?: 0) >= 9
-                && walletProvider != null) || ((mobileNumber?.length ?: 0) >= 9 && isWalletSelected)
+                && walletProvider != null) && isWalletSelected
 
 
     companion object {

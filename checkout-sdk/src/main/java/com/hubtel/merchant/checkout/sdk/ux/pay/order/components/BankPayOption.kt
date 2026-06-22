@@ -102,7 +102,7 @@ internal fun BankPayOption(
                     modifier = Modifier.size(80.dp) // Adjust the size as needed
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.img),
+                        painter = painterResource(R.drawable.checkout_img),
                         contentDescription = stringResource(R.string.checkout_bank_pay),
                         modifier = Modifier.fillMaxSize(), // Fill the available space in the Box
                         contentScale = ContentScale.Fit
