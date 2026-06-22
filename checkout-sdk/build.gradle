@@ -1,22 +1,20 @@
-import com.vanniktech.maven.publish.SonatypeHost
-
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.25.3"
+    id "com.vanniktech.maven.publish" version "0.36.0"
 }
 
 android {
     namespace 'com.hubtel.merchant.checkout.sdk'
-    compileSdk 33
+    compileSdk 36
 
     resourcePrefix 'checkout'
 
     defaultConfig {
         minSdk 21
-        targetSdk 33
+        targetSdk 36
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -53,7 +51,7 @@ android {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.S01, true)
+    publishToMavenCentral()
     signAllPublications()
 
     coordinates("$groud_id", "$checkout_artifact_id", findProperty("versionName") ? findProperty("versionName") : "$checkout_sdk_verison")
