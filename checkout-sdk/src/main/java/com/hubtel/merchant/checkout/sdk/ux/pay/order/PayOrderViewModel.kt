@@ -116,6 +116,12 @@ internal class PayOrderViewModel (
 
     var mandateIdNumber by mutableStateOf("")
 
+    // Set true when a pre-payment OTP is verified, so the screen can resume the
+    // payment flow after Voyager recreates PayOrderScreen. Lives on the ViewModel
+    // (which outlives the composable) because composable state set from the
+    // covered OTP screen is lost when the home screen is recreated.
+    var resumeAfterOtp by mutableStateOf(false)
+
     fun initData(amount: Double) {
         getUserWallets()
         resetPaymentInfo()

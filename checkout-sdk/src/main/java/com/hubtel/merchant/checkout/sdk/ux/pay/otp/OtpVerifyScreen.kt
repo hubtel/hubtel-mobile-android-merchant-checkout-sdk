@@ -14,8 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalContext
+import timber.log.Timber
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +65,7 @@ import com.hubtel.merchant.checkout.sdk.ux.theme.Dimens
 import com.hubtel.merchant.checkout.sdk.ux.theme.HubtelTheme
 import com.hubtel.merchant.checkout.sdk.ux.utils.LocalActivity
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 internal data class OtpVerifyScreen(
     val config: CheckoutConfig,
@@ -174,6 +181,10 @@ internal data class OtpVerifyScreen(
 
                 Box(modifier = Modifier.padding(Dimens.paddingNano))
 
+                DialToReceiveCodeText(
+                    modifier = Modifier.padding(top = Dimens.paddingSmall)
+                )
+
                 if (showErrorMessage) {
                     CheckoutMessageDialog(
                         onDismissRequest = {
@@ -228,13 +239,13 @@ internal data class OtpVerifyScreen(
             customerMsisdn = customerMsisdn.formatInternational(),
             userOtpEntry = otpValue,
             otpPrefix = otpPrefix,
-            otpRequestId = "",
+            otpRequestId = otpRequestId,
             clientReference = clientReference,
             preApprovalId = preApprovalId,
             paymentChannel = paymentChannel
         )
 
-        onVerificationFinish.invoke(viewModel.otpUiState.value.success)
+        onVerificationFinish.invoke(viewModel.paymentOtpUiState.value.success)
     }
 
     @Composable
@@ -361,4 +372,55 @@ fun String.formatInternational(): String {
     if (this.startsWith("0")) return this.replaceRange(0, 1, "233")
 
     return this
+}
+
+@Composable
+fun DialToReceiveCodeText(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val dialCode = stringResource(R.string.checkout_otp_dial_code)
+    val fullText = stringResource(R.string.checkout_otp_didnt_receive_code, dialCode)
+    val codeStart = fullText.indexOf(dialCode)
+
+    val annotatedString = buildAnnotatedString {
+        append(fullText)
+        addStyle(SpanStyle(color = Color.Black), 0, fullText.length)
+        if (codeStart >= 0) {
+            val codeEnd = codeStart + dialCode.length
+            addStyle(
+                SpanStyle(color = HubtelTheme.colors.colorPrimary),
+                codeStart,
+                codeEnd
+            )
+            addStringAnnotation(
+                tag = "dial",
+                annotation = dialCode,
+                start = codeStart,
+                end = codeEnd
+            )
+        }
+    }
+
+    ClickableText(
+        text = annotatedString,
+        style = TextStyle(textAlign = TextAlign.Start),
+        modifier = modifier.fillMaxWidth(),
+        onClick = { offset ->
+            annotatedString
+                .getStringAnnotations(tag = "dial", start = offset, end = offset)
+                .firstOrNull()
+                ?.let { annotation ->
+                    try {
+                        val intent = Intent(
+                            Intent.ACTION_DIAL,
+                            ("tel:" + Uri.encode(annotation.item)).toUri()
+                        )
+                        context.startActivity(intent)
+                    } catch (e: ActivityNotFoundException) {
+                        Timber.d(e, "No dialer app available for %s", annotation.item)
+                    }
+                }
+        }
+    )
 }
